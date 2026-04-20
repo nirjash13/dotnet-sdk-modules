@@ -1,13 +1,209 @@
-# Local agent state
+# =============================================================================
+# .gitignore — .NET 10 / ASP.NET Core / EF Core monorepo
+# Derived from the Microsoft canonical .NET .gitignore with project-specific
+# exclusions appended at the bottom.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Project-specific
+# -----------------------------------------------------------------------------
+# Local-only implementation plan and working docs (not committed per team policy)
+docs/
+
+# Load-test artifacts and local observability volumes
+loadtests/results/
+*.k6-summary.json
+*.nbomber_reports/
+deploy/**/data/
+deploy/**/volumes/
+grafana/data/
+prometheus/data/
+loki/data/
+tempo/data/
+
+# -----------------------------------------------------------------------------
+# Claude Code local agent state (keep global config, ignore per-user local)
+# -----------------------------------------------------------------------------
 .claude/settings.local.json
 
-# .NET build outputs
-**/bin/
-**/obj/
-.vs/
-*.user
+# -----------------------------------------------------------------------------
+# User-specific IDE files
+# -----------------------------------------------------------------------------
+*.rsuser
 *.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
 
-# OS/editor cruft
+# Mono auto-generated
+mono_crash.*
+
+# -----------------------------------------------------------------------------
+# Build outputs
+# -----------------------------------------------------------------------------
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Generated C# files (source generators emit into obj/)
+*.g.cs
+*.g.i.cs
+Generated/
+
+# -----------------------------------------------------------------------------
+# Visual Studio
+# -----------------------------------------------------------------------------
+.vs/
+
+# Visual Studio Code — keep shared settings, ignore personal
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# -----------------------------------------------------------------------------
+# JetBrains Rider / ReSharper
+# -----------------------------------------------------------------------------
+.idea/
+*.sln.iml
+*.DotSettings.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+_TeamCity*
+
+# -----------------------------------------------------------------------------
+# MSBuild / test results
+# -----------------------------------------------------------------------------
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+*.binlog
+*.pdb
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# -----------------------------------------------------------------------------
+# NuGet
+# -----------------------------------------------------------------------------
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+.nuget/
+
+# -----------------------------------------------------------------------------
+# Entity Framework Core
+# -----------------------------------------------------------------------------
+*.dacpac
+Migrations/ApplyMigrations.bat
+# Generated compiled-model assets live in obj/, covered above
+
+# -----------------------------------------------------------------------------
+# Coverage / benchmarking
+# -----------------------------------------------------------------------------
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+TestResults/
+coverage/
+.coverage*/
+BenchmarkDotNet.Artifacts/
+
+# -----------------------------------------------------------------------------
+# NCrunch
+# -----------------------------------------------------------------------------
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# -----------------------------------------------------------------------------
+# Publish artifacts
+# -----------------------------------------------------------------------------
+publish/
+PublishScripts/
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+*.[Pp]ublish[Pp]rofile
+
+# -----------------------------------------------------------------------------
+# Secrets — NEVER commit
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+**/secrets.json
+*.pfx
+*.key
+*.pem
+*.p12
+*.cer
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+docker-compose.override.yml
+.docker/
+
+# -----------------------------------------------------------------------------
+# Node / TypeScript (for integrated SPA if added later)
+# -----------------------------------------------------------------------------
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+lerna-debug.log
+.pnpm-debug.log
+typings/
+*.tsbuildinfo
+
+# -----------------------------------------------------------------------------
+# OS / editor cruft
+# -----------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.bak
+*.orig
+*.swp
+*~
+
+# -----------------------------------------------------------------------------
+# Windows installer
+# -----------------------------------------------------------------------------
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
