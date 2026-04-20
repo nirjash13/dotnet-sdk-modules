@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <!-- Host is the composition root — not packaged as a NuGet library -->
+    <IsPackable>false</IsPackable>
+    <!-- AOT deferred; see docs/IMPLEMENTATION_PLAN.md §10 -->
+    <IsAotCompatible>false</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\Chassis.Persistence\Chassis.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit Mediator">
+    <PackageReference Include="MassTransit" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="API documentation">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101: this-prefix — not required in project style -->
+    <!-- SA1309: underscore prefix on fields — we use _camelCase -->
+    <!-- SA0001: XML doc analysis — public surface only -->
+    <!-- SA1600: members must be documented — not required on internal types -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600</NoWarn>
+  </PropertyGroup>
+
+</Project>

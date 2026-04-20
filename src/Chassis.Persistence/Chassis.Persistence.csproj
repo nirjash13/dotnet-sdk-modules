@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Chassis.Persistence</PackageId>
+    <Title>Chassis Persistence</Title>
+    <Description>EF Core base context with tenant global query filters and RLS command interceptor for the Modular SaaS Chassis.</Description>
+    <Authors>Chassis Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>chassis;modular;saas;efcore;tenancy;rls</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project reference to SharedKernel for ITenantScoped, ITenantContextAccessor, etc. -->
+    <ProjectReference Include="..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="EF Core + Postgres — via CPM">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer — tag-driven SemVer versioning (build-time only)">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101: this-prefix — not required in project style -->
+    <!-- SA1309: underscore prefix on fields — we use _camelCase -->
+    <!-- SA0001: XML doc analysis — public surface only per stylecop.json -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001</NoWarn>
+  </PropertyGroup>
+
+</Project>

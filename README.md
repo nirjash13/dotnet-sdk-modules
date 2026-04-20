@@ -30,7 +30,7 @@ Modules are delivered as both NuGet packages (for external consumption) and proj
 | **Modular monolith → microservices migration whiplash** | Start in-process with a single deployment. Flip the transport config to RabbitMQ when load demands. No code changes. |
 | **Multi-tenant data isolation risk** | EF Core global filters + Postgres RLS with `FORCE ROW LEVEL SECURITY` — cross-tenant reads return zero rows even if the filter is missing. |
 | **Legacy estate absorption (strangler-fig)** | YARP gateway with canary routing. .NET 4.8 bridge via CloudEvents 1.0 + AsyncAPI 3.0. Non-.NET via message contracts. |
-| **Dispatcher abstraction sprawl** | Single `IModuleDispatcher` backed by MassTransit end-to-end (vs. MediatR + bus friction). MediatR rejected on license grounds. |
+| **Dispatcher abstraction sprawl** | Single `IModuleDispatcher` backed by MassTransit end-to-end (vs. MediatR + bus friction). |
 | **Observability blackhole** | OpenTelemetry built-in — Prometheus metrics, Loki logs, Tempo traces, Grafana dashboards (all provisioned). No opt-in required. |
 | **Mutable licensing dependencies** | Permissively-licensed stack end-to-end — MassTransit 8.x, Marten, YARP, all CQRS machinery. No commercial surprises. |
 | **Tenant leakage on new features** | NetArchTest enforces that every tenant-scoped table gets a Postgres RLS policy. Nightly cross-tenant smoke tests. |
@@ -123,26 +123,6 @@ modular-sdk-dotnet/
 └── deploy/                             # OTel Collector, Prometheus, Loki, Tempo, Grafana configs
 ```
 
----
-
-## Roadmap
-
-- [ ] **Phase 0** — Foundations (in progress) — build + CI + SharedKernel skeleton
-- [ ] **Phase 1** — Chassis Host & Tenancy — module loader, middleware pipeline, RLS wiring
-- [ ] **Phase 2** — Identity Module with OpenIddict — OIDC flows, JWT bearer validation, claim propagation
-- [ ] **Phase 3** — Ledger Module — EF Core, Marten audit events, RLS SQL
-- [ ] **Phase 4** — Out-of-Proc Transport & Outbox — RabbitMQ, transactional inbox/outbox, idempotency, retry
-- [ ] **Phase 5** — Saga: Association Registration — orchestrated compensation, timeouts
-- [ ] **Phase 6** — Universal Integration Layer — .NET 4.8 bridge, legacy .NET Core, non-.NET via CloudEvents, YARP canary routing
-- [ ] **Phase 7** — Observability Stack — OpenTelemetry → Prometheus + Loki + Tempo → Grafana
-- [ ] **Phase 8** — Load Testing with Grafana — k6 scenarios (steady / spike / soak / ramp-to-break), SLO gates, chaos overlays
-- [ ] **Phase 9** — Architecture, Integration, Security Tests — NetArchTest rules, end-to-end auth, tenant isolation, IDOR resistance
-- [ ] **Phase 10** — Documentation & Handbook — ENGINEERS_HANDBOOK.md, API contracts, deployment runbooks
-
-See `docs/IMPLEMENTATION_PLAN.md` §6 for detailed per-phase goals, dependencies, and acceptance criteria.
-
----
-
 ## Key design decisions
 
 1. **MassTransit Mediator, not MediatR** — MediatR moved to commercial license in late 2024. MassTransit Mediator provides the same API for both in-proc dispatch and bus routing, with a single transport-swap configuration toggle.
@@ -162,8 +142,6 @@ For ADR details, see `.claude/memory/decisions.md`.
 ---
 
 ## Contributing
-
-See `ENGINEERS_HANDBOOK.md` for:
 
 - Local dev setup (Docker Compose, environment variables)
 - Module scaffolding (Clean Architecture templates)
@@ -186,6 +164,3 @@ Architecture and layer rules are in `.claude/rules/backend.md`. Security rules, 
 This chassis draws architectural guidance from:
 - Microsoft's Orleans, YARP, and ASP.NET Core monorepo patterns
 - Domain-Driven Design and Clean Architecture principles
-- The original `Modular_SaaS_Chassis_Architecture.pdf` specification
-
-<!-- written-by: writer-haiku | model: haiku -->
