@@ -1,0 +1,179 @@
+<Project>
+
+  <!--
+    Central Package Management — single source of truth for all NuGet versions.
+    Rules:
+    - Do not pin versions in individual .csproj files.
+    - To upgrade a package, change it here and run `dotnet restore`.
+    - Version notes are included where the chosen version differs from the
+      plan's target (e.g., a major-version bump occurred since the plan was written).
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="MassTransit — in-proc mediator + bus transport">
+    <!--
+      Plan targets MassTransit 8.x; MT 9.x is in active development (develop-channel only
+      as of 2026-04-20). Using 8.5.9 — the latest stable 8.x release — per plan §2.1.
+      Decision: keep 8.x until MT 9.x ships a stable release; revisit when 9.0.0 GA lands.
+    -->
+    <PackageVersion Include="MassTransit" Version="8.5.9" />
+    <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.9" />
+    <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.5.9" />
+  </ItemGroup>
+
+  <ItemGroup Label="Entity Framework Core">
+    <!-- EF Core 10.x — matches .NET 10 target; in-box with .NET 10 SDK -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.6" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.6" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.6" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Marten — event store (Ledger audit only)">
+    <!--
+      Plan targets Marten 7.x; actual latest stable as of 2026-04-20 is 8.31.0.
+      Marten 8.x is fully supported on .NET 10 and Postgres 16+.
+      Using 8.31.0. See CHANGELOG_AI.md for the version-bump note.
+    -->
+    <PackageVersion Include="Marten" Version="8.31.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="OpenIddict — OIDC / OAuth2 auth server">
+    <!--
+      Plan targets OpenIddict 6.x; actual latest stable is 7.4.0.
+      OpenIddict 7.x ships .NET 10 support and is the recommended version.
+      Using 7.4.0. See CHANGELOG_AI.md for the version-bump note.
+    -->
+    <PackageVersion Include="OpenIddict.AspNetCore" Version="7.4.0" />
+    <PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="7.4.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Microsoft.Extensions.* abstractions — shared kernel only">
+    <!--
+      These are lightweight abstractions packages. SharedKernel references them so that
+      IModuleStartup can declare IServiceCollection / IConfiguration parameters.
+      They carry no transitive infrastructure dependencies.
+    -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+    <!--
+      Note: IEndpointRouteBuilder is part of the ASP.NET Core shared framework.
+      Projects needing it on net10.0 should use:
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+      rather than a NuGet package reference (no standalone package exists for .NET 10+).
+    -->
+  </ItemGroup>
+
+  <ItemGroup Label="ASP.NET Core — authentication">
+    <!-- Ships in-box with .NET 10; version matches the runtime -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <!--
+      Plan targets FluentValidation 11.x; actual latest stable is 12.1.1.
+      FV 12.x is fully supported on .NET 10. Using 12.1.1.
+    -->
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Mapping">
+    <!--
+      Plan targets Mapster 7.x; actual latest stable is 10.0.7.
+      Mapster 10.x is the current release series. Using 10.0.7.
+    -->
+    <PackageVersion Include="Mapster" Version="10.0.7" />
+    <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.7" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging">
+    <!--
+      Serilog.AspNetCore 10.x is the latest stable release series (matched to .NET 10).
+      Plan referenced 8.x which was the .NET 8-era release; 10.x is correct for .NET 10.
+    -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <!--
+      Serilog.Sinks.OpenTelemetry 4.2.0 is the latest stable release.
+    -->
+    <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="OpenTelemetry — observability">
+    <!-- OTel 1.15.x is the latest stable 1.x series as of 2026-04-20 -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <!--
+      OpenTelemetry.Instrumentation.EntityFrameworkCore has no stable release as of 2026-04-20.
+      Using the latest available prerelease. Remove this comment when a stable release ships.
+    -->
+    <PackageVersion Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.15" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Resilience">
+    <!-- Microsoft.Extensions.Resilience wraps Polly v8; ships with .NET 10 Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.Resilience" Version="10.5.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="API Gateway">
+    <!-- YARP 2.3.0 — matches plan target of 2.x -->
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="API documentation">
+    <!-- Scalar.AspNetCore 2.14.1 — replaces Swashbuckle as default in .NET 9+ -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.14.1" />
+    <!-- Microsoft.AspNetCore.OpenApi ships in-box with .NET 10 -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.6" />
+  </ItemGroup>
+
+  <ItemGroup Label="CloudEvents">
+    <!-- CloudNative.CloudEvents 2.8.0 — matches plan target of 2.x -->
+    <PackageVersion Include="CloudNative.CloudEvents" Version="2.8.0" />
+    <PackageVersion Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Versioning">
+    <!--
+      Plan targets MinVer 5.x; actual latest stable is 7.0.0.
+      MinVer 7.x supports .NET 10 and the same tag-based SemVer semantics.
+      Using 7.0.0. See CHANGELOG_AI.md for the version-bump note.
+    -->
+    <PackageVersion Include="MinVer" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — applied globally via Directory.Build.props or per-project">
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.202" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="4.15.0" />
+    <!-- StyleCop.Analyzers 1.1.118 — matches plan target of latest 1.x -->
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <!--
+      xUnit 2.9.3 — using v2 stable; xUnit v3 is not yet GA stable as of 2026-04-20.
+      Intent: swap to xUnit.v3 when it reaches a stable GA release (likely 2026 H2).
+      Update this file and xunit.runner.visualstudio simultaneously.
+    -->
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
+    <!--
+      FluentAssertions 8.9.0 — plan referenced 6.x; 8.x is the current stable series.
+    -->
+    <PackageVersion Include="FluentAssertions" Version="8.9.0" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.6" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.11.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

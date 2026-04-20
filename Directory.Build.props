@@ -1,0 +1,32 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Language and compiler settings -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Package management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!-- Versioning via MinVer (tag-driven SemVer) -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+
+    <!-- AOT: deliberately not targeting AOT in v1; see docs/IMPLEMENTATION_PLAN.md §10 -->
+    <IsAotCompatible>false</IsAotCompatible>
+
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Suppress StyleCop XML-doc warnings on internal/private members to reduce noise.
+       Full XML doc is required only on public API surface (SA1600 covers public members). -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1633</NoWarn>  <!-- file header — managed by .editorconfig -->
+  </PropertyGroup>
+
+</Project>

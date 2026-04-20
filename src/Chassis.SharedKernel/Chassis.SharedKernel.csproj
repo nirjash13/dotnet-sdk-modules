@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Multi-target: netstandard2.0 for .NET Framework 4.x / .NET Core 6/8 consumers;
+         net10.0 for full-fidelity platform-native consumers. -->
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+
+    <!-- Package metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Chassis.SharedKernel</PackageId>
+    <Title>Chassis Shared Kernel</Title>
+    <Description>Core abstractions and contracts for the Modular SaaS Chassis — IModuleStartup, IModuleDispatcher, Result types, tenant context, and CloudEvent envelope.</Description>
+    <Authors>Chassis Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>chassis;modular;saas;abstractions;shared-kernel</PackageTags>
+
+  </PropertyGroup>
+
+  <ItemGroup Label="Runtime dependencies — lightweight abstractions only">
+    <!--
+      IModuleStartup requires IServiceCollection and IConfiguration; these are the
+      only permitted external dependencies in SharedKernel. Both packages are pure
+      abstractions with no transitive infrastructure dependencies.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup Label="ASP.NET Core shared framework reference — net10.0 only" Condition="'$(TargetFramework)' == 'net10.0'">
+    <!--
+      IEndpointRouteBuilder is part of the ASP.NET Core shared framework.
+      It is not available as a standalone NuGet package for .NET 10+.
+      FrameworkReference makes all ASP.NET Core types available at compile time
+      without shipping them in the package (they are always present on the target runtime).
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer — tag-driven SemVer versioning (build-time only)">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only, not shipped in the package">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <!-- stylecop.json is at the repo root; path is relative to this project file -->
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <!-- Suppress SA1633 (file header required) — managed via .editorconfig copyright header setting -->
+  <!-- Suppress SA1101 (prefix local calls with this) — not required in this project style -->
+  <!-- Suppress SA1309 (field names must not begin with underscore) — we use _camelCase convention -->
+  <!-- Suppress SA1503 (braces for multi-line statements) — handled by csharp_prefer_braces -->
+  <!-- Suppress SA0001 (XML comment analysis) — required for public API only; already configured in stylecop.json -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1633;SA1101;SA1309;SA0001</NoWarn>
+  </PropertyGroup>
+
+</Project>

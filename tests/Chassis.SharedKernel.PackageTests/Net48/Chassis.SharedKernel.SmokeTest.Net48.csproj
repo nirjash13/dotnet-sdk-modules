@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!--
+      Smoke test: verifies Chassis.SharedKernel's netstandard2.0 facet is consumable
+      from .NET Framework 4.8. Build success = pass. No test framework required.
+      This confirms the multi-target story for legacy .NET Framework consumers.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <!-- Suppress StyleCop and IDE rules that don't apply to smoke projects -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1633;SA1101;SA1309;SA0001;SA1200;SA1210;SA1649</NoWarn>
+  </PropertyGroup>
+
+</Project>

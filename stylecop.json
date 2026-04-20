@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+  "settings": {
+    "documentationRules": {
+      "companyName": "Chassis",
+      "copyrightText": "Copyright (c) {companyName}. All rights reserved.",
+      "xmlHeader": false,
+      "documentExposedElements": true,
+      "documentInternalElements": false,
+      "documentPrivateElements": false,
+      "documentPrivateFields": false,
+      "documentInterfaces": true,
+      "unrecognizedWarningBehavior": "allow",
+      "fileNamingConvention": "stylecop"
+    },
+    "orderingRules": {
+      "usingDirectivesPlacement": "outsideNamespace",
+      "systemUsingDirectivesFirst": true,
+      "elementOrder": [
+        "kind",
+        "accessibility",
+        "constant",
+        "static",
+        "readonly"
+      ]
+    },
+    "namingRules": {
+      "allowCommonHungarianPrefixes": false,
+      "allowedHungarianPrefixes": [],
+      "allowedNamespaceComponents": []
+    },
+    "layoutRules": {
+      "newlineAtEndOfFile": "require"
+    },
+    "maintainabilityRules": {
+      "topLevelTypes": [
+        "class",
+        "interface",
+        "struct",
+        "enum"
+      ]
+    },
+    "readabilityRules": {
+      "allowBuiltInTypeAliases": false
+    }
+  }
+}
