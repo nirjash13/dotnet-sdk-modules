@@ -1,0 +1,26 @@
+# active.yaml — always-loaded session memory
+# Keep this SHORT. Full detail lives in decisions.md, bugs.md, patterns.md.
+
+project:
+  name: "[Project Name]"
+  stack: ".NET 8 / ASP.NET Core / EF Core / Clean Architecture"
+  target_framework: "net8.0"
+  architecture: "clean"  # "clean" or "vertical-slice"
+  db: "postgresql"  # postgresql | sqlserver | sqlite
+  auth: "jwt"
+
+## Paste recent architectural decisions here (1-line each):
+decisions:
+  # - "2024-01-15: Chose Vertical Slice over Clean Architecture — small team, CRUD-heavy"
+
+## Active bugs being investigated:
+bugs:
+  # - "Job search returns archived jobs — root cause: missing global query filter"
+
+## Key patterns in use:
+patterns:
+  # - "Result<T> pattern for expected failures (not exceptions)"
+  # - "WebApplicationFactory + TestContainers for integration tests"
+
+## Current sprint / focus:
+current_focus: ""

@@ -1,0 +1,13 @@
+# Local agent state
+.claude/settings.local.json
+
+# .NET build outputs
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
