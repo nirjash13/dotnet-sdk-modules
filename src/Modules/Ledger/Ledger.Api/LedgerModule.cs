@@ -7,7 +7,6 @@ using Ledger.Application.Commands;
 using Ledger.Application.Queries;
 using Ledger.Contracts;
 using Ledger.Infrastructure.Extensions;
-using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -27,14 +26,6 @@ public sealed class LedgerModule : IModuleStartup
     {
         // Infrastructure: EF Core DbContext, Marten, repositories, unit of work, and validators.
         services.AddLedgerInfrastructure(config);
-
-        // MassTransit consumers: register command + query handlers so the Mediator
-        // can discover and route messages to them.
-        services.AddMediator(cfg =>
-        {
-            cfg.AddConsumer<PostTransactionHandler>();
-            cfg.AddConsumer<GetAccountBalanceHandler>();
-        });
     }
 
     /// <inheritdoc />
@@ -42,7 +33,6 @@ public sealed class LedgerModule : IModuleStartup
     {
         RouteGroupBuilder ledger = endpoints
             .MapGroup("/api/v1/ledger")
-            .RequireAuthorization()
             .WithTags("ledger");
 
         // POST /api/v1/ledger/accounts/{accountId}/transactions
@@ -63,7 +53,7 @@ public sealed class LedgerModule : IModuleStartup
     private static async Task<IResult> PostTransactionAsync(
         Guid accountId,
         PostTransactionRequest request,
-        IRequestClient<PostTransactionCommand> client,
+        IPostTransactionService service,
         CancellationToken ct)
     {
         if (request is null)
@@ -78,15 +68,15 @@ public sealed class LedgerModule : IModuleStartup
             memo: request.Memo,
             idempotencyKey: request.IdempotencyKey);
 
-        Response<Result<Guid>> response = await client
-            .GetResponse<Result<Guid>>(command, ct)
+        // In-process execution — no RabbitMQ on the hot write path. Downstream
+        // projection is published from inside the service (fire-and-forget on the bus)
+        // and does not block this response.
+        Result<Guid> result = await service
+            .ExecuteAsync(command, ct)
             .ConfigureAwait(false);
-
-        Result<Guid> result = response.Message;
 
         if (!result.IsSuccess)
         {
-            // A not-found failure is returned as 404 (IDOR-safe — not 403).
             if (result.Error?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
             {
                 return Results.NotFound(CreateProblem(result.Error));
@@ -95,7 +85,6 @@ public sealed class LedgerModule : IModuleStartup
             return Results.BadRequest(CreateProblem(result.Error ?? "Command failed."));
         }
 
-        // Return 201 Created with the posting Id.
         return Results.Created(
             $"/api/v1/ledger/accounts/{accountId}/transactions/{result.Value}",
             new { TransactionId = result.Value });
@@ -103,16 +92,14 @@ public sealed class LedgerModule : IModuleStartup
 
     private static async Task<IResult> GetAccountBalanceAsync(
         Guid accountId,
-        IRequestClient<GetAccountBalanceQuery> client,
+        IGetAccountBalanceService service,
         CancellationToken ct)
     {
         GetAccountBalanceQuery query = new GetAccountBalanceQuery(accountId);
 
-        Response<Result<AccountBalanceDto>> response = await client
-            .GetResponse<Result<AccountBalanceDto>>(query, ct)
+        Result<AccountBalanceDto> result = await service
+            .ExecuteAsync(query, ct)
             .ConfigureAwait(false);
-
-        Result<AccountBalanceDto> result = response.Message;
 
         if (!result.IsSuccess)
         {

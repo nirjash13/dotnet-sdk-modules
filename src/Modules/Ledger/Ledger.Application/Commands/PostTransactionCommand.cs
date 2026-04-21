@@ -9,6 +9,13 @@ namespace Ledger.Application.Commands;
 /// </summary>
 public sealed class PostTransactionCommand : ICommand<Result<Guid>>
 {
+    /// <summary>
+    /// Parameterless constructor required by transport serializers.
+    /// </summary>
+    public PostTransactionCommand()
+    {
+    }
+
     /// <summary>Initializes the command with required fields.</summary>
     public PostTransactionCommand(
         Guid accountId,
@@ -25,21 +32,21 @@ public sealed class PostTransactionCommand : ICommand<Result<Guid>>
     }
 
     /// <summary>Gets the target account identifier.</summary>
-    public Guid AccountId { get; }
+    public Guid AccountId { get; set; }
 
     /// <summary>Gets the monetary amount to post. May be negative (credit/reversal).</summary>
-    public decimal Amount { get; }
+    public decimal Amount { get; set; }
 
     /// <summary>Gets the 3-character ISO 4217 currency code.</summary>
-    public string Currency { get; }
+    public string Currency { get; set; } = string.Empty;
 
     /// <summary>Gets the optional human-readable description.</summary>
-    public string? Memo { get; }
+    public string? Memo { get; set; }
 
     /// <summary>
     /// Gets the optional client-supplied idempotency key.
     /// When supplied, a duplicate request with the same key returns the existing posting's Id
     /// instead of creating a second posting.
     /// </summary>
-    public Guid? IdempotencyKey { get; }
+    public Guid? IdempotencyKey { get; set; }
 }

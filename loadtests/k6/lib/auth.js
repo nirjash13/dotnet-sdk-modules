@@ -18,6 +18,7 @@ let _tokenExpiresAt = 0;
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const CLIENT_ID = __ENV.CLIENT_ID || 'chassis-loadtest';
 const CLIENT_SECRET = __ENV.CLIENT_SECRET || 'chassis-loadtest-secret';
+const OIDC_SCOPE = __ENV.OIDC_SCOPE || 'chassis-api';
 
 /**
  * Fetch a new token from the /connect/token endpoint.
@@ -29,7 +30,7 @@ function fetchToken() {
     grant_type: 'client_credentials',
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
-    scope: 'chassis-api',
+    scope: OIDC_SCOPE,
   };
 
   const res = http.post(url, payload, {

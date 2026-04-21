@@ -28,6 +28,7 @@ internal sealed class PostingConfiguration : IEntityTypeConfiguration<Posting>
     {
         builder.ToTable("postings", "ledger");
         builder.HasKey(p => p.Id);
+        builder.Property(p => p.Id).ValueGeneratedNever();
 
         builder.Property(p => p.TenantId)
             .IsRequired();

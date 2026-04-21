@@ -9,7 +9,7 @@ namespace Chassis.SharedKernel.Abstractions;
 /// <typeparam name="T">The type of the success value.</typeparam>
 public sealed class Result<T>
 {
-    private Result(bool isSuccess, T? value, string? error)
+    public Result(bool isSuccess, T? value, string? error)
     {
         IsSuccess = isSuccess;
         Value = value;

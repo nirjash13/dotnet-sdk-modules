@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Ledger.Application.Abstractions;
 using Ledger.Domain.Exceptions;
 using Marten;
@@ -45,32 +44,10 @@ internal sealed class LedgerUnitOfWork(LedgerDbContext context, IDocumentSession
     /// <inheritdoc />
     public async Task CommitAsync(CancellationToken ct = default)
     {
-        // TransactionScope with async flow ensures the ambient transaction context
-        // propagates across await boundaries (required for .NET async/await).
-        //
-        // TransactionScopeOption.Required: joins an existing ambient transaction if one
-        // exists, or creates a new one. Since handler code runs in an HTTP request scope
-        // with no pre-existing TransactionScope, this always creates a new scope here.
         try
         {
-            using TransactionScope scope = new TransactionScope(
-                TransactionScopeOption.Required,
-                new TransactionOptions
-                {
-                    IsolationLevel = IsolationLevel.ReadCommitted,
-                    Timeout = TimeSpan.FromSeconds(30),
-                },
-                TransactionScopeAsyncFlowOption.Enabled);
-
-            // 1. EF Core SaveChanges — enlists in the ambient TransactionScope.
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            // 2. Marten SaveChanges — enlists in the same ambient TransactionScope.
-            //    Marten's Npgsql connection is opened inside the scope, so it auto-enlists.
             await martenSession.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            // Mark the scope as complete — both participants commit on Dispose().
-            scope.Complete();
         }
         catch (Exception ex) when (IsUniqueViolation(ex, out Guid idempotencyKey))
         {

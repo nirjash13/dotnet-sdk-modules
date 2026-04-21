@@ -2,6 +2,8 @@ using System;
 using Chassis.Persistence;
 using FluentValidation;
 using Ledger.Application.Abstractions;
+using Ledger.Application.Commands;
+using Ledger.Application.Queries;
 using Ledger.Application.Validators;
 using Ledger.Infrastructure.Events;
 using Ledger.Infrastructure.Persistence;
@@ -68,6 +70,12 @@ public static class LedgerInfrastructureExtensions
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<ILedgerUnitOfWork, LedgerUnitOfWork>();
         services.AddScoped<IDomainAuditEventStore, MartenDomainAuditEventStore>();
+
+        // Direct in-process execution services for the HTTP hot path — bypass MT
+        // request/response so write latency is not coupled to bus round-trips or
+        // downstream projection consumer speed.
+        services.AddScoped<IPostTransactionService, PostTransactionService>();
+        services.AddScoped<IGetAccountBalanceService, GetAccountBalanceService>();
 
         // 4. FluentValidation — register all validators from the Application assembly.
         services.AddValidatorsFromAssemblyContaining<PostTransactionCommandValidator>();

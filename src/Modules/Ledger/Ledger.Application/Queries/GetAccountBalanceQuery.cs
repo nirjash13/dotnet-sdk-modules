@@ -10,6 +10,13 @@ namespace Ledger.Application.Queries;
 /// </summary>
 public sealed class GetAccountBalanceQuery : IQuery<Result<AccountBalanceDto>>
 {
+    /// <summary>
+    /// Parameterless constructor required by transport serializers.
+    /// </summary>
+    public GetAccountBalanceQuery()
+    {
+    }
+
     /// <summary>Initializes the query with required fields.</summary>
     public GetAccountBalanceQuery(Guid accountId)
     {
@@ -22,5 +29,5 @@ public sealed class GetAccountBalanceQuery : IQuery<Result<AccountBalanceDto>>
     }
 
     /// <summary>Gets the account to retrieve the balance for.</summary>
-    public Guid AccountId { get; }
+    public Guid AccountId { get; set; }
 }

@@ -114,7 +114,6 @@ public static class IdentityInfrastructureExtensions
                     .AddDevelopmentEncryptionCertificate();
 
                 server.UseAspNetCore()
-                    .EnableTokenEndpointPassthrough()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough()
                     .DisableTransportSecurityRequirement();
@@ -134,7 +133,6 @@ public static class IdentityInfrastructureExtensions
                     .AddEncryptionCertificate(LoadFromStore(encryptionThumbprint, "encryption"));
 
                 server.UseAspNetCore()
-                    .EnableTokenEndpointPassthrough()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough();
             }

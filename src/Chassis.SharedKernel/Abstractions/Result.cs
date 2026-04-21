@@ -1,7 +1,7 @@
 // Result pattern implementation for Chassis.SharedKernel.
 //
-// Design choice: using sealed classes with private constructors rather than
-// record types with init-only setters. Records with `init` require the
+// Design choice: using sealed classes with constructor-based immutability
+// rather than record types with init-only setters. Records with `init` require the
 // IsExternalInit polyfill on netstandard2.0 (which adds noise); a simple
 // class achieves the same immutability guarantee cleanly on both targets.
 
@@ -16,7 +16,7 @@ public sealed class Result
 {
     private static readonly Result SuccessInstance = new Result(true, null);
 
-    private Result(bool isSuccess, string? error)
+    public Result(bool isSuccess, string? error)
     {
         IsSuccess = isSuccess;
         Error = error;
