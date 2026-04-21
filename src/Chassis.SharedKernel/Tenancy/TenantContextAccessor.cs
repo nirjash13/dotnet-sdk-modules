@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 
 namespace Chassis.SharedKernel.Tenancy;
@@ -15,46 +16,89 @@ namespace Chassis.SharedKernel.Tenancy;
 /// </para>
 /// <para>
 /// The holder pattern fixes this by storing a mutable <em>object</em> (the holder) in the
-/// <c>AsyncLocal</c> and mutating a field on that object. The holder reference is the same
-/// in parent and child; mutations to the holder's field are visible across the shared reference.
+/// <c>AsyncLocal</c> and mutating a property on that object. The holder reference is the same
+/// in parent and child; mutations to the holder's property are visible across the shared reference.
 /// This is the same approach used by <c>IHttpContextAccessor</c> in ASP.NET Core.
 /// </para>
 /// <para>
 /// Registered as a singleton. Thread-safe: <see cref="ITenantContext"/> is immutable; the
-/// holder field is a plain reference write (atomic on all .NET-supported platforms for
-/// reference types).
+/// holder property write is atomic on all .NET-supported platforms for reference types.
 /// </para>
 /// </remarks>
 public sealed class TenantContextAccessor : ITenantContextAccessor
 {
-    // The holder class wraps the mutable value. Because we store the holder itself in the
-    // AsyncLocal (not the ITenantContext directly), mutations to holder.Value are visible to
-    // all code sharing the same holder reference — including async continuations started
-    // before the assignment.
-    private sealed class TenantContextHolder
-    {
-        public ITenantContext? Value;
-    }
-
-    private static readonly AsyncLocal<TenantContextHolder> _holder = new();
+    private static readonly AsyncLocal<TenantContextHolder> _holder = new AsyncLocal<TenantContextHolder>();
 
     /// <inheritdoc />
     public ITenantContext? Current
     {
-        get => _holder.Value?.Value;
+        get => _holder.Value?.TenantContext;
         set
         {
-            // Ensure a holder exists in this execution context before writing.
-            // If no holder exists yet, create one so the write propagates correctly.
-            var holder = _holder.Value;
-            if (holder is not null)
+            // If a holder already exists, null its context so child execution contexts
+            // spawned before this assignment do not unexpectedly see the new value.
+            // The null-conditional operator cannot appear on the left side of an assignment,
+            // so the explicit null check is intentional — suppress IDE0031.
+#pragma warning disable IDE0031 // Null check can be simplified
+            TenantContextHolder? existing = _holder.Value;
+            if (existing != null)
             {
-                // Wipe the existing holder so child contexts spawned before this set
-                // don't unexpectedly see the new value (avoid upward flow).
-                holder.Value = null;
+                existing.TenantContext = null;
             }
+#pragma warning restore IDE0031
 
-            _holder.Value = new TenantContextHolder { Value = value };
+            _holder.Value = new TenantContextHolder { TenantContext = value };
+        }
+    }
+
+    /// <inheritdoc />
+    public bool IsBypassed => _holder.Value?.IsBypassed ?? false;
+
+    /// <inheritdoc />
+    public IDisposable BeginBypass()
+    {
+        // Ensure a holder exists so the bypass flag is visible to the current scope.
+#pragma warning disable IDE0031 // Null check can be simplified
+        TenantContextHolder? existing = _holder.Value;
+        if (existing == null)
+        {
+            existing = new TenantContextHolder();
+            _holder.Value = existing;
+        }
+#pragma warning restore IDE0031
+
+        existing.IsBypassed = true;
+        return new BypassHandle(existing);
+    }
+
+    /// <summary>
+    /// Mutable wrapper stored in <see cref="AsyncLocal{T}"/>.
+    /// The holder reference is shared across async continuations; mutating
+    /// properties on the shared instance is the key to the pattern.
+    /// </summary>
+    private sealed class TenantContextHolder
+    {
+        public ITenantContext? TenantContext { get; set; }
+
+        public bool IsBypassed { get; set; }
+    }
+
+    /// <summary>
+    /// Restores <see cref="TenantContextHolder.IsBypassed"/> to <see langword="false"/>
+    /// when disposed. Uses the holder reference captured at <see cref="BeginBypass"/> time.
+    /// </summary>
+    private sealed class BypassHandle : IDisposable
+    {
+        private readonly TenantContextHolder _holder;
+
+        public BypassHandle(TenantContextHolder holder)
+        {
+            _holder = holder;
+        }
+
+        public void Dispose()
+        {
+            _holder.IsBypassed = false;
         }
     }
 }

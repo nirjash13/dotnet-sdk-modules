@@ -1,0 +1,96 @@
+---
+# Modular SaaS Chassis — local observability stack
+# Starts: OTel Collector, Prometheus, Loki, Tempo, Grafana
+#
+# Usage:
+#   docker compose up -d
+#
+# Grafana: http://localhost:3000 (admin / admin)
+# Prometheus: http://localhost:9090
+# OTel Collector gRPC: localhost:4317
+# OTel Collector HTTP: localhost:4318
+#
+# Configure your .NET host to export to the collector:
+#   Otel__Endpoint=http://localhost:4317  (or set OTEL_EXPORTER_OTLP_ENDPOINT)
+
+version: "3.9"
+
+services:
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    container_name: chassis-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"    # OTLP gRPC — .NET host exports here
+      - "4318:4318"    # OTLP HTTP
+      - "8889:8889"    # Prometheus scrape endpoint
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v3.3.0
+    container_name: chassis-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=24h"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  loki:
+    image: grafana/loki:3.4.3
+    container_name: chassis-loki
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/tmp/loki
+    ports:
+      - "3100:3100"
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: chassis-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/tmp/tempo
+    ports:
+      - "3200:3200"    # Tempo HTTP API
+      - "14317:4317"   # Tempo OTLP gRPC (mapped to 14317 to avoid conflict with collector)
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    container_name: chassis-grafana
+    restart: unless-stopped
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+volumes:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:

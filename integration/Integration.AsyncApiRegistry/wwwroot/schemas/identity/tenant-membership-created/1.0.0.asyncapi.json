@@ -1,0 +1,136 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Chassis Identity — TenantMembershipCreated",
+    "version": "1.0.0",
+    "description": "AsyncAPI 3.0 schema for the TenantMembershipCreated integration event published by the Identity bounded context when a user is added to a tenant.",
+    "contact": {
+      "name": "Chassis Platform Team"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": {
+    "rabbitmq-dev": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Local RabbitMQ development broker"
+    }
+  },
+  "channels": {
+    "identity/tenant-membership-created": {
+      "address": "identity.tenant-membership-created",
+      "description": "Channel on which the Identity module publishes tenant-membership-created events.",
+      "messages": {
+        "TenantMembershipCreated": {
+          "$ref": "#/components/messages/TenantMembershipCreated"
+        }
+      },
+      "servers": [
+        { "$ref": "#/servers/rabbitmq-dev" }
+      ]
+    }
+  },
+  "operations": {
+    "publishTenantMembershipCreated": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity~1tenant-membership-created"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity~1tenant-membership-created/messages/TenantMembershipCreated"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "TenantMembershipCreated": {
+        "name": "TenantMembershipCreated",
+        "title": "Tenant Membership Created",
+        "summary": "Published when a user is successfully added to a tenant in the Identity module.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "ce-id": {
+              "type": "string",
+              "description": "CloudEvents event ID (UUID)."
+            },
+            "ce-source": {
+              "type": "string",
+              "description": "CloudEvents source URI."
+            },
+            "ce-type": {
+              "type": "string",
+              "description": "CloudEvents type: com.chassis.identity.tenant-membership.created.v1"
+            },
+            "ce-time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "CloudEvents time (RFC 3339)."
+            },
+            "tenant-id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Chassis tenant propagation header."
+            },
+            "correlation-id": {
+              "type": "string",
+              "description": "End-to-end correlation identifier."
+            }
+          }
+        },
+        "payload": {
+          "$ref": "#/components/schemas/TenantMembershipCreatedPayload"
+        }
+      }
+    },
+    "schemas": {
+      "TenantMembershipCreatedPayload": {
+        "type": "object",
+        "required": ["eventId", "occurredAt", "tenantId", "userId", "membershipId", "roles", "isPrimary"],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of this event occurrence."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp when the membership was created (RFC 3339)."
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tenant the user was added to."
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The user who was added."
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The membership identifier (links user to tenant)."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles assigned to the user within this tenant."
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "description": "Whether this is the user's primary tenant."
+          }
+        }
+      }
+    }
+  }
+}

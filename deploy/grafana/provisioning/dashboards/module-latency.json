@@ -1,0 +1,99 @@
+{
+  "title": "Module Latency",
+  "uid": "module-latency",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "tags": ["chassis", "latency"],
+  "templating": {
+    "list": [
+      {
+        "name": "module",
+        "label": "Module",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(chassis_commands_duration_seconds_count, module)",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Command Latency p50 / p95 / p99 by Module",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, module) (rate(chassis_commands_duration_seconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "p50 - {{module}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, module) (rate(chassis_commands_duration_seconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "p95 - {{module}}",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, module) (rate(chassis_commands_duration_seconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "p99 - {{module}}",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "heatmap",
+      "title": "Command Duration Heatmap (all modules)",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "options": {
+        "calculate": false,
+        "yAxis": { "unit": "s" },
+        "color": { "scheme": "Oranges", "mode": "scheme" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (le) (increase(chassis_commands_duration_seconds_bucket{module=~\"$module\"}[$__rate_interval]))",
+          "legendFormat": "{{le}}",
+          "refId": "A",
+          "format": "heatmap"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Module Load Duration",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "targets": [
+        {
+          "expr": "chassis_module_load_duration_seconds_sum / chassis_module_load_duration_seconds_count",
+          "legendFormat": "{{module}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

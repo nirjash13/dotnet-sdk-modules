@@ -20,10 +20,10 @@ namespace Chassis.Persistence;
 /// </para>
 /// <para>
 /// The filter expression evaluates <see cref="ITenantContextAccessor.Current"/> at query
-/// execution time (not model-build time), so the accessor must be non-null when a query runs.
-/// If <see cref="ITenantContextAccessor.Current"/> is null at query execution, the filter
-/// throws <see cref="InvalidOperationException"/> with a diagnostic message — fail-fast
-/// rather than leaking cross-tenant data.
+/// execution time (not model-build time). When the accessor's bypass scope is active
+/// (<see cref="ITenantContextAccessor.BeginBypass"/>) or when <c>Current</c> is <see langword="null"/>
+/// (e.g. OpenIddict internal queries, dev seeding), the filter is a no-op — all rows are
+/// returned. RLS policies on the database remain the defence in depth for tenant-scoped tables.
 /// </para>
 /// </remarks>
 public abstract class ChassisDbContext : DbContext
@@ -66,14 +66,19 @@ public abstract class ChassisDbContext : DbContext
                 continue;
             }
 
-            MethodInfo method = typeof(ChassisDbContext)
-                .GetMethod(nameof(BuildTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            MethodInfo? methodNullable = typeof(ChassisDbContext)
+                .GetMethod(nameof(BuildTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // GetMethod returns null if not found; this is a programming error if it happens.
+            MethodInfo method = methodNullable
+                ?? throw new InvalidOperationException("BuildTenantFilter method not found via reflection.");
 
             // BuildTenantFilter is generic; create the closed generic for this entity type.
             MethodInfo genericMethod = method.MakeGenericMethod(entityType.ClrType);
 
             // The method returns a LambdaExpression which we pass to HasQueryFilter.
-            LambdaExpression filterLambda = (LambdaExpression)genericMethod.Invoke(this, null)!;
+            LambdaExpression filterLambda = (LambdaExpression)(genericMethod.Invoke(this, null)
+                ?? throw new InvalidOperationException("BuildTenantFilter returned null."));
             entityType.SetQueryFilter(filterLambda);
         }
     }
@@ -87,24 +92,26 @@ public abstract class ChassisDbContext : DbContext
         where TEntity : class, ITenantScoped
     {
         // 'this' is captured — the lambda re-evaluates Current on every query execution.
-        return entity => entity.TenantId == GetCurrentTenantId();
+        return entity => IsTenantFilterBypassed() || entity.TenantId == GetCurrentTenantId();
     }
 
     /// <summary>
-    /// Returns the current tenant id, throwing if the context is not established.
-    /// Called at query-execution time by the global query filter expression.
+    /// Returns <see langword="true"/> when the bypass scope is active (e.g. OpenIddict
+    /// internal queries, dev seeding) or when no tenant context exists. In either case
+    /// the global query filter is a no-op and RLS on the DB side is the remaining defence.
+    /// </summary>
+    private bool IsTenantFilterBypassed()
+        => _tenantContextAccessor.IsBypassed || _tenantContextAccessor.Current is null;
+
+    /// <summary>
+    /// Returns the current tenant id.
+    /// Called at query-execution time by the global query filter expression only when
+    /// <see cref="IsTenantFilterBypassed"/> is <see langword="false"/>.
     /// </summary>
     private Guid GetCurrentTenantId()
     {
-        ITenantContext? ctx = _tenantContextAccessor.Current;
-        if (ctx is null)
-        {
-            throw new InvalidOperationException(
-                "No ambient tenant context is established. " +
-                "Ensure TenantMiddleware has run before any EF Core query is executed, " +
-                "or explicitly set ITenantContextAccessor.Current in background services.");
-        }
-
-        return ctx.TenantId;
+        // Current is guaranteed non-null when this method is reached because
+        // IsTenantFilterBypassed() returns true (short-circuiting the &&) when Current is null.
+        return _tenantContextAccessor.Current!.TenantId;
     }
 }

@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: local-dev
+
+# Retention: 24h (set via --storage.tsdb.retention.time=24h in docker-compose command).
+
+scrape_configs:
+  # Scrape metrics exported by the OTel Collector's Prometheus exporter endpoint.
+  - job_name: otel-collector
+    static_configs:
+      - targets:
+          - otel-collector:8889
+    metric_relabel_configs:
+      # Drop high-cardinality OTel SDK self-telemetry if present.
+      - source_labels: [__name__]
+        regex: otelcol_.*
+        action: drop

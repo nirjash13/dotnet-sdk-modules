@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- ── Source projects under test ───────────────────────────────────────── -->
+  <ItemGroup Label="Chassis core">
+    <ProjectReference Include="..\..\src\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Chassis.Host\Chassis.Host.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Identity module">
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Domain\Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Ledger module">
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Application\Ledger.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Api\Ledger.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Contracts\Ledger.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Registration module">
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Application\Registration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Api\Registration.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Contracts\Registration.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Reporting module">
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Api\Reporting.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Contracts\Reporting.Contracts.csproj" />
+  </ItemGroup>
+
+  <!-- ── Test framework ───────────────────────────────────────────────────── -->
+  <ItemGroup Label="Test framework">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <!-- ── Analyzers ──────────────────────────────────────────────────────── -->
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101/SA1309: project style conventions -->
+    <!-- SA0001/SA1600: docs not required on test types -->
+    <!-- SA1116/SA1118: multi-line parameter placement relaxed in test code -->
+    <!-- SA1202/SA1204: member ordering relaxed in test fixtures -->
+    <!-- SA1515: single-line comment blank line relaxed in test fixtures -->
+    <!-- SA1009/SA1011: spacing around parentheses relaxed in test fixtures -->
+    <!-- SA1516: blank line between elements relaxed in test fixtures -->
+    <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed per xUnit1030 -->
+    <!-- SA1000: StyleCop 1.1.x incorrectly flags C# 12 collection expression syntax new(...) -->
+    <!-- IDE0032: auto property — relaxed in test fixtures -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1000;IDE0032;xUnit1030</NoWarn>
+  </PropertyGroup>
+
+</Project>

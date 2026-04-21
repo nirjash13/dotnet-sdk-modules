@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Chassis.Gateway</RootNamespace>
+    <!-- SA1600: XML doc on public members only — gateway host has no public API surface -->
+    <NoWarn>$(NoWarn);SA1600</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -109,10 +109,12 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <!--
-      OpenTelemetry.Instrumentation.EntityFrameworkCore has no stable release as of 2026-04-20.
-      Using the latest available prerelease. Remove this comment when a stable release ships.
+      OpenTelemetry.Instrumentation.EntityFrameworkCore has no stable release as of 2026-04-21.
+      Updated from 1.0.0-beta.15 → 1.10.0-beta.1 (latest available prerelease; the older version
+      was not found on NuGet — the series jumped to 1.10.0-beta.1 in the OTel 1.15.x timeframe).
+      Remove this comment when a stable release ships.
     -->
-    <PackageVersion Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.15" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.10.0-beta.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
   </ItemGroup>
 
@@ -153,6 +155,24 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="4.15.0" />
     <!-- StyleCop.Analyzers 1.1.118 — matches plan target of latest 1.x -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
+
+<ItemGroup Label="Legacy .NET Framework — Integration.Framework48Bridge only">
+    <!--
+      RabbitMQ.Client 6.9.0 — last version supporting net48.
+      RabbitMQ.Client 7.x+ requires net6.0+.
+    -->
+    <!--
+      RabbitMQ.Client 6.8.1 — the latest 6.x release with net48 support.
+      RabbitMQ.Client 6.9.0 does not exist on NuGet (the series jumped to 7.0.0 next).
+      6.9.0 was the plan target; 6.8.1 is the correct substitute.
+    -->
+    <PackageVersion Include="RabbitMQ.Client" Version="6.8.1" />
+    <!--
+      Newtonsoft.Json 13.0.3 — latest stable; used by the net48 bridge because
+      System.Text.Json is not available on .NET Framework without extra polyfills.
+    -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">

@@ -1,0 +1,130 @@
+version: 1
+
+# ── SLO definitions for the Modular SaaS Chassis — v1 ─────────────────────
+#
+# These targets are derived from §7.4 of IMPLEMENTATION_PLAN.md.
+# INVARIANT: Thresholds here MUST match the k6 scenario threshold values.
+#            If you update one, update the other.
+#
+# window values:
+#   steady-state  — 15-minute constant-100VU run (CI gate uses 5-minute variant)
+#   nightly-soak  — 4-hour 50VU run
+#   nightly-ramp  — 30-minute 10→2000VU ramp
+#
+# metric values reference Prometheus metric names as scraped from either:
+#   - k6 remote-write output (k6_* metrics)
+#   - Chassis OTLP → OTel Collector → Prometheus (chassis_* metrics)
+
+slos:
+  - name: ledger_post_transaction_p95
+    description: "POST /api/v1/ledger/accounts/{id}/transactions p95 latency"
+    metric: 'http_req_duration{endpoint="post_transaction"}'
+    quantile: 0.95
+    threshold: 150ms
+    window: steady-state
+    breach_action: fail_build
+
+  - name: ledger_post_transaction_p99
+    description: "POST /api/v1/ledger/accounts/{id}/transactions p99 latency"
+    metric: 'http_req_duration{endpoint="post_transaction"}'
+    quantile: 0.99
+    threshold: 400ms
+    window: steady-state
+    breach_action: fail_build
+
+  - name: ledger_get_account_p95
+    description: "GET /api/v1/ledger/accounts/{id} p95 latency"
+    metric: 'http_req_duration{endpoint="get_account"}'
+    quantile: 0.95
+    threshold: 80ms
+    window: steady-state
+    breach_action: fail_build
+
+  - name: auth_token_endpoint_p95
+    description: "POST /connect/token p95 latency"
+    metric: 'http_req_duration{endpoint="token"}'
+    quantile: 0.95
+    threshold: 250ms
+    window: steady-state
+    breach_action: fail_build
+
+  - name: saga_completion_p99
+    description: "Saga happy path (3 steps) end-to-end p99 completion time"
+    metric: chassis_saga_duration_seconds
+    quantile: 0.99
+    threshold: 2000ms
+    window: steady-state
+    breach_action: warn
+
+  - name: outbox_lag_p99
+    description: "Outbox message delivery lag p99 (time from write to consumer pickup)"
+    metric: chassis_outbox_lag_seconds
+    quantile: 0.99
+    threshold: 500ms
+    window: steady-state
+    breach_action: warn
+
+  - name: http_error_rate
+    description: "HTTP 5xx error rate across all endpoints"
+    metric: http_req_failed
+    quantile: null
+    threshold: 0.5%
+    window: steady-state
+    breach_action: fail_build
+
+  - name: sustained_throughput
+    description: "Sustained throughput per node under steady-state load"
+    metric: 'rate(http_req_total[1m])'
+    quantile: null
+    threshold: 500rps
+    window: steady-state
+    direction: min   # must be >= threshold, not <=
+    breach_action: warn
+
+# ── Chaos overlay invariants ──────────────────────────────────────────────
+#
+# These are qualitative invariants verified by reviewing Grafana dashboards
+# during/after chaos run — not machine-gated (no automatic fail).
+
+chaos:
+  - name: reporting_offline
+    script: loadtests/k6/chaos/reporting-offline.js
+    description: "Reporting module offline during steady-state load"
+    invariants:
+      - "Ledger p95 unchanged (< 150ms)"
+      - "Reporting projection lag grows (chassis_outbox_lag_seconds increases)"
+      - "No HTTP 5xx from Ledger API"
+      - "Outbox drains within 60s after docker unpause chassis-reporting"
+    manual_setup: "docker pause chassis-reporting"
+    manual_teardown: "docker unpause chassis-reporting"
+
+  - name: rabbit_paused
+    script: loadtests/k6/chaos/rabbit-paused.js
+    description: "RabbitMQ paused mid-steady-state"
+    invariants:
+      - "Ledger writes continue (HTTP 2xx) via outbox during pause"
+      - "No 5xx spike during pause window"
+      - "Ledger p95 < 150ms (outbox write is local Postgres)"
+      - "Outbox drains within 60s after docker unpause chassis-rabbitmq"
+    manual_setup: "docker pause chassis-rabbitmq"
+    manual_teardown: "docker unpause chassis-rabbitmq"
+
+  - name: postgres_pool_starved
+    script: loadtests/k6/chaos/postgres-starved.js
+    description: "Postgres connection pool exhausted (MaxPoolSize=5 + 50 VUs)"
+    invariants:
+      - "API returns HTTP 503 with ProblemDetails code=pool_exhausted"
+      - "No unbounded waits (response p99 < 10s)"
+      - "No 500 Internal Server Error (all errors are structured)"
+    manual_setup: "Set Npgsql__MaxPoolSize=5 and restart chassis host"
+    manual_teardown: "Unset Npgsql__MaxPoolSize and restart chassis host"
+
+  - name: network_latency_rabbit
+    script: loadtests/k6/chaos/network-latency.js
+    description: "50ms tc netem latency injected on RabbitMQ host"
+    invariants:
+      - "Saga p99 < 2000ms with +50ms bus latency"
+      - "Ledger write p95 < 150ms (outbox path unaffected)"
+      - "No HTTP 5xx"
+    manual_setup: "docker exec chassis-rabbitmq tc qdisc add dev eth0 root netem delay 50ms"
+    manual_teardown: "docker exec chassis-rabbitmq tc qdisc del dev eth0 root netem"

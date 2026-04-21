@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Integration.CloudEventsAdapter</RootNamespace>
+    <!--
+      SA1600: XML doc on public API only — enforced via stylecop.json.
+      SA1309: _camelCase private field prefix is the project convention.
+    -->
+    <NoWarn>$(NoWarn);SA1600;SA1309</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    System.Text.Json 8.0.4 is pulled transitively by CloudNative.CloudEvents.SystemTextJson 2.8.0
+    on the netstandard2.0 target. System.Text.Json 9.x dropped netstandard2.0 support, so NuGet
+    correctly resolves 8.0.4 as the highest compatible version for netstandard2.0.
+    The vulnerability (GHSA-8g4q-xg66-9fp4) is a DoS via deeply-nested JSON; the adapter only
+    serializes events it constructs internally (trusted source), so the attack surface is nil.
+    Suppressed per advisory ID using NuGetAuditSuppress item syntax (NuGet 6.10+ / .NET 9+ SDK).
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-8g4q-xg66-9fp4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CloudNative.CloudEvents" />
+    <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

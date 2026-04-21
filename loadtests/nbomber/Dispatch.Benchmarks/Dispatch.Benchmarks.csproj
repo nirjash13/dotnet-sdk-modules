@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!--
+      TreatWarningsAsErrors is NOT enabled here because NBomber's API surface
+      generates nullable reference warnings that are not under our control.
+      This project is a dev-only benchmark — not part of the main solution.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Optimize>true</Optimize>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!--
+      Opt out of Central Package Management. This project lives outside Chassis.sln
+      and must not participate in the global CPM graph — it pins its own NuGet
+      versions directly in <PackageReference> elements below.
+
+      This project is intentionally excluded from Chassis.sln to keep the
+      main solution build fast. To add it on demand:
+        dotnet sln ../../Chassis.sln add loadtests/nbomber/Dispatch.Benchmarks/Dispatch.Benchmarks.csproj
+      See loadtests/nbomber/Dispatch.Benchmarks/README.md for details.
+    -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!--
+    NBomber 6.0.0 — load testing + micro-benchmarking framework for .NET.
+    Version pinned here rather than in Directory.Packages.props because this
+    project is not part of the main solution and must not affect the main
+    CPM graph. See README.md for the rationale.
+
+    NBomber.Http is included for built-in HTTP step helpers (out-of-proc scenario).
+  -->
+  <ItemGroup>
+    <PackageReference Include="NBomber" Version="6.0.0" />
+    <PackageReference Include="NBomber.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

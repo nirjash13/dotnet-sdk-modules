@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <Description>Infrastructure layer for the Ledger module. EF Core, Marten, repositories, migrations.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ledger.Application\Ledger.Application.csproj" />
+    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Entity Framework Core">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup Label="Marten event store">
+    <PackageReference Include="Marten" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit EF Core Outbox">
+    <!--
+      MassTransit.EntityFrameworkCore provides the AddOutboxStateEntity/AddOutboxMessageEntity
+      extension methods used in LedgerDbContext.OnModelCreating.
+      No MassTransit.RabbitMQ reference here — transport lives in Chassis.Host only.
+    -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+      SA1009: StyleCop 1.1.x does not support C# 12 primary constructors.
+      SA1118: Multi-line parameter — LINQ projection lambdas in Select() span multiple lines by necessity.
+    -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Registration.Contracts\Registration.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit — saga state machine DSL">
+    <PackageReference Include="MassTransit" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101/SA1309: project style conventions -->
+    <!-- SA0001/SA1600: docs not required on internal types -->
+    <!-- SA1118: parameter on separate line — MT fluent DSL chains span multiple lines -->
+    <!-- SA1115/SA1116: parameter placement — MT fluent DSL chains: first param on same line as method call -->
+    <!-- SA1201: member ordering — constructor after properties (required for MT saga field declarations) -->
+    <!-- SA1515: comment blank line — MT fluent DSL chain inline comments -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1118;SA1115;SA1116;SA1201;SA1515</NoWarn>
+  </PropertyGroup>
+
+</Project>

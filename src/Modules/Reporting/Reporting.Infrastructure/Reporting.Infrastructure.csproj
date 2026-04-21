@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="EF Core + Npgsql">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit EF Core Outbox/Inbox">
+    <!--
+      MassTransit.EntityFrameworkCore provides AddEntityFrameworkOutbox and AddEntityFrameworkInbox.
+      No MassTransit.RabbitMQ reference here — transport lives in Chassis.Host only.
+    -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600</NoWarn>
+  </PropertyGroup>
+
+</Project>

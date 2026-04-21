@@ -12,10 +12,27 @@
   <ItemGroup>
     <ProjectReference Include="..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
     <ProjectReference Include="..\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Identity.Api\Identity.Api.csproj" />
+    <ProjectReference Include="..\Modules\Ledger\Ledger.Api\Ledger.Api.csproj" />
+    <ProjectReference Include="..\Modules\Reporting\Reporting.Api\Reporting.Api.csproj" />
+    <ProjectReference Include="..\Modules\Registration\Registration.Api\Registration.Api.csproj" />
+    <!-- Ledger.Infrastructure needed for AddEntityFrameworkOutbox<LedgerDbContext> in bus wiring -->
+    <ProjectReference Include="..\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
+    <!-- Registration.Infrastructure needed for AddSagaStateMachine<RegistrationSaga, RegistrationSagaState> + ExistingDbContext<RegistrationDbContext> -->
+    <ProjectReference Include="..\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup Label="MassTransit Mediator">
+  <ItemGroup Label="Authentication">
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit — mediator (inproc) + RabbitMQ bus (out-of-proc)">
     <PackageReference Include="MassTransit" />
+    <!-- MassTransit.RabbitMQ lives ONLY here — no module references this package.
+         This enforces the invariant that handler code is transport-agnostic. -->
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <!-- EF Core Outbox/Inbox — AddEntityFrameworkOutbox + AddEntityFrameworkInbox -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup Label="Validation">
@@ -26,6 +43,19 @@
   <ItemGroup Label="API documentation">
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="OpenTelemetry — tracing, metrics, OTLP export">
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging — Serilog with OTel sink">
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.OpenTelemetry" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers — build-time only">
@@ -43,7 +73,13 @@
     <!-- SA1309: underscore prefix on fields — we use _camelCase -->
     <!-- SA0001: XML doc analysis — public surface only -->
     <!-- SA1600: members must be documented — not required on internal types -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600</NoWarn>
+    <!-- SA1516: StyleCop triggers this on the compiler-generated Program class from top-level statements -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1516</NoWarn>
   </PropertyGroup>
+
+  <!-- Expose the top-level Program class to the integration test project. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Chassis.IntegrationTests" />
+  </ItemGroup>
 
 </Project>

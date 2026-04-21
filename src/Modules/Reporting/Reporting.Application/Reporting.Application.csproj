@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reporting.Contracts\Reporting.Contracts.csproj" />
+    <ProjectReference Include="..\..\Ledger\Ledger.Contracts\Ledger.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <!-- Registration.Contracts: commands/responses for the registration saga consumers -->
+    <ProjectReference Include="..\..\Registration\Registration.Contracts\Registration.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit — consumer only, no transport-specific packages">
+    <!--
+      Only MassTransit core is referenced here — no MassTransit.RabbitMQ.
+      The transport package lives exclusively in Chassis.Host to enforce the
+      "no handler code changes between inproc and bus modes" invariant.
+    -->
+    <PackageReference Include="MassTransit" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101/SA1309: project style conventions -->
+    <!-- SA0001/SA1600: docs not required on internal types -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600</NoWarn>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Phase 0/1 projects under test -->
+    <ProjectReference Include="..\..\src\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <!-- Phase 2: boot the full host in-process for integration tests -->
+    <ProjectReference Include="..\..\src\Chassis.Host\Chassis.Host.csproj" />
+    <!-- Phase 3: Ledger module — needed for seed access (LedgerDbContext, Account) in IDOR test -->
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
+    <!-- Phase 4: Reporting module — needed for ReportingDbContext, TransactionProjection in outbox/idempotency tests -->
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
+    <!-- Phase 5: Registration saga — needed for saga state machine tests -->
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Application\Registration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Contracts\Registration.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test framework">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup Label="Integration test infrastructure">
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- Phase 4: RabbitMQ container for outbox durability tests -->
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <!-- Direct Npgsql for raw SQL in RLS tests (not going through EF Core) -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- WebApplicationFactory for in-process host boot -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <!-- MassTransit test harness for claim propagation tests (Phase 2) and saga tests (Phase 5).
+         MassTransit 8.x includes the ITestHarness / AddMassTransitTestHarness in the core package. -->
+    <PackageReference Include="MassTransit" />
+    <!-- JWT minting in security tests -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup Label="Architecture testing">
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101/SA1309: project style conventions -->
+    <!-- SA0001/SA1600: docs not required on test types -->
+    <!-- SA1600: XML docs not required on test methods -->
+    <!-- SA1116/SA1118: multi-line method-call parameter placement — not required in test code -->
+    <!-- SA1202/SA1204: member ordering — relaxed in test fixtures -->
+    <!-- SA1515: single-line comment blank line — relaxed in test fixtures -->
+    <!-- SA1009/SA1011: spacing around parentheses/brackets — relaxed in test fixtures -->
+    <!-- SA1516: blank line between elements — relaxed in test fixtures -->
+    <!-- IDE0032: auto property suggestion — not enforced in test code -->
+    <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed project-wide per xUnit1030 rule:
+         test methods run in xUnit's synchronization context and must not bypass it.
+         InitializeAsync/DisposeAsync are excluded from this rule and use ConfigureAwait(false). -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;IDE0032;xUnit1030</NoWarn>
+  </PropertyGroup>
+
+</Project>

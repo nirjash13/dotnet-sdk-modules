@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <Description>Application layer for the Identity module. Handlers, validators, service interfaces.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
+    <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <!-- Registration.Contracts: commands/responses for the registration saga consumers -->
+    <ProjectReference Include="..\..\Registration\Registration.Contracts\Registration.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit consumers">
+    <PackageReference Include="MassTransit" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1009: StyleCop 1.1.x incorrectly flags C# 12 primary constructor syntax. -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+  </PropertyGroup>
+
+</Project>

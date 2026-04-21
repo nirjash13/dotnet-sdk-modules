@@ -1,0 +1,519 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "k6 load test results merged with Chassis application metrics. Shows VU ramp, throughput, p95 latency, error rate, outbox lag, and SLO verdict.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Load Profile",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Active virtual users over the test run.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "VUs",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "legend": { "calcs": ["max", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "k6_vus{test_run_id=~\"$test_run_id\"}",
+          "legendFormat": "Active VUs",
+          "refId": "A"
+        }
+      ],
+      "title": "Virtual Users (VU Ramp)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Requests per second across all k6 VUs.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "req/s",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "id": 2,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(k6_http_reqs_total{test_run_id=~\"$test_run_id\"}[1m])",
+          "legendFormat": "Throughput (req/s)",
+          "refId": "A"
+        }
+      ],
+      "title": "Throughput (Requests / Second)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 101,
+      "title": "Latency",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "k6 HTTP request duration p50/p95/p99 — post_transaction endpoint. SLO thresholds: p95 < 150ms, p99 < 400ms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "ms",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "p95" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 120 },
+                    { "color": "red", "value": 150 }
+                  ]
+                }
+              },
+              { "id": "custom.thresholdsStyle", "value": { "mode": "line" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p99" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 350 },
+                    { "color": "red", "value": 400 }
+                  ]
+                }
+              },
+              { "id": "custom.thresholdsStyle", "value": { "mode": "line" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "id": 3,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.50, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"post_transaction\"}[1m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"post_transaction\"}[1m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.99, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"post_transaction\"}[1m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "title": "k6 HTTP Latency — post_transaction (ms)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Chassis command handler p95 latency by module (from OTLP metrics). Complements k6 HTTP latency with server-side view.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "id": 4,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(chassis_commands_duration_seconds_bucket[1m])) by (module)",
+          "legendFormat": "{{module}} p95",
+          "refId": "A"
+        }
+      ],
+      "title": "Chassis Command p95 Latency by Module",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 102,
+      "title": "Errors & Reliability",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "HTTP error rate (5xx). SLO: < 0.5%. Red threshold at 0.005.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "rate",
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.003 },
+              { "color": "red", "value": 0.005 }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "id": 5,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(k6_http_reqs_total{test_run_id=~\"$test_run_id\",status=~\"5..\"}[1m]) / rate(k6_http_reqs_total{test_run_id=~\"$test_run_id\"}[1m])",
+          "legendFormat": "5xx error rate",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP Error Rate (5xx / total) — SLO: < 0.5%",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Chassis RLS denial rate (PostgresException 42501). Spikes here indicate tenant boundary probing or misconfigured RLS policy.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "denials/s",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "id": 6,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(chassis_rls_denials_total[1m]) by (module)",
+          "legendFormat": "{{module}} RLS denials",
+          "refId": "A"
+        }
+      ],
+      "title": "RLS Denial Rate by Module",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "id": 103,
+      "title": "Outbox & Messaging",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Outbox message delivery lag p99. SLO: < 500ms. Grows under chaos (Rabbit paused or Reporting offline) then drains on recovery.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.4 },
+              { "color": "red", "value": 0.5 }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "id": 7,
+      "options": {
+        "legend": { "calcs": ["mean", "max", "last"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.50, rate(chassis_outbox_lag_seconds_bucket[1m]))",
+          "legendFormat": "Outbox lag p50",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.99, rate(chassis_outbox_lag_seconds_bucket[1m]))",
+          "legendFormat": "Outbox lag p99",
+          "refId": "B"
+        }
+      ],
+      "title": "Outbox Lag p50 / p99 — SLO: p99 < 500ms",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "id": 104,
+      "title": "SLO Verdict",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "SLO verdict table — green = passing, red = breached. Thresholds sourced from loadtests/slo.yaml (baked into queries).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "color-background" },
+            "inspect": false
+          },
+          "mappings": [
+            { "options": { "0": { "color": "red", "index": 0, "text": "BREACHED" }, "1": { "color": "green", "index": 1, "text": "PASS" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "SLO" },
+            "properties": [{ "id": "custom.width", "value": 350 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Target" },
+            "properties": [{ "id": "custom.width", "value": 150 }]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 37 },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (histogram_quantile(0.95, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"post_transaction\"}[5m])) > 150)",
+          "legendFormat": "ledger_post_transaction_p95 (< 150ms)",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (histogram_quantile(0.99, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"post_transaction\"}[5m])) > 400)",
+          "legendFormat": "ledger_post_transaction_p99 (< 400ms)",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (histogram_quantile(0.95, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"get_account\"}[5m])) > 80)",
+          "legendFormat": "ledger_get_account_p95 (< 80ms)",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (histogram_quantile(0.95, rate(k6_http_req_duration_bucket{test_run_id=~\"$test_run_id\",endpoint=\"token\"}[5m])) > 250)",
+          "legendFormat": "auth_token_p95 (< 250ms)",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (histogram_quantile(0.99, rate(chassis_outbox_lag_seconds_bucket[5m])) > 0.5)",
+          "legendFormat": "outbox_lag_p99 (< 500ms)",
+          "refId": "E"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "vector(1) > bool (rate(k6_http_reqs_total{test_run_id=~\"$test_run_id\",status=~\"5..\"}[5m]) / rate(k6_http_reqs_total{test_run_id=~\"$test_run_id\"}[5m]) > 0.005)",
+          "legendFormat": "http_error_rate (< 0.5%)",
+          "refId": "F"
+        }
+      ],
+      "title": "SLO Verdict (1 = PASS, 0 = BREACHED)",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": { "mode": "columns" }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["load-test", "k6", "chassis", "slo"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(k6_vus, test_run_id)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Test Run ID",
+        "multi": false,
+        "name": "test_run_id",
+        "options": [],
+        "query": {
+          "query": "label_values(k6_vus, test_run_id)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Load Test Results — k6 + Chassis Metrics",
+  "uid": "chassis-loadtest-results",
+  "version": 1
+}

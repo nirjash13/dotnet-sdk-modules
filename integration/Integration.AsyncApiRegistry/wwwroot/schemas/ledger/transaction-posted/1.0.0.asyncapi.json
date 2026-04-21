@@ -1,0 +1,136 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Chassis Ledger — LedgerTransactionPosted",
+    "version": "1.0.0",
+    "description": "AsyncAPI 3.0 schema for the LedgerTransactionPosted integration event published by the Ledger bounded context when a transaction is successfully posted.",
+    "contact": {
+      "name": "Chassis Platform Team"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": {
+    "rabbitmq-dev": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Local RabbitMQ development broker"
+    }
+  },
+  "channels": {
+    "ledger/transaction-posted": {
+      "address": "ledger.transaction-posted",
+      "description": "Channel on which the Ledger module publishes transaction-posted events.",
+      "messages": {
+        "LedgerTransactionPosted": {
+          "$ref": "#/components/messages/LedgerTransactionPosted"
+        }
+      },
+      "servers": [
+        { "$ref": "#/servers/rabbitmq-dev" }
+      ]
+    }
+  },
+  "operations": {
+    "publishTransactionPosted": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/ledger~1transaction-posted"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ledger~1transaction-posted/messages/LedgerTransactionPosted"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "LedgerTransactionPosted": {
+        "name": "LedgerTransactionPosted",
+        "title": "Ledger Transaction Posted",
+        "summary": "Published when a debit or credit posting is committed to a ledger account.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "ce-id": {
+              "type": "string",
+              "description": "CloudEvents event ID (UUID)."
+            },
+            "ce-source": {
+              "type": "string",
+              "description": "CloudEvents source URI."
+            },
+            "ce-type": {
+              "type": "string",
+              "description": "CloudEvents type: com.chassis.ledger.transaction.posted.v1"
+            },
+            "ce-time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "CloudEvents time (RFC 3339)."
+            },
+            "tenant-id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Chassis tenant propagation header."
+            },
+            "correlation-id": {
+              "type": "string",
+              "description": "End-to-end correlation identifier."
+            }
+          }
+        },
+        "payload": {
+          "$ref": "#/components/schemas/LedgerTransactionPostedPayload"
+        }
+      }
+    },
+    "schemas": {
+      "LedgerTransactionPostedPayload": {
+        "type": "object",
+        "required": ["tenantId", "transactionId", "accountId", "amount", "currency", "occurredAt"],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tenant that owns the account."
+          },
+          "transactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the posting (Posting.Id)."
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The account the transaction was posted to."
+          },
+          "amount": {
+            "type": "number",
+            "description": "The monetary amount. Positive = credit, negative = debit."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "description": "ISO 4217 currency code (e.g., USD, EUR, GBP)."
+          },
+          "memo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional free-text memo for this transaction."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp when the transaction was posted (RFC 3339)."
+          }
+        }
+      }
+    }
+  }
+}

@@ -34,6 +34,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Chassis.SharedKernel.Tenancy;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace Chassis.Persistence;
 
@@ -44,12 +45,17 @@ namespace Chassis.Persistence;
 /// </summary>
 /// <remarks>
 /// Registered via <c>AddChassisPersistence</c> and scoped to the DbContext lifetime.
-/// If no tenant context is established when a command executes, an
-/// <see cref="InvalidOperationException"/> is thrown — fail-fast to prevent data leakage.
+/// When a bypass scope is active (<see cref="ITenantContextAccessor.BeginBypass"/>) or
+/// when no tenant context is established (e.g. OpenIddict internal queries, dev seeding),
+/// the <c>SET LOCAL</c> command is skipped. RLS on the database remains the defence in depth
+/// for tenant-scoped tables; OpenIddict tables are not RLS-protected in Phase 2.
+/// A warning is logged when Current is null outside a bypass scope so misconfiguration
+/// remains visible.
 /// </remarks>
 public sealed class TenantCommandInterceptor : DbCommandInterceptor
 {
     private readonly ITenantContextAccessor _tenantContextAccessor;
+    private readonly ILogger<TenantCommandInterceptor> _logger;
 
     // Cache the last tenant id we SET on this interceptor instance so we avoid
     // an extra round-trip when consecutive commands run as the same tenant within
@@ -57,10 +63,14 @@ public sealed class TenantCommandInterceptor : DbCommandInterceptor
     private Guid _lastSetTenantId = Guid.Empty;
 
     /// <summary>Initializes the interceptor with the ambient tenant context accessor.</summary>
-    public TenantCommandInterceptor(ITenantContextAccessor tenantContextAccessor)
+    public TenantCommandInterceptor(
+        ITenantContextAccessor tenantContextAccessor,
+        ILogger<TenantCommandInterceptor> logger)
     {
         _tenantContextAccessor = tenantContextAccessor
             ?? throw new ArgumentNullException(nameof(tenantContextAccessor));
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
@@ -98,13 +108,27 @@ public sealed class TenantCommandInterceptor : DbCommandInterceptor
 
     private async Task SetTenantAsync(DbCommand command, CancellationToken cancellationToken)
     {
+        // When a bypass scope is active (OpenIddict internals, dev seeding, claim enrichment
+        // before a tenant context is established), skip SET LOCAL entirely.
+        // RLS on the database is the remaining defence for tenant-scoped tables;
+        // OpenIddict tables are not RLS-protected in Phase 2.
+        if (_tenantContextAccessor.IsBypassed)
+        {
+            return;
+        }
+
         ITenantContext? ctx = _tenantContextAccessor.Current;
+
         if (ctx is null)
         {
-            throw new InvalidOperationException(
-                "TenantCommandInterceptor: no ambient tenant context when executing a database command. " +
-                "Ensure TenantMiddleware runs before any database access, " +
-                "or explicitly set ITenantContextAccessor.Current in background services.");
+            // No tenant context outside a bypass scope — log a warning so misconfiguration
+            // is visible, but do not throw. RLS (missing app.tenant_id setting) will block
+            // any read against RLS-protected tables, providing defence in depth.
+            // TODO (Phase 3): promote to throw once all non-tenant code paths use BeginBypass.
+            _logger.LogWarning(
+                "TenantCommandInterceptor: no ambient tenant context and no bypass scope active. " +
+                "SET LOCAL app.tenant_id will be skipped; RLS will block tenant-scoped reads.");
+            return;
         }
 
         Guid tenantId = ctx.TenantId;

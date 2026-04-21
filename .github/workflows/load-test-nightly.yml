@@ -1,0 +1,171 @@
+name: Load Test Nightly (Soak + Ramp-to-Break)
+
+on:
+  schedule:
+    # 02:00 UTC nightly — runs soak (4h) + ramp-to-break (30m).
+    # Total CI budget: ~5h. Runner timeout set to 360 minutes.
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Which scenario to run'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - soak
+          - ramp-to-break
+
+concurrency:
+  group: load-test-nightly
+  cancel-in-progress: false
+
+jobs:
+  nightly-load-test:
+    name: k6 Nightly (${{ github.event.inputs.scenario || 'both' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours — covers 4h soak + 30m ramp + overhead
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Install k6 ────────────────────────────────────────────────────────
+      - name: Install k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -q
+          sudo apt-get install -y k6
+
+      # ── Spin up ephemeral observability stack ─────────────────────────────
+      - name: Start observability stack
+        working-directory: deploy
+        run: docker compose up -d
+
+      # ── Wait for chassis host readiness ───────────────────────────────────
+      - name: Wait for chassis host
+        run: |
+          echo "Waiting for chassis host to become ready..."
+          MAX_WAIT=120
+          ELAPSED=0
+          until curl -sf http://localhost:5000/health > /dev/null 2>&1; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "ERROR: Chassis host did not become ready within ${MAX_WAIT}s"
+              docker compose -f deploy/docker-compose.yml logs
+              exit 1
+            fi
+            echo "  Still waiting... (${ELAPSED}s elapsed)"
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          echo "Chassis host is ready after ${ELAPSED}s."
+
+      # ── Soak scenario (4 hours) ───────────────────────────────────────────
+      - name: Run k6 soak scenario (4h)
+        if: ${{ github.event.inputs.scenario == 'both' || github.event.inputs.scenario == 'soak' || github.event.inputs.scenario == '' }}
+        env:
+          BASE_URL: http://localhost:5000
+          TENANT_ID: 00000000-0000-0000-0000-000000000001
+          CLIENT_ID: chassis-loadtest
+          CLIENT_SECRET: chassis-loadtest-secret
+          TEST_RUN_ID: nightly-soak-${{ github.run_id }}
+        run: |
+          k6 run loadtests/k6/scenarios/soak.js \
+            --out experimental-prometheus-rw=http://localhost:9090/api/v1/write \
+            --tag test_run_id=${TEST_RUN_ID} \
+            --summary-export /tmp/k6-soak-summary.json \
+            --env BASE_URL=${BASE_URL} \
+            --env TENANT_ID=${TENANT_ID} \
+            --env CLIENT_ID=${CLIENT_ID} \
+            --env CLIENT_SECRET=${CLIENT_SECRET} \
+            --env TEST_RUN_ID=${TEST_RUN_ID}
+
+      - name: Check soak thresholds
+        if: ${{ github.event.inputs.scenario == 'both' || github.event.inputs.scenario == 'soak' || github.event.inputs.scenario == '' }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys
+
+          try:
+              with open("/tmp/k6-soak-summary.json") as f:
+                  summary = json.load(f)
+          except FileNotFoundError:
+              print("Soak summary not found — skipping threshold check.")
+              sys.exit(0)
+
+          thresholds = summary.get("thresholds", {})
+          failures = [f"  BREACHED: {name}" for name, data in thresholds.items() if not data.get("ok", True)]
+
+          if failures:
+              print("Soak scenario threshold breaches:")
+              for f in failures:
+                  print(f)
+              # Nightly soak failures are reported but do not block (warn only).
+              print("WARNING: Soak breaches are advisory — check for memory leaks or connection drift.")
+          else:
+              print(f"Soak: all {len(thresholds)} thresholds passed.")
+          PYEOF
+
+      # ── Ramp-to-break scenario (30 minutes) ───────────────────────────────
+      - name: Run k6 ramp-to-break scenario (30m)
+        if: ${{ github.event.inputs.scenario == 'both' || github.event.inputs.scenario == 'ramp-to-break' || github.event.inputs.scenario == '' }}
+        env:
+          BASE_URL: http://localhost:5000
+          TENANT_ID: 00000000-0000-0000-0000-000000000001
+          CLIENT_ID: chassis-loadtest
+          CLIENT_SECRET: chassis-loadtest-secret
+          TEST_RUN_ID: nightly-rtb-${{ github.run_id }}
+        run: |
+          # ramp-to-break intentionally drives beyond SLO to find the knee.
+          # Threshold failures here are informational (abortOnFail: false in script).
+          k6 run loadtests/k6/scenarios/ramp-to-break.js \
+            --out experimental-prometheus-rw=http://localhost:9090/api/v1/write \
+            --tag test_run_id=${TEST_RUN_ID} \
+            --summary-export /tmp/k6-rtb-summary.json \
+            --env BASE_URL=${BASE_URL} \
+            --env TENANT_ID=${TENANT_ID} \
+            --env CLIENT_ID=${CLIENT_ID} \
+            --env CLIENT_SECRET=${CLIENT_SECRET} \
+            --env TEST_RUN_ID=${TEST_RUN_ID} \
+          || true  # ramp-to-break WILL breach thresholds by design — don't fail the job
+
+      - name: Report knee VU from ramp-to-break
+        if: ${{ github.event.inputs.scenario == 'both' || github.event.inputs.scenario == 'ramp-to-break' || github.event.inputs.scenario == '' }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys
+
+          try:
+              with open("/tmp/k6-rtb-summary.json") as f:
+                  summary = json.load(f)
+          except FileNotFoundError:
+              print("Ramp-to-break summary not found — skipping.")
+              sys.exit(0)
+
+          metrics = summary.get("metrics", {})
+          knee = metrics.get("knee_vus", {})
+          if knee:
+              values = knee.get("values", {})
+              knee_value = values.get("value", 0)
+              print(f"KNEE VU: p95 latency crossed 500ms at approximately {knee_value} VUs")
+          else:
+              print("knee_vus metric not found — system may not have reached the knee within 2000 VUs.")
+          PYEOF
+
+      # ── Upload summaries ─────────────────────────────────────────────────
+      - name: Upload nightly summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-nightly-summaries-${{ github.run_id }}
+          path: /tmp/k6-*-summary.json
+          retention-days: 90
+
+      # ── Tear down ─────────────────────────────────────────────────────────
+      - name: Tear down observability stack
+        if: always()
+        working-directory: deploy
+        run: docker compose down -v

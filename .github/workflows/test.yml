@@ -7,11 +7,88 @@ on:
     branches: ["**"]
 
 jobs:
+  # ── Job 1: Architecture tests ──────────────────────────────────────────────────────
+  # Runs on every push. Does NOT require Docker. Blocks PRs that violate layer rules.
+  architecture:
+    name: Architecture Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.103"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Architecture Tests
+        run: >
+          dotnet test tests/Chassis.ArchitectureTests
+          --no-build
+          --configuration Release
+          --logger trx
+          --results-directory ./test-results/architecture
+
+      - name: Upload architecture test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-results-${{ github.run_id }}
+          path: ./test-results/architecture/**/*.trx
+          if-no-files-found: ignore
+
+  # ── Job 2: Security tests ──────────────────────────────────────────────────────────
+  # Requires Docker (Testcontainers). ubuntu-latest provides Docker via dind mode.
+  security:
+    name: Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.103"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Security Tests
+        run: >
+          dotnet test tests/Chassis.SecurityTests
+          --no-build
+          --configuration Release
+          --logger trx
+          --results-directory ./test-results/security
+
+      - name: Upload security test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-results-${{ github.run_id }}
+          path: ./test-results/security/**/*.trx
+          if-no-files-found: ignore
+
+  # ── Job 3: All other tests (integration, package smoke tests) ─────────────────────
   test:
     name: Test
     runs-on: ubuntu-latest
-    # Tests require the build job to succeed first, but we allow the test job
-    # to continue even if no test projects are found (Phase 0 has no xUnit projects yet).
 
     steps:
       - name: Checkout
@@ -31,10 +108,6 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        # continue-on-error: Phase 0 has no xUnit test projects — the test job is
-        # established here for the pipeline infrastructure; actual test execution will
-        # be introduced in Phase 1+. Remove continue-on-error once xUnit projects exist.
-        continue-on-error: true
         run: >
           dotnet test
           --no-build

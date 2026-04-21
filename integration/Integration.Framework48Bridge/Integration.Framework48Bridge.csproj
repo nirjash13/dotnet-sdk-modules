@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Integration.Framework48Bridge</RootNamespace>
+    <!--
+      TreatWarningsAsErrors=false for net48 target: the .NET Framework reference assemblies
+      expose nullable annotations only partially; suppressing to avoid spurious nullable
+      warnings from framework types outside our control.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);SA1600;SA1309;CS8618;CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <!-- System.Configuration is a .NET Framework assembly; referenced via GAC on net48. -->
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Integration.CloudEventsAdapter\Integration.CloudEventsAdapter.csproj" />
+  </ItemGroup>
+
+</Project>
