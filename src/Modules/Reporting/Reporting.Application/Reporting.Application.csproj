@@ -8,7 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Reporting.Contracts\Reporting.Contracts.csproj" />
     <ProjectReference Include="..\..\Ledger\Ledger.Contracts\Ledger.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
     <!-- Registration.Contracts: commands/responses for the registration saga consumers -->
     <ProjectReference Include="..\..\Registration\Registration.Contracts\Registration.Contracts.csproj" />
   </ItemGroup>
@@ -16,7 +16,7 @@
   <ItemGroup Label="MassTransit — consumer only, no transport-specific packages">
     <!--
       Only MassTransit core is referenced here — no MassTransit.RabbitMQ.
-      The transport package lives exclusively in Chassis.Host to enforce the
+      The transport package lives exclusively in SaasBuilder.Host to enforce the
       "no handler code changes between inproc and bus modes" invariant.
     -->
     <PackageReference Include="MassTransit" />

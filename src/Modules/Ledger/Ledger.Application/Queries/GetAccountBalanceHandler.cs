@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
 using Ledger.Contracts;
 using MassTransit;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Ledger.Application.Queries;
 

@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using Integration.CloudEventsAdapter;
-using Chassis.SharedKernel.Contracts;
+using SaasBuilder.SharedKernel.Contracts;
 
 namespace Integration.Framework48Bridge
 {

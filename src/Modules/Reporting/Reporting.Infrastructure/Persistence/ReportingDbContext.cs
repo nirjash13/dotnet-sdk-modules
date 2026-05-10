@@ -1,18 +1,18 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.Persistence;
-using Chassis.SharedKernel.Tenancy;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Application.Abstractions;
 using Reporting.Application.Persistence;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Reporting.Infrastructure.Persistence;
 
 /// <summary>
 /// EF Core DbContext for the Reporting bounded context.
-/// Inherits <see cref="ChassisDbContext"/> for automatic tenant query filters and
+/// Inherits <see cref="SaasBuilderDbContext"/> for automatic tenant query filters and
 /// <c>TenantCommandInterceptor</c> RLS enforcement.
 /// Also implements <see cref="IReportingDbContext"/> so Application-layer consumers
 /// can interact with it without a direct EF Core dependency.
@@ -20,7 +20,7 @@ namespace Reporting.Infrastructure.Persistence;
 public sealed class ReportingDbContext(
     DbContextOptions<ReportingDbContext> options,
     ITenantContextAccessor tenantContextAccessor)
-    : ChassisDbContext(options, tenantContextAccessor), IReportingDbContext
+    : SaasBuilderDbContext(options, tenantContextAccessor), IReportingDbContext
 {
     /// <summary>Gets the transaction projections set.</summary>
     public DbSet<TransactionProjection> TransactionProjections => Set<TransactionProjection>();

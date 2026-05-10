@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="OpenIddict">

@@ -2,7 +2,6 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
 using Ledger.Application.Commands;
 using Ledger.Application.Queries;
 using Ledger.Contracts;
@@ -12,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Ledger.Api;
 

@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Registration.Application\Registration.Application.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="EF Core + Npgsql">
@@ -20,7 +20,7 @@
     <!--
       MassTransit.EntityFrameworkCore provides the EF Core saga repository
       (EntityFrameworkSagaRepository) and AddSagaStateMachineEntityFrameworkRepository.
-      No MassTransit.RabbitMQ reference here — transport lives in Chassis.Host only.
+      No MassTransit.RabbitMQ reference here — transport lives in SaasBuilder.Host only.
     -->
     <PackageReference Include="MassTransit.EntityFrameworkCore" />
   </ItemGroup>

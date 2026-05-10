@@ -1,8 +1,8 @@
-using Chassis.SharedKernel.Abstractions;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reporting.Infrastructure.Extensions;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Reporting.Api;
 
@@ -13,7 +13,7 @@ namespace Reporting.Api;
 /// <remarks>
 /// Phase 4 registers only the infrastructure (DbContext, IReportingDbContext).
 /// The consumer <c>LedgerTransactionPostedConsumer</c> is registered in the bus wiring
-/// (<c>MassTransitConfig.AddChassisBus</c> in Chassis.Host) rather than here, following
+/// (<c>MassTransitConfig.AddSaasBuilderBus</c> in SaasBuilder.Host) rather than here, following
 /// the same pattern as Ledger command/query handlers being registered in LedgerModule.
 /// Phase 5 will add HTTP query endpoints for projection data.
 /// </remarks>

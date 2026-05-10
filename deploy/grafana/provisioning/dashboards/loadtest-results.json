@@ -27,7 +27,7 @@
       }
     ]
   },
-  "description": "k6 load test results merged with Chassis application metrics. Shows VU ramp, throughput, p95 latency, error rate, outbox lag, and SLO verdict.",
+  "description": "k6 load test results merged with SaasBuilder application metrics. Shows VU ramp, throughput, p95 latency, error rate, outbox lag, and SLO verdict.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -219,7 +219,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "description": "Chassis command handler p95 latency by module (from OTLP metrics). Complements k6 HTTP latency with server-side view.",
+      "description": "SaasBuilder command handler p95 latency by module (from OTLP metrics). Complements k6 HTTP latency with server-side view.",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -248,7 +248,7 @@
           "refId": "A"
         }
       ],
-      "title": "Chassis Command p95 Latency by Module",
+      "title": "SaasBuilder Command p95 Latency by Module",
       "type": "timeseries"
     },
     {
@@ -302,7 +302,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "description": "Chassis RLS denial rate (PostgresException 42501). Spikes here indicate tenant boundary probing or misconfigured RLS policy.",
+      "description": "SaasBuilder RLS denial rate (PostgresException 42501). Spikes here indicate tenant boundary probing or misconfigured RLS policy.",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -513,7 +513,7 @@
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Load Test Results — k6 + Chassis Metrics",
+  "title": "Load Test Results — k6 + SaasBuilder Metrics",
   "uid": "chassis-loadtest-results",
   "version": 1
 }

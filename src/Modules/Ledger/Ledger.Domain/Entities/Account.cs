@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Chassis.SharedKernel.Tenancy;
 using Ledger.Domain.DomainEvents;
 using Ledger.Domain.Exceptions;
 using Ledger.Domain.ValueObjects;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ledger.Domain.Entities;
 

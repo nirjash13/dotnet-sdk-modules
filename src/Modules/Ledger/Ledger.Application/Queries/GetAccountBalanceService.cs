@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
-using Chassis.SharedKernel.Tenancy;
 using Ledger.Application.Abstractions;
 using Ledger.Contracts;
 using Microsoft.Extensions.Logging;
+using SaasBuilder.SharedKernel.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ledger.Application.Queries;
 

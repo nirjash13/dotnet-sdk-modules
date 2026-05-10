@@ -104,8 +104,8 @@
   </ItemGroup>
 
   <ItemGroup Label="OpenTelemetry — observability">
-    <!-- OTel 1.15.x is the latest stable 1.x series as of 2026-04-20 -->
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
+    <!-- OTel 1.15.3 — patched for GHSA-g94r-2vxg-569j and GHSA-4625-4j76-fww9 / GHSA-mr8r-92fq-pj8p -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <!--
@@ -115,7 +115,7 @@
       Remove this comment when a stable release ships.
     -->
     <PackageVersion Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.10.0-beta.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
   </ItemGroup>
 
   <ItemGroup Label="Resilience">

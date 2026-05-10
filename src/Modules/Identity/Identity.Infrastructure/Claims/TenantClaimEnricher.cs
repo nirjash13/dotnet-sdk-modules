@@ -4,11 +4,11 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Tenancy;
 using Identity.Application.Services;
 using Identity.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Identity.Infrastructure.Claims;
 

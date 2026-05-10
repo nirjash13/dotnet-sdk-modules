@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Reporting.Application\Reporting.Application.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="EF Core + Npgsql">
@@ -19,7 +19,7 @@
   <ItemGroup Label="MassTransit EF Core Outbox/Inbox">
     <!--
       MassTransit.EntityFrameworkCore provides AddEntityFrameworkOutbox and AddEntityFrameworkInbox.
-      No MassTransit.RabbitMQ reference here — transport lives in Chassis.Host only.
+      No MassTransit.RabbitMQ reference here — transport lives in SaasBuilder.Host only.
     -->
     <PackageReference Include="MassTransit.EntityFrameworkCore" />
   </ItemGroup>

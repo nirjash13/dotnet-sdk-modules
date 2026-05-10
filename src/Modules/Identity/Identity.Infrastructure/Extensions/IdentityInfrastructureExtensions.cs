@@ -1,6 +1,5 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
-using Chassis.Persistence;
 using Identity.Application.Services;
 using Identity.Infrastructure.Certificates;
 using Identity.Infrastructure.Claims;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
+using SaasBuilder.Persistence;
 
 namespace Identity.Infrastructure.Extensions;
 
@@ -32,8 +32,8 @@ public static class IdentityInfrastructureExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        // 1. EF Core DbContext via Chassis persistence helper (adds interceptor + accessor).
-        services.AddChassisPersistence<IdentityDbContext>(options =>
+        // 1. EF Core DbContext via SaasBuilder persistence helper (adds interceptor + accessor).
+        services.AddSaasBuilderPersistence<IdentityDbContext>(options =>
         {
             string connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(

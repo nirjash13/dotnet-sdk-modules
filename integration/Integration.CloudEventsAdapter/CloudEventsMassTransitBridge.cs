@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using CloudNative.CloudEvents;
-using Chassis.SharedKernel.Contracts;
+using SaasBuilder.SharedKernel.Contracts;
 
 namespace Integration.CloudEventsAdapter;
 

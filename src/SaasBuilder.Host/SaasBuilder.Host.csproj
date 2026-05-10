@@ -1,0 +1,97 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Library output — consumed as a NuGet package or project reference -->
+    <IsPackable>true</IsPackable>
+    <!-- AOT deferred; see docs/IMPLEMENTATION_PLAN.md §10 -->
+    <IsAotCompatible>false</IsAotCompatible>
+
+    <!-- Package metadata -->
+    <PackageId>SaasBuilder.Host</PackageId>
+    <Title>SaasBuilder Host</Title>
+    <Description>Fluent host composition library for the Modular SaaS SaasBuilder — module loader, MassTransit transport, tenancy middleware, observability, rate limiting, and OpenAPI wiring.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>chassis;modular;saas;host;aspnetcore</PackageTags>
+  </PropertyGroup>
+
+  <!-- ASP.NET Core shared framework — provides IEndpointRouteBuilder, IWebHostEnvironment, etc.
+       Using FrameworkReference instead of Sdk="Microsoft.NET.Sdk.Web" so this project builds
+       as a library (dll) rather than an Exe. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project references — SDK core only; no module assemblies">
+    <ProjectReference Include="..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Authentication">
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup Label="MassTransit — mediator (inproc) + RabbitMQ bus (out-of-proc)">
+    <PackageReference Include="MassTransit" />
+    <!-- MassTransit.RabbitMQ lives ONLY here — no module references this package.
+         This enforces the invariant that handler code is transport-agnostic. -->
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <!-- EF Core Outbox/Inbox — AddEntityFrameworkOutbox + AddEntityFrameworkInbox -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="API documentation">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="OpenTelemetry — tracing, metrics, OTLP export">
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging — Serilog with OTel sink">
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.OpenTelemetry" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer — tag-driven SemVer versioning (build-time only)">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- SA1101: this-prefix — not required in project style -->
+    <!-- SA1309: underscore prefix on fields — we use _camelCase -->
+    <!-- SA0001: XML doc analysis — public surface only -->
+    <!-- SA1600: members must be documented — not required on internal types -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600</NoWarn>
+  </PropertyGroup>
+
+  <!-- Expose internals to the integration test and security test projects. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="SaasBuilder.IntegrationTests" />
+    <InternalsVisibleTo Include="SaasBuilder.SecurityTests" />
+  </ItemGroup>
+
+</Project>

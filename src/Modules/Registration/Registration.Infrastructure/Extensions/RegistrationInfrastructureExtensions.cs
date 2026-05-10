@@ -1,9 +1,9 @@
 using System;
-using Chassis.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Registration.Infrastructure.Persistence;
+using SaasBuilder.Persistence;
 
 namespace Registration.Infrastructure.Extensions;
 
@@ -23,14 +23,14 @@ public static class RegistrationInfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("Chassis")
+        string connectionString = configuration.GetConnectionString("SaasBuilder")
             ?? configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Connection string 'Chassis' (or fallback 'DefaultConnection') is not configured. " +
-                "Set it via environment variable 'ConnectionStrings__Chassis'.");
+                "Connection string 'SaasBuilder' (or fallback 'DefaultConnection') is not configured. " +
+                "Set it via environment variable 'ConnectionStrings__SaasBuilder'.");
 
-        // EF Core DbContext via Chassis persistence helper (adds TenantCommandInterceptor + accessor).
-        services.AddChassisPersistence<RegistrationDbContext>(options =>
+        // EF Core DbContext via SaasBuilder persistence helper (adds TenantCommandInterceptor + accessor).
+        services.AddSaasBuilderPersistence<RegistrationDbContext>(options =>
         {
             options.UseNpgsql(
                 connectionString,

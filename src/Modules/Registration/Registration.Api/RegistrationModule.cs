@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Registration.Contracts;
 using Registration.Infrastructure.Extensions;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Registration.Api;
 

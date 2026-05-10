@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
-using Chassis.SharedKernel.Tenancy;
 using FluentValidation;
 using Ledger.Application.Abstractions;
 using Ledger.Contracts;
@@ -15,6 +13,8 @@ using Ledger.Domain.Exceptions;
 using Ledger.Domain.ValueObjects;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using SaasBuilder.SharedKernel.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ledger.Application.Commands;
 

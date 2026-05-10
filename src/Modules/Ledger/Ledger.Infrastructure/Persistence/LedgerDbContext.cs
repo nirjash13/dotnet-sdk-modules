@@ -1,22 +1,22 @@
-using Chassis.Persistence;
-using Chassis.SharedKernel.Tenancy;
 using Ledger.Domain.Entities;
 using Ledger.Domain.ValueObjects;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ledger.Infrastructure.Persistence;
 
 /// <summary>
 /// EF Core DbContext for the Ledger bounded context.
-/// Inherits <see cref="ChassisDbContext"/> for automatic tenant query filters and
+/// Inherits <see cref="SaasBuilderDbContext"/> for automatic tenant query filters and
 /// the <c>TenantCommandInterceptor</c> that issues <c>SET LOCAL app.tenant_id</c>
 /// before every command.
 /// </summary>
 public sealed class LedgerDbContext(
     DbContextOptions<LedgerDbContext> options,
     ITenantContextAccessor tenantContextAccessor)
-    : ChassisDbContext(options, tenantContextAccessor)
+    : SaasBuilderDbContext(options, tenantContextAccessor)
 {
     /// <summary>Gets the account aggregate root set.</summary>
     public DbSet<Account> Accounts => Set<Account>();

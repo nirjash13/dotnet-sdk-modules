@@ -1,11 +1,11 @@
 {
   "asyncapi": "3.0.0",
   "info": {
-    "title": "Chassis Ledger — LedgerTransactionPosted",
+    "title": "SaasBuilder Ledger — LedgerTransactionPosted",
     "version": "1.0.0",
     "description": "AsyncAPI 3.0 schema for the LedgerTransactionPosted integration event published by the Ledger bounded context when a transaction is successfully posted.",
     "contact": {
-      "name": "Chassis Platform Team"
+      "name": "SaasBuilder Platform Team"
     },
     "license": {
       "name": "MIT"
@@ -75,7 +75,7 @@
             "tenant-id": {
               "type": "string",
               "format": "uuid",
-              "description": "Chassis tenant propagation header."
+              "description": "SaasBuilder tenant propagation header."
             },
             "correlation-id": {
               "type": "string",

@@ -1,5 +1,5 @@
 using System;
-using Chassis.SharedKernel.Abstractions;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Ledger.Contracts;
 

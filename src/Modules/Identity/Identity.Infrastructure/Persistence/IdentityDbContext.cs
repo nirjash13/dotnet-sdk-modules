@@ -1,13 +1,13 @@
-using Chassis.Persistence;
-using Chassis.SharedKernel.Tenancy;
 using Identity.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Identity.Infrastructure.Persistence;
 
 /// <summary>
 /// EF Core DbContext for the Identity bounded context.
-/// Inherits <see cref="ChassisDbContext"/> for automatic tenant query filters and
+/// Inherits <see cref="SaasBuilderDbContext"/> for automatic tenant query filters and
 /// the <c>TenantCommandInterceptor</c> that issues <c>SET LOCAL app.tenant_id</c>
 /// before every command.
 /// </summary>
@@ -26,7 +26,7 @@ namespace Identity.Infrastructure.Persistence;
 public sealed class IdentityDbContext(
     DbContextOptions<IdentityDbContext> options,
     ITenantContextAccessor tenantContextAccessor)
-    : ChassisDbContext(options, tenantContextAccessor)
+    : SaasBuilderDbContext(options, tenantContextAccessor)
 {
     /// <summary>Gets the user aggregate root set.</summary>
     public DbSet<User> Users => Set<User>();

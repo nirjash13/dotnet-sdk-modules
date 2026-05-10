@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Security.Claims;
-using Chassis.SharedKernel.Abstractions;
 using Identity.Contracts;
 using Identity.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Identity.Api;
 
