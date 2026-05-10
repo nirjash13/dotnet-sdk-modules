@@ -1,14 +1,17 @@
 using System.Linq;
 using System.Security.Claims;
-using Chassis.SharedKernel.Abstractions;
+using Identity.Api.Authorization;
+using Identity.Api.Organizations;
 using Identity.Contracts;
 using Identity.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Identity.Api;
 
@@ -44,6 +47,9 @@ public sealed class IdentityModule : IModuleStartup
 #pragma warning restore ASP0000
 
         services.AddIdentityInfrastructure(config, environment);
+
+        // Phase 2 — RBAC: register authorization handler at the API layer.
+        services.AddScoped<IAuthorizationHandler, RequiresPermissionAuthorizationHandler>();
     }
 
     /// <inheritdoc />
@@ -59,6 +65,9 @@ public sealed class IdentityModule : IModuleStartup
         identity.MapGet("/me", GetCurrentUser)
             .WithName("Identity_GetCurrentUser")
             .WithSummary("Returns the authenticated principal's identity claims.");
+
+        // Phase 2 — Organization & RBAC endpoints.
+        OrganizationEndpoints.MapOrganizationEndpoints(endpoints);
     }
 
     private static IResult GetCurrentUser(HttpContext context)

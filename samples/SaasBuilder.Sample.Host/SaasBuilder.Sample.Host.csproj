@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- AOT deferred; see docs/IMPLEMENTATION_PLAN.md §10 -->
+    <IsAotCompatible>false</IsAotCompatible>
+    <!-- SA1516: StyleCop triggers this on the compiler-generated Program class from top-level statements -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1516</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="SaasBuilder SDK">
+    <ProjectReference Include="..\..\src\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\SaasBuilder.Host\SaasBuilder.Host.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Modules — loaded at runtime; would be probe-directory DLLs in production">
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Api\Ledger.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Api\Reporting.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Api\Registration.Api.csproj" />
+    <!-- Ledger.Infrastructure needed for AddEntityFrameworkOutbox<LedgerDbContext> in bus wiring -->
+    <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
+    <!-- Registration.Infrastructure needed for AddSagaStateMachine<RegistrationSaga, RegistrationSagaState> + ExistingDbContext<RegistrationDbContext> -->
+    <ProjectReference Include="..\..\src\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <!-- Expose the top-level Program class to integration and security test projects. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="SaasBuilder.IntegrationTests" />
+    <InternalsVisibleTo Include="SaasBuilder.SecurityTests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "SaasBuilder Contributors",
+  "classifications": ["Web", "API", "SaaS", "Multi-tenant"],
+  "identity": "SaasBuilder.Templates.SaasApi",
+  "name": "SaaS Builder API",
+  "shortName": "saas-api",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "SaasBuilder.Sample",
+  "preferNameDirectory": true,
+  "symbols": {
+    "Framework": {
+      "type": "parameter",
+      "description": "The target framework for the project.",
+      "datatype": "choice",
+      "defaultValue": "net10.0",
+      "choices": [
+        {
+          "choice": "net10.0",
+          "description": ".NET 10.0"
+        }
+      ],
+      "replaces": "net10.0"
+    },
+    "transport": {
+      "type": "parameter",
+      "description": "Default dispatch transport — inproc uses in-process MassTransit Mediator; bus uses RabbitMQ via MassTransit.",
+      "datatype": "choice",
+      "defaultValue": "inproc",
+      "choices": [
+        {
+          "choice": "inproc",
+          "description": "In-process MassTransit Mediator (default, no broker required)"
+        },
+        {
+          "choice": "bus",
+          "description": "RabbitMQ via MassTransit Bus (requires broker)"
+        }
+      ]
+    },
+    "transportIsInProc": {
+      "type": "computed",
+      "value": "(transport == \"inproc\")"
+    },
+    "transportIsBus": {
+      "type": "computed",
+      "value": "(transport == \"bus\")"
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./"
+    }
+  ]
+}

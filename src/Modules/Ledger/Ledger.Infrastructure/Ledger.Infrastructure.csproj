@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ledger.Application\Ledger.Application.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.Persistence\Chassis.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -29,7 +29,7 @@
     <!--
       MassTransit.EntityFrameworkCore provides the AddOutboxStateEntity/AddOutboxMessageEntity
       extension methods used in LedgerDbContext.OnModelCreating.
-      No MassTransit.RabbitMQ reference here — transport lives in Chassis.Host only.
+      No MassTransit.RabbitMQ reference here — transport lives in SaasBuilder.Host only.
     -->
     <PackageReference Include="MassTransit.EntityFrameworkCore" />
   </ItemGroup>

@@ -1,7 +1,10 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
-using Chassis.Persistence;
+using FluentValidation;
+using Identity.Application.Authorization;
+using Identity.Application.Organizations;
 using Identity.Application.Services;
+using Identity.Infrastructure.Authorization;
 using Identity.Infrastructure.Certificates;
 using Identity.Infrastructure.Claims;
 using Identity.Infrastructure.Persistence;
@@ -11,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
+using SaasBuilder.Persistence;
 
 namespace Identity.Infrastructure.Extensions;
 
@@ -32,8 +36,8 @@ public static class IdentityInfrastructureExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        // 1. EF Core DbContext via Chassis persistence helper (adds interceptor + accessor).
-        services.AddChassisPersistence<IdentityDbContext>(options =>
+        // 1. EF Core DbContext via SaasBuilder persistence helper (adds interceptor + accessor).
+        services.AddSaasBuilderPersistence<IdentityDbContext>(options =>
         {
             string connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(
@@ -53,6 +57,28 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICertificateProvider, CertificateLoader>();
         services.AddScoped<ITenantClaimEnricher, TenantClaimEnricher>();
+
+        // Phase 2 — Organizations & RBAC repositories.
+        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        services.AddScoped<IMemberRepository, MemberRepository>();
+        services.AddScoped<IInvitationRepository, InvitationRepository>();
+
+        // Phase 2 — Organization command handlers.
+        services.AddScoped<CreateOrganizationHandler>();
+        services.AddScoped<InviteMemberHandler>();
+        services.AddScoped<AcceptInvitationHandler>();
+        services.AddScoped<ChangeMemberRoleHandler>();
+        services.AddScoped<RemoveMemberHandler>();
+        services.AddScoped<TransferOwnershipHandler>();
+
+        // Phase 2 — Permission system.
+        services.AddSingleton<IPermissionDefinitionProvider, BuiltinPermissionDefinitionProvider>();
+        services.AddScoped<IPermissionRegistry, PermissionRegistry>();
+
+        // FluentValidation validators for organization commands.
+        // Note: RequiresPermissionAuthorizationHandler is registered in the API layer (IdentityModule)
+        // to keep the IAuthorizationHandler dependency out of Infrastructure.
+        services.AddValidatorsFromAssemblyContaining<CreateOrganizationValidator>();
 
         // 3. Scoped OpenIddict sign-in event handler.
         services.AddScoped<TenantClaimEventHandler>();

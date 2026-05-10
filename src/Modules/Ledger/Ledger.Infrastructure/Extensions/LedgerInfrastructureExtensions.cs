@@ -1,5 +1,4 @@
 using System;
-using Chassis.Persistence;
 using FluentValidation;
 using Ledger.Application.Abstractions;
 using Ledger.Application.Commands;
@@ -11,6 +10,7 @@ using Marten;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SaasBuilder.Persistence;
 
 namespace Ledger.Infrastructure.Extensions;
 
@@ -30,14 +30,14 @@ public static class LedgerInfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("Chassis")
+        string connectionString = configuration.GetConnectionString("SaasBuilder")
             ?? configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Connection string 'Chassis' (or fallback 'DefaultConnection') is not configured. " +
-                "Set it via environment variable 'ConnectionStrings__Chassis'.");
+                "Connection string 'SaasBuilder' (or fallback 'DefaultConnection') is not configured. " +
+                "Set it via environment variable 'ConnectionStrings__SaasBuilder'.");
 
-        // 1. EF Core DbContext via Chassis persistence helper (adds interceptor + accessor).
-        services.AddChassisPersistence<LedgerDbContext>(options =>
+        // 1. EF Core DbContext via SaasBuilder persistence helper (adds interceptor + accessor).
+        services.AddSaasBuilderPersistence<LedgerDbContext>(options =>
         {
             options.UseNpgsql(
                 connectionString,

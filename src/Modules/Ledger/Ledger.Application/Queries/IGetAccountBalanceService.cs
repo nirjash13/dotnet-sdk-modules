@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Abstractions;
 using Ledger.Contracts;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Ledger.Application.Queries;
 

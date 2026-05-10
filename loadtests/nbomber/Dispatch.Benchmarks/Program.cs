@@ -9,7 +9,7 @@ using NBomber.CSharp;
 // Both scenarios target the running chassis host via HTTP.
 //
 // Prerequisites:
-//   - Chassis host running: dotnet run --project src/Chassis.Host
+//   - SaasBuilder host running: dotnet run --project src/SaasBuilder.Host
 //   - (Optional) Obtain a bearer token and set BEARER_TOKEN env var.
 //   - For Bus mode: docker compose -f deploy/docker-compose.yml up -d rabbitmq
 //
@@ -25,7 +25,7 @@ using NBomber.CSharp;
 //
 // See README.md for the recommended two-run workflow to compare dispatcher modes.
 
-Console.WriteLine("NBomber Dispatcher Benchmarks — Chassis v1");
+Console.WriteLine("NBomber Dispatcher Benchmarks — SaasBuilder v1");
 Console.WriteLine($"Target: {Environment.GetEnvironmentVariable("BASE_URL") ?? "http://localhost:5000"}");
 Console.WriteLine();
 

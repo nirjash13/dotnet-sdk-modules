@@ -3,13 +3,20 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Identity.Application</PackageId>
+    <Title>SaasBuilder Identity Application</Title>
     <Description>Application layer for the Identity module. Handlers, validators, service interfaces.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>saasbuilder;identity;application;handlers;rbac</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
     <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
     <!-- Registration.Contracts: commands/responses for the registration saga consumers -->
     <ProjectReference Include="..\..\Registration\Registration.Contracts\Registration.Contracts.csproj" />
   </ItemGroup>
@@ -34,8 +41,12 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <!-- SA1009: StyleCop 1.1.x incorrectly flags C# 12 primary constructor syntax. -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <!--
+      SA1009: StyleCop 1.1.x incorrectly flags C# 12 primary constructor spacing.
+      SA1313: StyleCop 1.1.x incorrectly flags PascalCase record positional parameters (idiomatic C# 9+).
+      SA1512: single-line comment followed by blank line — false positive in method bodies.
+    -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313;SA1512</NoWarn>
   </PropertyGroup>
 
 </Project>

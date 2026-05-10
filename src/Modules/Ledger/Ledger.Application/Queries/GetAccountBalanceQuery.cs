@@ -1,6 +1,6 @@
 using System;
-using Chassis.SharedKernel.Abstractions;
 using Ledger.Contracts;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Ledger.Application.Queries;
 

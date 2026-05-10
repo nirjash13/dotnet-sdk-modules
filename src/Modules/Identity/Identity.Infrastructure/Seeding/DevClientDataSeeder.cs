@@ -2,13 +2,13 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Chassis.SharedKernel.Tenancy;
 using Identity.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Identity.Infrastructure.Seeding;
@@ -104,7 +104,7 @@ internal sealed class DevClientDataSeeder(
             ClientId = DevClientId,
             ClientSecret = clientSecret,
             ClientType = ClientTypes.Confidential,
-            DisplayName = "Chassis Dev Client",
+            DisplayName = "SaasBuilder Dev Client",
         };
 
         // Store the dev-tenant ID in application properties so TenantClaimEnricher can

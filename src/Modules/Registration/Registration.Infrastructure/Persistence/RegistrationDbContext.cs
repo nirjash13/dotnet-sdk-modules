@@ -1,13 +1,13 @@
-using Chassis.Persistence;
-using Chassis.SharedKernel.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Registration.Application.Sagas;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Registration.Infrastructure.Persistence;
 
 /// <summary>
 /// EF Core DbContext for the Registration bounded context.
-/// Inherits <see cref="ChassisDbContext"/> for the standard chassis interceptor chain.
+/// Inherits <see cref="SaasBuilderDbContext"/> for the standard chassis interceptor chain.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,7 +23,7 @@ namespace Registration.Infrastructure.Persistence;
 public sealed class RegistrationDbContext(
     DbContextOptions<RegistrationDbContext> options,
     ITenantContextAccessor tenantContextAccessor)
-    : ChassisDbContext(options, tenantContextAccessor)
+    : SaasBuilderDbContext(options, tenantContextAccessor)
 {
     /// <summary>Gets the saga state set.</summary>
     public DbSet<RegistrationSagaState> RegistrationSagaStates => Set<RegistrationSagaState>();

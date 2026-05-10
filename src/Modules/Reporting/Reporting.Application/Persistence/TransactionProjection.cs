@@ -1,5 +1,5 @@
 using System;
-using Chassis.SharedKernel.Tenancy;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Reporting.Application.Persistence;
 

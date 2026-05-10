@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Jobs.Infrastructure</PackageId>
+    <Title>SaasBuilder Jobs Infrastructure</Title>
+    <Description>Infrastructure layer for the Jobs module — in-process scheduler, DLQ store, idempotency enforcement.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>saasbuilder;jobs;infrastructure</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jobs.Application\Jobs.Application.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Entity Framework Core">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup Label="ASP.NET Core — BackgroundService, ILogger, IHostedService">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+      SA1000: target-typed new() — StyleCop 1.1.x incorrectly flags new(...) without explicit type.
+      SA1117: multi-line method call parameter placement — complex record/object construction.
+      SA1118: parameter must not span multiple lines — related to SA1117.
+      SA1127: generic type constraints — StyleCop 1.1.x requires own line for where clauses.
+      SA1201: element ordering — SA1201 fires on nested record types inside methods/classes.
+      SA1313: PascalCase record positional parameters.
+      SA1401: public field — Channel<T> field is intentionally internal-style for BackgroundService.
+      SA1516: blank line between elements — relaxed in infrastructure code.
+      AD0001: SA1201 ElementsMustAppearInTheCorrectOrder throws on RecordDeclaration — analyzer bug in StyleCop 1.1.x.
+    -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1000;SA1117;SA1127;SA1201;SA1313;SA1401;SA1516;AD0001</NoWarn>
+  </PropertyGroup>
+
+</Project>

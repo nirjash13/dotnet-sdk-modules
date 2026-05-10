@@ -1,0 +1,152 @@
+// Design choice: DbCommandInterceptor (not DbConnectionInterceptor)
+//
+// Two viable patterns exist for injecting SET LOCAL app.tenant_id:
+//
+// Option A — DbConnectionInterceptor.ConnectionOpenedAsync:
+//   Issue a single SET statement when the connection opens.
+//   Pro: fires once per connection open; simple.
+//   Con: SET is connection-scoped, not transaction-scoped. "SET LOCAL" requires an active
+//       transaction to be meaningful (LOCAL reverts at transaction end). If the connection
+//       is opened outside a transaction and then a transaction starts, the SET LOCAL issued
+//       at connection-open is *outside* the transaction and therefore has no LOCAL effect —
+//       it persists for the connection lifetime. RLS depends on the value being reset per
+//       transaction. Using plain SET (not LOCAL) has the correct semantics at
+//       connection-open time but is harder to reason about in pooled connections.
+//
+// Option B — DbCommandInterceptor hooking ReaderExecutingAsync / NonQueryExecutingAsync /
+//   ScalarExecutingAsync: Issue "SET LOCAL app.tenant_id = '<guid>'" as a separate command
+//   before each query. SET LOCAL is transaction-scoped so it is correct to issue per-command
+//   in an auto-commit context too (each command runs in an implicit single-statement transaction
+//   in Postgres if there is no explicit BEGIN). The cost is one extra round-trip per distinct
+//   tenant-id-change within a transaction, mitigated by caching the last-set value per
+//   DbContext instance.
+//
+// Decision: Option B — DbCommandInterceptor per-command with a per-instance last-set cache.
+// Rationale: correctness over the connection-pool lifecycle is clearer; RLS requires
+// SET LOCAL to take effect within the transaction that issues the DML. A connection recycled
+// from the pool starts with no app.tenant_id set, so issuing it at command time ensures it
+// is always present regardless of pool reuse. The extra round-trip is ~0.1 ms on localhost
+// and negligible at our target RPS (200–500).
+
+using System;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
+using SaasBuilder.SharedKernel.Tenancy;
+
+namespace SaasBuilder.Persistence;
+
+/// <summary>
+/// EF Core command interceptor that issues <c>SET LOCAL app.tenant_id = '&lt;guid&gt;'</c>
+/// before every DML/query command so that Postgres Row-Level Security policies evaluate
+/// against the current tenant.
+/// </summary>
+/// <remarks>
+/// Registered via <c>AddSaasBuilderPersistence</c> and scoped to the DbContext lifetime.
+/// When a bypass scope is active (<see cref="ITenantContextAccessor.BeginBypass"/>) or
+/// when no tenant context is established (e.g. OpenIddict internal queries, dev seeding),
+/// the <c>SET LOCAL</c> command is skipped. RLS on the database remains the defence in depth
+/// for tenant-scoped tables; OpenIddict tables are not RLS-protected in Phase 2.
+/// A warning is logged when Current is null outside a bypass scope so misconfiguration
+/// remains visible.
+/// </remarks>
+public sealed class TenantCommandInterceptor : DbCommandInterceptor
+{
+    private readonly ITenantContextAccessor _tenantContextAccessor;
+    private readonly ILogger<TenantCommandInterceptor> _logger;
+
+    // Cache the last tenant id we SET on this interceptor instance so we avoid
+    // an extra round-trip when consecutive commands run as the same tenant within
+    // the same DbContext instance.
+    private Guid _lastSetTenantId = Guid.Empty;
+
+    /// <summary>Initializes the interceptor with the ambient tenant context accessor.</summary>
+    public TenantCommandInterceptor(
+        ITenantContextAccessor tenantContextAccessor,
+        ILogger<TenantCommandInterceptor> logger)
+    {
+        _tenantContextAccessor = tenantContextAccessor
+            ?? throw new ArgumentNullException(nameof(tenantContextAccessor));
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+        DbCommand command,
+        CommandEventData eventData,
+        InterceptionResult<DbDataReader> result,
+        CancellationToken cancellationToken = default)
+    {
+        await SetTenantAsync(command, cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
+        DbCommand command,
+        CommandEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        await SetTenantAsync(command, cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<InterceptionResult<object>> ScalarExecutingAsync(
+        DbCommand command,
+        CommandEventData eventData,
+        InterceptionResult<object> result,
+        CancellationToken cancellationToken = default)
+    {
+        await SetTenantAsync(command, cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    private async Task SetTenantAsync(DbCommand command, CancellationToken cancellationToken)
+    {
+        // When a bypass scope is active (OpenIddict internals, dev seeding, claim enrichment
+        // before a tenant context is established), skip SET LOCAL entirely.
+        // RLS on the database is the remaining defence for tenant-scoped tables;
+        // OpenIddict tables are not RLS-protected in Phase 2.
+        if (_tenantContextAccessor.IsBypassed)
+        {
+            return;
+        }
+
+        ITenantContext? ctx = _tenantContextAccessor.Current;
+
+        if (ctx is null)
+        {
+            // No tenant context outside a bypass scope — log a warning so misconfiguration
+            // is visible, but do not throw. RLS (missing app.tenant_id setting) will block
+            // any read against RLS-protected tables, providing defence in depth.
+            // TODO (Phase 3): promote to throw once all non-tenant code paths use BeginBypass.
+            _logger.LogWarning(
+                "TenantCommandInterceptor: no ambient tenant context and no bypass scope active. " +
+                "SET LOCAL app.tenant_id will be skipped; RLS will block tenant-scoped reads.");
+            return;
+        }
+
+        Guid tenantId = ctx.TenantId;
+
+        // Skip the round-trip if this interceptor instance already SET the same tenant id.
+        if (tenantId == _lastSetTenantId)
+        {
+            return;
+        }
+
+        // Issue SET LOCAL so the value is scoped to the current transaction.
+        // In auto-commit mode (no explicit BEGIN), SET LOCAL is equivalent to SET for that
+        // single statement's implicit transaction, which is exactly what we want for RLS.
+        using DbCommand setCmd = command.Connection!.CreateCommand();
+        setCmd.Transaction = command.Transaction;
+        setCmd.CommandText = $"SET LOCAL app.tenant_id = '{tenantId}'";
+        await setCmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        _lastSetTenantId = tenantId;
+    }
+}

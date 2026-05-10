@@ -1,0 +1,98 @@
+using System;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Billing.Application.Abstractions;
+using Microsoft.Extensions.Configuration;
+
+namespace Billing.Infrastructure.Providers;
+
+/// <summary>
+/// Verifies Stripe webhook signatures using the Standard Webhooks HMAC-SHA256 scheme.
+/// Enforces a 5-minute timestamp replay window.
+/// TODO(Phase 4): Replace stub HMAC parsing with Stripe's Stripe-Signature header format
+/// (v1,t=timestamp,v1=signature) and use Stripe.NET's <c>EventUtility.ValidateSignature</c>.
+/// </summary>
+public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration) : IWebhookSignatureVerifier
+{
+    private static readonly TimeSpan ReplayWindow = TimeSpan.FromMinutes(5);
+
+    /// <inheritdoc />
+    public string ProviderName => "stripe";
+
+    /// <inheritdoc />
+    public Task<WebhookVerificationResult> VerifyAsync(
+        byte[] rawBody,
+        string signatureHeader,
+        CancellationToken ct)
+    {
+        // Stripe-Signature format: t=<unix_timestamp>,v1=<hex_signature>
+        // e.g., "t=1614556800,v1=abc123def456..."
+        if (string.IsNullOrWhiteSpace(signatureHeader))
+        {
+            return Task.FromResult(WebhookVerificationResult.Failure("Missing Stripe-Signature header."));
+        }
+
+        long timestampUnix = 0;
+        string? signature = null;
+
+        foreach (string part in signatureHeader.Split(','))
+        {
+            string[] kv = part.Split('=', 2);
+            if (kv.Length != 2)
+            {
+                continue;
+            }
+
+            if (kv[0] == "t" && long.TryParse(kv[1], out long ts))
+            {
+                timestampUnix = ts;
+            }
+            else if (kv[0] == "v1")
+            {
+                signature = kv[1];
+            }
+        }
+
+        if (timestampUnix == 0 || signature is null)
+        {
+            return Task.FromResult(WebhookVerificationResult.Failure("Malformed Stripe-Signature header."));
+        }
+
+        // Enforce 5-minute replay window.
+        DateTimeOffset eventTime = DateTimeOffset.FromUnixTimeSeconds(timestampUnix);
+        if (DateTimeOffset.UtcNow - eventTime > ReplayWindow)
+        {
+            return Task.FromResult(WebhookVerificationResult.Failure(
+                $"Webhook timestamp is outside the {ReplayWindow.TotalMinutes}-minute replay window."));
+        }
+
+        string? webhookSecret = configuration["Billing:Stripe:WebhookSecret"];
+        if (string.IsNullOrWhiteSpace(webhookSecret))
+        {
+            // TODO(Phase 4): Make this a hard error in production; for scaffold return failure.
+            return Task.FromResult(WebhookVerificationResult.Failure(
+                "Billing:Stripe:WebhookSecret is not configured."));
+        }
+
+        // Compute expected signature: HMAC-SHA256(webhook_secret, "{timestamp}.{body}")
+        string signedPayload = $"{timestampUnix}.{Encoding.UTF8.GetString(rawBody)}";
+        byte[] expectedSignatureBytes = HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(webhookSecret),
+            Encoding.UTF8.GetBytes(signedPayload));
+        string expectedSignature = Convert.ToHexString(expectedSignatureBytes).ToLowerInvariant();
+
+        if (!CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(expectedSignature),
+            Encoding.UTF8.GetBytes(signature)))
+        {
+            return Task.FromResult(WebhookVerificationResult.Failure("HMAC signature mismatch."));
+        }
+
+        // TODO(Phase 4): Parse the body as a Stripe event JSON to extract event type + event id.
+        // For scaffold: return a placeholder event type and use the timestamp as idempotency key.
+        string idempotencyKey = $"stripe_{timestampUnix}";
+        return Task.FromResult(WebhookVerificationResult.Success("webhook.verified", idempotencyKey));
+    }
+}

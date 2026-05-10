@@ -1,6 +1,6 @@
 using System;
-using Chassis.SharedKernel.Tenancy;
 using Ledger.Domain.ValueObjects;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ledger.Domain.Entities;
 
