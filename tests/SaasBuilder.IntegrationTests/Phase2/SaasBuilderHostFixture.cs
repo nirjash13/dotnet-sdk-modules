@@ -67,6 +67,23 @@ public sealed class SaasBuilderHostFixture : IAsyncLifetime
     {
         await _postgres.StartAsync().ConfigureAwait(false);
         _connectionString = _postgres.GetConnectionString();
+
+        // Configuration set via WebApplicationFactory.ConfigureAppConfiguration arrives AFTER
+        // AddSaasBuilderHost has already read IConfiguration during the WebApplicationBuilder
+        // phase. Module ConfigureServices methods that read connection strings or environment
+        // flags at registration time (Identity, Ledger, Reporting, Registration) need these
+        // values present in builder.Configuration's seed sources — environment variables are
+        // the only source guaranteed to be picked up by WebApplication.CreateBuilder() before
+        // user code runs. Setting them here, before WebApplicationFactory boots the host.
+        Environment.SetEnvironmentVariable("ConnectionStrings__SaasBuilder", _connectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _connectionString);
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+        Environment.SetEnvironmentVariable("Identity__SeedDevClient", "true");
+        Environment.SetEnvironmentVariable("Identity__AllowInsecureMetadata", "true");
+        Environment.SetEnvironmentVariable("Identity__Authority", TestIssuer);
+        Environment.SetEnvironmentVariable("Identity__Audience", TestAudience);
+        Environment.SetEnvironmentVariable("Identity__DevClient__Secret", "chassis-test-secret");
+
         _factory = new SaasBuilderWebApplicationFactory(_connectionString, _signingKey);
     }
 
@@ -174,7 +191,11 @@ public sealed class SaasBuilderHostFixture : IAsyncLifetime
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Testing");
+            // "Development" so OpenIddict picks the dev-cert branch and skips the
+            // production thumbprint requirement. The in-memory configuration below
+            // adds Identity:AllowInsecureMetadata=true as a belt-and-braces fallback
+            // for any code path that prefers that flag over IHostEnvironment.IsDevelopment().
+            builder.UseEnvironment("Development");
 
             builder.ConfigureAppConfiguration((_, config) =>
             {

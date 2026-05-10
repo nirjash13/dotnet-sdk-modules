@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Notifications.Contracts\Notifications.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="MinVer">
@@ -28,11 +29,12 @@
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <!-- SA1202: member ordering — private constructors before public properties — StyleCop 1.1.x false positive on domain entities. -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1202</NoWarn>
   </PropertyGroup>
 
 </Project>

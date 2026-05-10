@@ -1,6 +1,6 @@
 using System;
-using FluentAssertions;
 using FeatureFlags.Infrastructure.Providers;
+using FluentAssertions;
 using Xunit;
 
 namespace SaasBuilder.IntegrationTests.FeatureFlags;
@@ -58,7 +58,8 @@ public sealed class PercentageRolloutTests
         // Assert — with a good hash function, 50% of 1000 tenants → 400-600 in bucket.
         // This is a ±10% tolerance to avoid flakiness.
         inBucketCount.Should().BeInRange(
-            400, 600,
+            minimumValue: 400,
+            maximumValue: 600,
             because: $"a 50% rollout across 1000 tenants should place ~500 in-bucket (got {inBucketCount})");
     }
 }

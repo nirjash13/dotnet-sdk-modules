@@ -3,7 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Identity.Api</PackageId>
+    <Title>SaasBuilder Identity API</Title>
     <Description>API layer for the Identity module. IModuleStartup implementation and endpoint mapping.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>saasbuilder;identity;api;endpoints;authorization</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

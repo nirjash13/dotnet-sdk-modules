@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>SaasBuilder.Modules.Notifications.Application</PackageId>
     <Title>SaasBuilder Notifications Application</Title>
-    <Description>Application layer for the Notifications module — abstractions, services, handlers.</Description>
+    <Description>Application layer for the Notifications module â€” abstractions, services, handlers.</Description>
     <Authors>SaasBuilder Contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Notifications.Domain\Notifications.Domain.csproj" />
-    <ProjectReference Include="..\..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Validation">
@@ -27,18 +27,19 @@
     <PackageReference Include="MinVer" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup Label="Analyzers — build-time only">
+  <ItemGroup Label="Analyzers â€” build-time only">
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <!-- SA1313: record positional parameters PascalCase — StyleCop 1.1.x false positive. -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313</NoWarn>
   </PropertyGroup>
 
 </Project>

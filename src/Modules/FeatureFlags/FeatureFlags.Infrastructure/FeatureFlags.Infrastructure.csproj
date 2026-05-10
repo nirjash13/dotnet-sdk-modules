@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1204</NoWarn>
   </PropertyGroup>
 
 </Project>

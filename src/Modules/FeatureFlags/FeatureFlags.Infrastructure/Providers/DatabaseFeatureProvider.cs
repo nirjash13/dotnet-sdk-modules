@@ -94,6 +94,19 @@ public sealed class DatabaseFeatureProvider(
         return Details(flagKey, flag.DefaultBoolValue || defaultValue, EvaluationReason.Default);
     }
 
+    /// <summary>
+    /// Computes a deterministic bucket value [0, 99] for a (tenantId, flagKey) pair.
+    /// Same inputs always produce the same bucket — ensures consistent percentage rollout.
+    /// Algorithm: SHA-256(tenantId + ":" + flagKey) → first 4 bytes as uint → modulo 100.
+    /// </summary>
+    public static int ComputeBucket(Guid tenantId, string flagKey)
+    {
+        string input = $"{tenantId:N}:{flagKey}";
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        uint hashInt = BitConverter.ToUInt32(hash, 0);
+        return (int)(hashInt % 100);
+    }
+
     /// <inheritdoc />
     public async ValueTask<FlagEvaluationDetails<int>> ResolveIntegerAsync(
         string flagKey,
@@ -130,19 +143,6 @@ public sealed class DatabaseFeatureProvider(
             Value = defaultValue,
             Reason = EvaluationReason.Default,
         };
-    }
-
-    /// <summary>
-    /// Computes a deterministic bucket value [0, 99] for a (tenantId, flagKey) pair.
-    /// Same inputs always produce the same bucket — ensures consistent percentage rollout.
-    /// Algorithm: SHA-256(tenantId + ":" + flagKey) → first 4 bytes as uint → modulo 100.
-    /// </summary>
-    internal static int ComputeBucket(Guid tenantId, string flagKey)
-    {
-        string input = $"{tenantId:N}:{flagKey}";
-        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        uint hashInt = BitConverter.ToUInt32(hash, 0);
-        return (int)(hashInt % 100);
     }
 
     private static FlagEvaluationDetails<bool> Details(

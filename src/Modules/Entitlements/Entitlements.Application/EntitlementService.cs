@@ -28,7 +28,8 @@ public sealed class EntitlementService(
 {
     // Simple in-process cache: (tenantId, key) → grants snapshot.
     // In production this should be IDistributedCache with a short TTL.
-    private readonly ConcurrentDictionary<(Guid, Guid?), IReadOnlyList<EntitlementGrant>> _cache = new();
+    private readonly ConcurrentDictionary<(Guid, Guid?), IReadOnlyList<EntitlementGrant>> _cache =
+        new ConcurrentDictionary<(Guid, Guid?), IReadOnlyList<EntitlementGrant>>();
 
     /// <inheritdoc />
     public async Task<bool> HasAsync(string key, CancellationToken ct)

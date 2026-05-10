@@ -3,7 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Identity.Infrastructure</PackageId>
+    <Title>SaasBuilder Identity Infrastructure</Title>
     <Description>Infrastructure layer for the Identity module. EF Core, OpenIddict, certificate loading.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>saasbuilder;identity;infrastructure;efcore;openiddict</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

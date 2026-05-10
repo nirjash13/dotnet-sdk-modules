@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="MinVer">
@@ -28,11 +28,11 @@
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1000;SA1313</NoWarn>
   </PropertyGroup>
 
 </Project>

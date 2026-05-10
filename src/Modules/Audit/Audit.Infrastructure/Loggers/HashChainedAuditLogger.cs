@@ -24,7 +24,7 @@ namespace Audit.Infrastructure.Loggers;
 /// For strict ordering, use a DB sequence or advisory lock.
 /// </para>
 /// </summary>
-internal sealed class HashChainedAuditLogger(
+public sealed class HashChainedAuditLogger(
     AuditDbContext db,
     ILogger<HashChainedAuditLogger> logger)
     : IAuditLogger

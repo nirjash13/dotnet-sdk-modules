@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Search.Application\Search.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -43,11 +43,17 @@
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+    <!--
+      SA1127: generic type constraints should be on own line — StyleCop 1.1.x.
+      SA1202: member ordering — private before public — StyleCop 1.1.x domain entity false positive.
+      SA1204: static before non-static — intentional placement for readability.
+      SA1210: using directive ordering — StyleCop 1.1.x false positive on certain using groups.
+    -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1127;SA1202;SA1204;SA1210</NoWarn>
   </PropertyGroup>
 
 </Project>

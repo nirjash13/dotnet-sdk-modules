@@ -9,6 +9,7 @@ using Audit.Application.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata;
 using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Audit.Application.Interceptors;

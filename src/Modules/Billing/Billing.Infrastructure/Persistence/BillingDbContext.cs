@@ -43,6 +43,8 @@ public sealed class BillingDbContext(
 
         modelBuilder.ApplyConfiguration(new SubscriptionConfiguration());
         modelBuilder.ApplyConfiguration(new WebhookEventConfiguration());
+        modelBuilder.ApplyConfiguration(new EditionConfiguration());
+        modelBuilder.ApplyConfiguration(new EntitlementGrantConfiguration());
 
         // Apply MassTransit outbox schema for transactional outbox support.
         modelBuilder.AddOutboxStateEntity();

@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>SaasBuilder.Modules.Files.Infrastructure</PackageId>
     <Title>SaasBuilder Files Infrastructure</Title>
-    <Description>Infrastructure layer for the Files module — filesystem blob store, quota DB store.</Description>
+    <Description>Infrastructure layer for the Files module â€” filesystem blob store, quota DB store.</Description>
     <Authors>SaasBuilder Contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Files.Application\Files.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -36,18 +36,19 @@
     <PackageReference Include="MinVer" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup Label="Analyzers — build-time only">
+  <ItemGroup Label="Analyzers â€” build-time only">
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+    <!-- SA1000: target-typed new() — StyleCop 1.1.x flags new(...). SA1515: comment spacing. IDE0270: simplified null check. -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1000;SA1515;IDE0270</NoWarn>
   </PropertyGroup>
 
 </Project>

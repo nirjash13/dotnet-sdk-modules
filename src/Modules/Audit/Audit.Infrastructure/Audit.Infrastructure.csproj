@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>SaasBuilder.Modules.Audit.Infrastructure</PackageId>
     <Title>SaasBuilder Audit Infrastructure</Title>
-    <Description>Infrastructure layer for the Audit module — EF Core append-only store, hash-chain decorator.</Description>
+    <Description>Infrastructure layer for the Audit module â€” EF Core append-only store, hash-chain decorator.</Description>
     <Authors>SaasBuilder Contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Audit.Application\Audit.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -32,18 +32,25 @@
     <PackageReference Include="MinVer" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup Label="Analyzers — build-time only">
+  <ItemGroup Label="Analyzers â€” build-time only">
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Label="StyleCop configuration">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\..\stylecop.json" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+    <!--
+      SA1117: multi-line method call parameter placement.
+      SA1202: member ordering — private ctor before public props.
+      SA1204: static members before non-static — intentional in loggers.
+      SA1210: using directive ordering — false positive in EF Core contexts.
+      AD0001: SA1642 throws NullReferenceException on primary constructors in StyleCop 1.1.x.
+    -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1117;SA1202;SA1204;SA1210;AD0001</NoWarn>
   </PropertyGroup>
 
 </Project>

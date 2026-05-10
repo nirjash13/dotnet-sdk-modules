@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Search.Application.Models;
 
 namespace Search.Application.Abstractions;
 
