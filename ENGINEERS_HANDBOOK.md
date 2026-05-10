@@ -1,8 +1,8 @@
-# Engineers Handbook — Modular SaaS Chassis SDK
+# Engineers Handbook — SaaS Builder SDK
 
-This guide is for engineers building modules on top of the Chassis SDK or extending the SDK itself. **This is a Phase-0 document** — most recipes below are forward-looking against the implementation plan; code examples are intent, not yet compilable.
+This guide is for engineers building modules on top of the SaaS Builder SDK or extending the SDK itself. **Phase 1 is complete; Phases 2–5 scaffolding landed** (abstractions + default providers + clearly-marked TODOs for deferred features). For strategic context and the complete roadmap, read `docs/TASK_LIST.md` and `docs/SAAS_SDK_IMPLEMENTATION_PLAN.md`.
 
-For strategic context and decision rationale, read `docs/IMPLEMENTATION_PLAN.md` (architecture, phases, tradeoffs) and `.claude/memory/decisions.md` (Approach A+ rationale).
+All code examples below are **production-compilable** on the current main branch.
 
 ---
 
@@ -10,61 +10,74 @@ For strategic context and decision rationale, read `docs/IMPLEMENTATION_PLAN.md`
 
 ### 1. Module
 A **bounded context** with its own domain logic, database tables, and async event contracts. Structured as Clean Architecture:
-- **Contracts** (netstandard2.0;net10.0) — commands, queries, integration events as records; consumed by other modules and external systems
+- **Contracts** (net10.0) — commands, queries, integration events as records; consumed by other modules and external systems
 - **Domain** (net10.0) — entities, value objects, domain events; *zero* infra dependencies
 - **Application** (net10.0) — MassTransit consumers (handlers), FluentValidation validators, DTOs, Mapster profiles
-- **Infrastructure** (net10.0) — `YourModuleDbContext : ChassisDbContext`, EF Core migrations, external API clients
+- **Infrastructure** (net10.0) — `YourModuleDbContext : SaasBuilderDbContext`, EF Core migrations, external API clients
 - **Api** (net10.0) — `IModuleStartup` implementation wiring DI and HTTP endpoints under `/api/v1/yourmodule/*`
 
 Modules are simultaneously projects in this monorepo (project references, sub-second builds) and NuGet packages (external consumption).
 
 ### 2. IModuleStartup
+
 The **module bootstrap contract**. Every module's `Api` project implements this interface:
 
 ```csharp
 public interface IModuleStartup
 {
-    string ModuleName { get; }
-    void ConfigureServices(IServiceCollection services);
-    void MapEndpoints(IEndpointRouteBuilder routes);
+    /// <summary>Register the module's services into the dependency injection container.</summary>
+    void ConfigureServices(IServiceCollection services, IConfiguration config);
+
+    /// <summary>Map the module's HTTP endpoints (ASP.NET Core 10.0+).</summary>
+    void Configure(IEndpointRouteBuilder endpoints);
 }
 ```
 
-The Chassis.Host's `ModuleLoader` scans assemblies at startup, discovers all `IModuleStartup` implementations via reflection, invokes them in dependency order. Emits a `chassis_module_load_duration_seconds` meter per module.
+The `ReflectionModuleLoader` scans configured probe directories at startup, discovers all `IModuleStartup` implementations via reflection, invokes them in dependency order. Emits a `saasbuilder_module_load_duration_seconds` meter per module.
 
-### 3. IModuleDispatcher
-The **unified dispatch abstraction** — sends commands and publishes events to handlers, indifferently of transport:
+**Discovery:** 
+- Assembly scan: `opts.Modules.ScanAssemblyContaining<MyModule>()`
+- Probe directories: `opts.Modules.AddProbeDirectory("modules/")` — default is `AppDomain.BaseDirectory + "modules/"`
+
+### 3. Fluent Options API
+
+The **unified entry point** for host configuration — replaces parameterless `AddSaasBuilderHost()` overload:
 
 ```csharp
-public interface IModuleDispatcher
+builder.AddSaasBuilderHost(opts =>
 {
-    Task<TResponse> SendAsync<TRequest, TResponse>(
-        TRequest request, 
-        CancellationToken ct = default)
-        where TRequest : ICommand;
-    
-    Task PublishAsync<TEvent>(
-        TEvent @event,
-        CancellationToken ct = default)
-        where TEvent : IIntegrationEvent;
-}
+    opts.UseTransport(SaasTransport.InProc);                    // or Bus
+    opts.UseTenancy(TenantIsolation.PoolWithRls);               // or PoolShared, SiloedSchema, SiloedDatabase, SiloedStamp (stubbed)
+    opts.Modules.ScanAssemblyContaining<MyModule>();
+    opts.Modules.AddProbeDirectory("modules/");
+    opts.Observability.Enable();
+    opts.RateLimiting.UsePerTenantSlidingWindow();
+    opts.Transport.WithMediatorConsumers(cfg => { /* MassTransit in-process */ });
+    opts.Transport.WithBusConsumers(cfg => { /* RabbitMQ consumers */ });
+});
 ```
 
-**In-process** (Phase 1+): MassTransit Mediator runs handlers on the current thread or MT's scheduler.
-**Out-of-process** (Phase 4+): MassTransit Bus serializes to RabbitMQ; handlers run in isolated consumers.
+Each `Saas*Options` class (e.g., `SaasBuilderModulesOptions`, `SaasBuilderTransportOptions`) offers fluent methods for granular control. See `src/SaasBuilder.Host/Configuration/Options/` for implementations.
 
-The **transport toggle** is a single appsettings.json switch per edge:
-```json
-{
-  "Dispatch": {
-    "Ledger→Reporting": "inproc",  // or "bus"
-    "Identity→Ledger": "bus"
-  }
-}
+### 4. Transport Abstraction
+
+**In-process** (InProc): MassTransit Mediator runs handlers on the current thread.
+**Out-of-process** (Bus): MassTransit Bus serializes to RabbitMQ; handlers run in isolated consumers.
+
+Toggle via fluent option:
+```csharp
+opts.UseTransport(SaasTransport.InProc);  // ← fast, for dev; all consumers run sync
+opts.UseTransport(SaasTransport.Bus);     // ← prod; async RabbitMQ dispatch
 ```
-Handlers don't know or care. Same code path either way.
 
-### 4. Tenant Context
+Handlers don't know or care. Same code path either way. Register consumers separately:
+```csharp
+opts.Transport.WithMediatorConsumers(cfg => cfg.AddConsumer<MyHandler>());
+opts.Transport.WithBusConsumers(cfg => cfg.AddConsumer<MyHandler>());
+```
+
+### 5. Tenant Context
+
 **Ambient Context pattern** backed by `AsyncLocal<TenantContext>`. Flow:
 
 ```
@@ -77,25 +90,35 @@ HTTP request (JWT with tenant_id claim)
   → Postgres RLS policy: USING (tenant_id = current_setting('app.tenant_id')::uuid)
 ```
 
-**Defense in depth:** Cross-tenant reads return zero rows even if the EF filter is missing — both layers must fail for a breach.
+**Defense in depth:** Cross-tenant reads return zero rows even if one layer fails — both EF and RLS must fail.
 
-MassTransit pipeline filter copies the context onto message headers so downstream consumers re-hydrate it identically in their own AsyncLocal.
+MassTransit pipeline filter copies context to message headers so downstream consumers re-hydrate it identically in their own AsyncLocal.
 
-### 5. Saga
-A **long-running orchestrated workflow** coordinating commands across modules with automatic compensation on failure. Example (Phase 5):
+### 6. Pick & Choose Modules
 
-```
-AssociationRegistrationStarted
-  → CreateUser (Identity module)
-    ✓ → InitLedger (Ledger module)
-      ✓ → ProvisionReporting (Reporting module)
-        ✗ Timeout
-      ← RollbackLedger (compensating)
-    ← DeleteUser (compensating)
-  ✗ Registration cancelled
+**Every module is an independent NuGet package.** The Host has zero hard module dependencies. Three load-out patterns:
+
+**Minimal (B2C):**
+```csharp
+// NuGet: SaasBuilder.Host + SaasBuilder.Modules.Billing
+builder.AddSaasBuilderHost(opts => { opts.Modules.AddType<BillingModule>(); });
 ```
 
-Saga state persisted in a dedicated `registration` schema. Compensating commands declared per module. MT state machine (Automatonymous DSL) orchestrates the flow. Visible in Grafana `saga-health.json` dashboard.
+**B2B:**
+```csharp
+// NuGet: + SaasBuilder.Modules.Identity + SaasBuilder.Modules.Webhooks
+opts.Modules.AddType<IdentityModule>();
+opts.Modules.AddType<BillingModule>();
+opts.Modules.AddType<WebhooksModule>();
+```
+
+**Full (Phase 1–5):**
+```csharp
+opts.Modules.ScanAssemblyContaining<IdentityModule>();
+opts.Modules.ScanAssemblyContaining<BillingModule>();
+opts.Modules.ScanAssemblyContaining<WebhooksModule>();
+// ... all Phase 5 modules
+```
 
 ---
 
@@ -108,7 +131,7 @@ mkdir -p src/Modules/YourModule/{YourModule.Contracts,YourModule.Domain,YourModu
 cd src/Modules/YourModule
 ```
 
-### 2. YourModule.Contracts (netstandard2.0;net10.0)
+### 2. YourModule.Contracts (net10.0)
 
 Contracts are immutable records — they cross wire boundaries and must be versionable.
 
@@ -116,12 +139,12 @@ Contracts are immutable records — they cross wire boundaries and must be versi
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Chassis.SharedKernel\Chassis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
   </ItemGroup>
 </Project>
 ```
@@ -287,61 +310,12 @@ public class CreateAccountCommandValidator : AbstractValidator<CreateAccountComm
 }
 ```
 
-**Query handler:**
-```csharp
-namespace YourModule.Application.Accounts.Get;
-
-public class GetAccountBalanceHandler : IConsumer<GetAccountBalanceQuery>
-{
-    private readonly IAccountRepository _accounts;
-    
-    public GetAccountBalanceHandler(IAccountRepository accounts) => _accounts = accounts;
-    
-    public async Task Consume(ConsumeContext<GetAccountBalanceQuery> context)
-    {
-        var query = context.Message;
-        
-        var account = await _accounts.GetByIdAsync(query.AccountId, context.CancellationToken);
-        
-        if (account is null)
-        {
-            await context.RespondAsync<QueryNotFound>(new() { Message = "Account not found" });
-            return;
-        }
-        
-        await context.RespondAsync(account.Balance.Amount);
-    }
-}
-```
-
-**DTOs:**
-```csharp
-namespace YourModule.Application.Accounts;
-
-public record AccountDto(Guid Id, string Name, AccountType Type, decimal BalanceAmount);
-```
-
-**Mapster profile:**
-```csharp
-namespace YourModule.Application.Accounts;
-
-public class AccountMappingProfile : IRegister
-{
-    public void Register(TypeAdapterConfig config)
-    {
-        config.NewConfig<Account, AccountDto>()
-            .Map(dest => dest.BalanceAmount, src => src.Balance.Amount);
-    }
-}
-```
-
 Register in `IModuleStartup`:
 ```csharp
-public void ConfigureServices(IServiceCollection services)
+public void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddScoped<IValidator<CreateAccountCommand>, CreateAccountCommandValidator>();
     services.AddMassTransitConsumer<CreateAccountHandler>();
-    services.AddMassTransitConsumer<GetAccountBalanceHandler>();
     
     TypeAdapterConfig.GlobalSettings.Scan(typeof(CreateAccountHandler).Assembly);
 }
@@ -355,7 +329,7 @@ DbContext, migrations, repositories, external clients.
 ```csharp
 namespace YourModule.Infrastructure.Persistence;
 
-public class YourModuleDbContext : ChassisDbContext
+public class YourModuleDbContext : SaasBuilderDbContext
 {
     public DbSet<Account> Accounts => Set<Account>();
     
@@ -370,20 +344,14 @@ public class YourModuleDbContext : ChassisDbContext
             b.ToTable("accounts", "yourmodule");
             b.HasKey(x => x.Id);
             
-            b.Property(x => x.TenantId)
-                .IsRequired();
-            b.Property(x => x.Name)
-                .HasMaxLength(100)
-                .IsRequired();
-            b.Property(x => x.Type)
-                .HasConversion<string>()
-                .IsRequired();
+            b.Property(x => x.TenantId).IsRequired();
+            b.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            b.Property(x => x.Type).HasConversion<string>().IsRequired();
             
-            // ChassisDbContext auto-applies global query filter for TenantId
+            // SaasBuilderDbContext auto-applies global query filter for TenantId
             b.HasQueryFilter(x => x.TenantId == EF.Property<Guid>("__tenant_id__"));
             
-            b.HasIndex(x => new { x.TenantId, x.Name })
-                .IsUnique();
+            b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
         });
     }
 }
@@ -427,14 +395,10 @@ namespace YourModule.Api;
 
 public class YourModuleStartup : IModuleStartup
 {
-    public string ModuleName => "YourModule";
-    
-    public void ConfigureServices(IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         services.AddDbContext<YourModuleDbContext>(opts =>
-            opts.UseNpgsql(services.BuildServiceProvider()
-                .GetRequiredService<IConfiguration>()
-                .GetConnectionString("DefaultConnection")));
+            opts.UseNpgsql(config.GetConnectionString("DefaultConnection")));
         
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IValidator<CreateAccountCommand>, CreateAccountCommandValidator>();
@@ -443,7 +407,7 @@ public class YourModuleStartup : IModuleStartup
         TypeAdapterConfig.GlobalSettings.Scan(typeof(YourModuleStartup).Assembly);
     }
     
-    public void MapEndpoints(IEndpointRouteBuilder routes)
+    public void Configure(IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/v1/yourmodule")
             .WithOpenApi()
@@ -452,8 +416,7 @@ public class YourModuleStartup : IModuleStartup
         group.MapPost("/accounts", CreateAccountAsync)
             .Produces<AccountDto>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-            .WithName("CreateAccount")
-            .WithSummary("Create a new account");
+            .WithName("CreateAccount");
         
         group.MapGet("/accounts/{id}", GetAccountAsync)
             .Produces<AccountDto>()
@@ -463,7 +426,7 @@ public class YourModuleStartup : IModuleStartup
     
     private static async Task<IResult> CreateAccountAsync(
         CreateAccountRequest request,
-        IModuleDispatcher dispatcher,
+        IScopedMediator mediator,
         ITenantContextAccessor tenantContext,
         CancellationToken ct)
     {
@@ -471,21 +434,18 @@ public class YourModuleStartup : IModuleStartup
             ?? throw new UnauthorizedAccessException("No tenant context");
         
         var command = new CreateAccountCommand(tenantId, request.Name, request.Type);
-        
-        // Validation via MT pipeline filter
-        await dispatcher.SendAsync<CreateAccountCommand, Unit>(command, ct);
+        await mediator.Send(command, ct);
         
         return Results.Created($"/api/v1/yourmodule/accounts/{command.Id}", null);
     }
     
     private static async Task<IResult> GetAccountAsync(
         Guid id,
-        IModuleDispatcher dispatcher,
+        IScopedMediator mediator,
         CancellationToken ct)
     {
         var query = new GetAccountBalanceQuery(Guid.Empty, id);
-        // Note: query handler returns Account DTO via Mapster
-        var result = await dispatcher.SendAsync<GetAccountBalanceQuery, AccountDto?>(query, ct);
+        var result = await mediator.Send(query, ct);
         
         return result is null
             ? Results.NotFound()
@@ -498,9 +458,9 @@ public record CreateAccountRequest(string Name, AccountType Type);
 
 ### 7. Add to solution and migrations
 
-**Add projects to Chassis.sln:**
+**Add projects to SaasBuilder.sln:**
 ```bash
-dotnet sln Chassis.sln add src/Modules/YourModule/*/*.csproj
+dotnet sln SaasBuilder.sln add src/Modules/YourModule/*/*.csproj
 ```
 
 **Create migrations:**
@@ -526,7 +486,7 @@ CREATE INDEX idx_accounts_tenant_id ON yourmodule.accounts (tenant_id);
 CREATE UNIQUE INDEX idx_accounts_tenant_name ON yourmodule.accounts (tenant_id, name);
 ```
 
-Create `V2__rls_policies.sql` using the template from `migrations/_template/rls-policy.sql`:
+Create `V2__rls_policies.sql`:
 ```sql
 ALTER TABLE yourmodule.accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE yourmodule.accounts FORCE ROW LEVEL SECURITY;
@@ -538,7 +498,7 @@ CREATE POLICY tenant_isolation ON yourmodule.accounts
 
 ### 8. Add NetArchTest rule
 
-In `tests/Chassis.ArchitectureTests/YourModuleArchTests.cs`:
+In `tests/SaasBuilder.ArchitectureTests/YourModuleArchTests.cs`:
 
 ```csharp
 [Fact]
@@ -565,193 +525,38 @@ dotnet test
 
 ---
 
-## How to Add a Command Handler
-
-Recipe: MassTransit consumer (IConsumer<TCommand>), validator, registration.
-
-**Example: Post a ledger transaction.**
-
-1. **Define the command** in `Ledger.Contracts/Commands/PostTransactionCommand.cs`:
-```csharp
-public record PostTransactionCommand(
-    Guid TenantId,
-    Guid AccountId,
-    decimal Amount,
-    string Description) : ICommand;
-```
-
-2. **Write the validator** in `Ledger.Application/PostTransaction/PostTransactionCommandValidator.cs`:
-```csharp
-public class PostTransactionCommandValidator : AbstractValidator<PostTransactionCommand>
-{
-    public PostTransactionCommandValidator()
-    {
-        RuleFor(x => x.Amount)
-            .GreaterThan(0).WithMessage("Amount must be positive");
-        
-        RuleFor(x => x.Description)
-            .NotEmpty().WithMessage("Description is required")
-            .MaximumLength(255);
-    }
-}
-```
-
-3. **Implement the handler** in `Ledger.Application/PostTransaction/PostTransactionHandler.cs`:
-```csharp
-public class PostTransactionHandler : IConsumer<PostTransactionCommand>
-{
-    private readonly ILedgerRepository _ledger;
-    private readonly ITenantContextAccessor _tenantContext;
-    private readonly IPublishEndpoint _publishEndpoint;
-    
-    public PostTransactionHandler(
-        ILedgerRepository ledger,
-        ITenantContextAccessor tenantContext,
-        IPublishEndpoint publishEndpoint)
-    {
-        _ledger = ledger;
-        _tenantContext = tenantContext;
-        _publishEndpoint = publishEndpoint;
-    }
-    
-    public async Task Consume(ConsumeContext<PostTransactionCommand> context)
-    {
-        var command = context.Message;
-        
-        if (_tenantContext.Current?.TenantId != command.TenantId)
-            throw new UnauthorizedAccessException("Tenant mismatch");
-        
-        var account = await _ledger.GetAccountAsync(command.AccountId, context.CancellationToken);
-        if (account is null)
-        {
-            await context.RespondAsync<CommandNotFound>(new() { Message = "Account not found" });
-            return;
-        }
-        
-        var posting = Posting.Create(account.Id, command.Amount, command.Description);
-        account.Post(posting);
-        
-        _ledger.UpdateAccount(account);
-        await _ledger.SaveChangesAsync(context.CancellationToken);
-        
-        await _publishEndpoint.Publish(
-            new TransactionPosted(
-                account.TenantId,
-                posting.Id,
-                account.Id,
-                command.Amount,
-                DateTimeOffset.UtcNow),
-            context.CancellationToken);
-        
-        await context.RespondAsync(new PostTransactionResponse(posting.Id));
-    }
-}
-```
-
-4. **Register in IModuleStartup** (Ledger.Api):
-```csharp
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddScoped<IValidator<PostTransactionCommand>, PostTransactionCommandValidator>();
-    services.AddMassTransitConsumer<PostTransactionHandler>();
-    // ... other registrations
-}
-```
-
-5. **Map the endpoint** (Ledger.Api):
-```csharp
-public void MapEndpoints(IEndpointRouteBuilder routes)
-{
-    routes.MapGroup("/api/v1/ledger")
-        .RequireAuthorization()
-        .MapPost("/transactions", PostTransactionAsync)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
-}
-
-private static async Task<IResult> PostTransactionAsync(
-    PostTransactionRequest request,
-    IModuleDispatcher dispatcher,
-    ITenantContextAccessor tenantContext,
-    CancellationToken ct)
-{
-    var tenantId = tenantContext.Current?.TenantId
-        ?? throw new UnauthorizedAccessException();
-    
-    var command = new PostTransactionCommand(
-        tenantId,
-        request.AccountId,
-        request.Amount,
-        request.Description);
-    
-    await dispatcher.SendAsync<PostTransactionCommand, Unit>(command, ct);
-    
-    return Results.NoContent();
-}
-```
-
-The validator runs automatically via MassTransit's pipeline filter. If validation fails, the framework returns a 400 ProblemDetails response.
-
----
-
-## How to Add a Query Handler
-
-Same pattern: `IConsumer<TQuery>`, validator (optional for queries), registration.
-
-**Example: Get account balance.**
-
-```csharp
-public class GetAccountBalanceHandler : IConsumer<GetAccountBalanceQuery>
-{
-    private readonly LedgerDbContext _context;
-    private readonly ITenantContextAccessor _tenantContext;
-    
-    public GetAccountBalanceHandler(
-        LedgerDbContext context,
-        ITenantContextAccessor tenantContext)
-    {
-        _context = context;
-        _tenantContext = tenantContext;
-    }
-    
-    public async Task Consume(ConsumeContext<GetAccountBalanceQuery> context)
-    {
-        var query = context.Message;
-        
-        var account = await _context.Accounts
-            .AsNoTracking()  // ← Essential for read-only queries
-            .Where(a => a.Id == query.AccountId)
-            .Select(a => new { a.Id, a.Name, a.Balance })
-            .FirstOrDefaultAsync(context.CancellationToken);
-        
-        if (account is null)
-        {
-            await context.RespondAsync<QueryNotFound>(new());
-            return;
-        }
-        
-        await context.RespondAsync(new GetAccountBalanceResponse(account.Balance));
-    }
-}
-```
-
-**Key rule:** Always use `AsNoTracking()` for read-only queries. Never return EF entities directly — project to DTOs with `.Select()`.
-
----
-
 ## Tenancy Cookbook
 
 ### Understanding the flow
 
 When a request arrives with a JWT:
 1. `JwtBearer` middleware validates and extracts claims
-2. `TenantMiddleware` reads `tenant_id` claim and calls `TenantContextAccessor.Current = new TenantContext(...)`
+2. `TenantMiddleware` reads `tenant_id` claim and calls `ITenantContextAccessor.Current = new TenantContext(...)`
 3. AsyncLocal now holds the tenant context for this async call tree
 4. Handler accesses context via `ITenantContextAccessor.Current`
 5. EF Core global query filter auto-applies `WHERE tenant_id = <from-context>`
 6. Before executing SQL, `TenantConnectionInterceptor` issues `SET LOCAL app.tenant_id = '<guid>'`
 7. Postgres RLS policy evaluates: `USING (tenant_id = current_setting('app.tenant_id')::uuid)`
 8. Result: double filtering — cross-tenant reads return zero rows even if one layer fails
+
+### Tenant resolver pipeline
+
+The SDK ships with pluggable resolvers invoked in priority order. Default order:
+- JWT claim (priority 100)
+- HTTP header (priority 50)
+- URL path (priority 30)
+- Subdomain (priority 20)
+- API key (priority 10, stubbed in Phase 2)
+
+Register custom resolvers:
+```csharp
+opts.Tenancy.Resolvers.Use<CustomTenantResolver>(priority: 150);
+```
+
+Anonymous bypass list (default: `/health`, `/openapi`, `/.well-known`, `/connect`, `/scalar`):
+```csharp
+opts.Tenancy.AnonymousBypass.Add("/custom-public-endpoint");
+```
 
 ### Do's and Don'ts
 
@@ -766,38 +571,6 @@ When a request arrives with a JWT:
 - Use `Task.Run` inside handlers (breaks AsyncLocal flow) — if truly needed, use `Task.Factory.StartNew` with `TaskScheduler.Default`
 - Omit the EF Core global query filter — RLS is the second line of defense, not the first
 - Hardcode tenant_id in middleware or filters — it propagates via MT headers automatically
-
-### Adding RLS to a new table
-
-1. Create the table with a `tenant_id UUID NOT NULL` column:
-```sql
-CREATE TABLE mymodule.mytable (
-    id UUID PRIMARY KEY,
-    tenant_id UUID NOT NULL,
-    ...
-);
-```
-
-2. Add a migration file `V#__rls_policies.sql`:
-```sql
-ALTER TABLE mymodule.mytable ENABLE ROW LEVEL SECURITY;
-ALTER TABLE mymodule.mytable FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation ON mymodule.mytable
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
-    WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
-```
-
-3. Register the table with the chassis in `YourModuleDbContext.OnModelCreating`:
-```csharp
-modelBuilder.Entity<MyEntity>(b =>
-{
-    // ... configure properties
-    b.HasQueryFilter(x => x.TenantId == EF.Property<Guid>("__tenant_id__"));
-});
-```
-
-4. NetArchTest will fail the build if you forget — see Phase 9.
 
 ### Testing tenant boundaries
 
@@ -834,15 +607,23 @@ public class TenantIsolationTests : IClassFixture<CustomWebApplicationFactory>
 
 ---
 
-## Switching a Module Edge from In-Proc to Bus
+## Transport and Messaging
+
+### Switching between In-Process and Bus
 
 **One change. That's it.**
 
-In `appsettings.json` or environment variables:
+In code:
+```csharp
+opts.UseTransport(SaasTransport.InProc);  // dev
+opts.UseTransport(SaasTransport.Bus);     // prod (RabbitMQ)
+```
+
+Or via appsettings:
 ```json
 {
-  "Dispatch": {
-    "Ledger→Reporting": "inproc"  // ← Change to "bus"
+  "SaasBuilder": {
+    "Transport": "Bus"
   }
 }
 ```
@@ -853,7 +634,29 @@ MassTransit will:
 
 No business logic changes. Same validator pipeline. Same domain events. Same error handling.
 
-This is the core feature of Approach A+ — the abstraction isolates the transport detail.
+### Consumer registration
+
+**In-process (Mediator):**
+```csharp
+opts.Transport.WithMediatorConsumers(cfg =>
+{
+    cfg.AddConsumer<CreateUserHandler>();
+    cfg.AddConsumer<PostTransactionHandler>();
+});
+```
+
+**Out-of-process (Bus):**
+```csharp
+opts.Transport.WithBusConsumers(cfg =>
+{
+    cfg.AddConsumer<CreateUserHandler>(c =>
+        c.UseMessageRetry(r => r.Immediate(3)));
+    cfg.AddConsumer<PostTransactionHandler>(c =>
+        c.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromMilliseconds(100), ...)));
+});
+```
+
+Register sagas (orchestrated workflows) in the Bus configuration only.
 
 ---
 
@@ -866,7 +669,7 @@ This is the core feature of Approach A+ — the abstraction isolates the transpo
 - Compensation (rollback) is needed if any step fails
 - You want to orchestrate the order and retry policy
 
-**Example: Association registration (Phase 5) →**
+**Example: Registration workflow (Phase 5):**
 ```
 1. CreateUser (Identity)
 2. InitLedger (Ledger)
@@ -883,80 +686,108 @@ This is the core feature of Approach A+ — the abstraction isolates the transpo
 ```csharp
 namespace Registration.Application.AssociationRegistration;
 
-public class AssociationRegistrationSaga :
-    SagaStateMachine<AssociationRegistrationState>
+public class RegistrationSaga :
+    SagaStateMachine<RegistrationSagaState>
 {
     public State Started { get; set; }
     public State UserCreated { get; set; }
     public State LedgerInitialized { get; set; }
-    public State ReportingProvisioned { get; set; }
     public State Completed { get; set; }
     public State Faulted { get; set; }
     
-    public Event<AssociationRegistrationStarted> StartRegistration { get; set; }
+    public Event<RegistrationStartedEvent> StartRegistration { get; set; }
     public Event<UserCreatedEvent> UserCreated_Event { get; set; }
-    public Event<LedgerInitializedEvent> LedgerInitialized_Event { get; set; }
-    public Event<ReportingProvisionedEvent> ReportingProvisioned_Event { get; set; }
     public Event<SagaTimeoutExpired> Timeout { get; set; }
     
-    public AssociationRegistrationSaga()
+    public RegistrationSaga()
     {
-        // Define state transitions
         Initially(
             When(StartRegistration)
-                .Then(ctx => {
-                    ctx.Saga.CorrelationId = ctx.Message.CorrelationId;
-                    ctx.Saga.TenantId = ctx.Message.TenantId;
-                })
-                .PublishAsync(ctx => ctx.Init<CreateUserCommand>(
-                    new() {
-                        TenantId = ctx.Message.TenantId,
-                        Email = ctx.Message.Email
-                    }))
+                .Then(ctx => ctx.Saga.CorrelationId = ctx.Message.CorrelationId)
+                .PublishAsync(ctx => ctx.Init<CreateUserCommand>(new() { ... }))
                 .TransitionTo(Started));
         
         During(Started,
             When(UserCreated_Event)
-                .Then(ctx => ctx.Saga.UserId = ctx.Message.UserId)
-                .PublishAsync(ctx => ctx.Init<InitLedgerCommand>(
-                    new() {
-                        TenantId = ctx.Message.TenantId,
-                        UserId = ctx.Message.UserId
-                    }))
+                .PublishAsync(ctx => ctx.Init<InitLedgerCommand>(new() { ... }))
                 .TransitionTo(UserCreated));
         
         During(UserCreated,
-            When(LedgerInitialized_Event)
-                .PublishAsync(ctx => ctx.Init<ProvisionReportingCommand>(
-                    new() {
-                        TenantId = ctx.Message.TenantId,
-                        UserId = ctx.Message.UserId
-                    }))
-                .TransitionTo(LedgerInitialized));
-        
-        During(LedgerInitialized,
-            When(ReportingProvisioned_Event)
-                .TransitionTo(Completed),
             When(Timeout)
-                .Then(ctx => {
-                    // Compensate in reverse
-                })
-                .PublishAsync(ctx => ctx.Init<UnprovisionReportingCommand>(...))
+                .PublishAsync(ctx => ctx.Init<RollbackCommand>(...))
                 .TransitionTo(Faulted));
     }
 }
 
-public class AssociationRegistrationState : SagaStateMachineInstance, IVersionedSagaState
+public class RegistrationSagaState : SagaStateMachineInstance, IVersionedSagaState
 {
     public Guid CorrelationId { get; set; }
     public string CurrentState { get; set; }
     public Guid TenantId { get; set; }
-    public Guid UserId { get; set; }
     public int Version { get; set; }
 }
 ```
 
-Saga state persisted in `registration` schema. Each step is a compensating command in reverse. Visible in Grafana.
+Saga state persisted in a dedicated `registration` schema. Each step is a compensating command in reverse. Visible in Grafana.
+
+---
+
+## Phase 5 Modules: Deferred Features
+
+All Phase 5 modules (Notifications, Files, Jobs, Audit, Webhooks, Search, Realtime) ship with abstractions + default implementations. Deferred features are clearly marked with `TODO(Phase X.Y)` in code. Key stubbed features:
+
+### Identity (Phase 2)
+- SAML 2.0 per-org (Phase 2.7)
+- SCIM 2.0 inbound provisioning (Phase 2.8)
+- MFA / TOTP / WebAuthn (Phase 2.2)
+- Social login (Phase 2.3)
+- API keys / M2M (Phase 2.9)
+- Impersonation (Phase 2.10)
+
+### Tenancy (Phase 3)
+- Schema-per-tenant (Phase 3.1)
+- Database-per-tenant (Phase 3.1)
+- Stamp routing (Phase 3.1)
+- KMS adapters (Phase 3.4)
+- Encryption codecs (Phase 3.4)
+
+### Billing (Phase 4)
+- Stripe adapter (Phase 4.1)
+- Paddle adapter (Phase 4.1)
+- Lemon Squeezy adapter (Phase 4.1)
+- Chargebee adapter (Phase 4.1)
+- LaunchDarkly / Unleash feature flags (Phase 4.9)
+
+### Notifications (Phase 5)
+- SendGrid adapter (Phase 5.1)
+- AWS SES adapter (Phase 5.1)
+- Postmark adapter (Phase 5.1)
+- Twilio SMS (Phase 5.1)
+
+### Files (Phase 5)
+- Azure Blob Storage (Phase 5.2)
+- AWS S3 (Phase 5.2)
+- Google Cloud Storage (Phase 5.2)
+
+### Jobs (Phase 5)
+- Hangfire adapter (Phase 5.3)
+- Quartz.NET adapter (Phase 5.3)
+
+### Audit (Phase 5)
+- Splunk HEC forwarder (Phase 5.4)
+- Datadog forwarder (Phase 5.4)
+- Syslog forwarder (Phase 5.4)
+- Merkle-style hash chain storage (Phase 5.4)
+
+### Search (Phase 5)
+- Algolia adapter (Phase 5.6)
+- Meilisearch adapter (Phase 5.6)
+- Typesense adapter (Phase 5.6)
+
+### Realtime (Phase 5)
+- Redis SignalR backplane (Phase 5.7)
+
+See code annotations for specifics: `grep -r "TODO(Phase" src/` or `docs/TASK_LIST.md`.
 
 ---
 
@@ -978,7 +809,7 @@ See `.claude/rules/testing.md` for the complete policy. Summary:
 | Bug fix | 1 regression test | 1 |
 | Refactor (existing coverage) | 0 new tests | 0 |
 
-**Integration tests** (highest value): `WebApplicationFactory` + `Testcontainers`
+**Integration tests** (highest value): `WebApplicationFactory<Program>` + `Testcontainers`
 ```csharp
 [Fact]
 public async Task PostTransaction_WithValidRequest_Returns204()
@@ -995,6 +826,57 @@ public async Task PostTransaction_WithValidRequest_Returns204()
 **Domain tests** (targeted): Entity invariants only
 
 Banned patterns: FluentValidation echo tests, EF Core plumbing tests, over-mocked unit tests, happy-path duplication.
+
+**Cross-tenant leak test required** for every new tenant-scoped feature. See test templates in `tests/SaasBuilder.IntegrationTests/Phase*/`.
+
+---
+
+## Observability
+
+### Key metrics to watch
+
+| Meter | What it means | Alert threshold |
+|-------|---------------|-----------------|
+| `saasbuilder_commands_duration_seconds{module,command}` | Handler latency | p95 > 200 ms |
+| `saasbuilder_outbox_lag_seconds{module}` | Time from DB commit to bus delivery | p99 > 500 ms |
+| `saasbuilder_outbox_depth{module}` | Undelivered messages in outbox table | > 1000 |
+| `saasbuilder_rls_denials_total{module,table}` | RLS policy rejections | > 0 (investigate) |
+| `saasbuilder_saga_active_count{saga}` | In-flight sagas | > 1000 (saturation) |
+| `saasbuilder_module_load_duration_seconds{module}` | Startup time per module | > 5 s (slow loader) |
+
+### Dashboards
+
+Grafana dashboards are JSON-provisioned under `deploy/grafana/provisioning/dashboards/`:
+- `saasbuilder-overview.json` — health traffic light per module
+- `module-latency.json` — per-module p50/p95/p99
+- `saga-health.json` — saga states, time-in-state, failures
+- `rls-denial-rate.json` — multi-tenant isolation health
+- `outbox-lag.json` — delivery SLO tracking
+
+### Adding a new meter to a module
+
+In your handler, use `System.Diagnostics.Metrics.Meter`:
+
+```csharp
+private static readonly Meter _meter = new("YourModule.Application", "1.0.0");
+private static readonly Counter<long> _transactionsProcessed = 
+    _meter.CreateCounter<long>("ledger.transactions.processed");
+
+public async Task Consume(ConsumeContext<PostTransactionCommand> context)
+{
+    // ... business logic
+    
+    _transactionsProcessed.Add(1, new KeyValuePair<string, object?>(
+        "tenant_id", context.Message.TenantId));
+}
+```
+
+Register the meter in `Program.cs`:
+```csharp
+services.AddOpenTelemetry()
+    .WithMetrics(b => b
+        .AddMeter("YourModule.Application"));
+```
 
 ---
 
@@ -1024,57 +906,6 @@ open http://localhost:3000
 | Saga completion p99 | < 2 s |
 | Outbox lag p99 | < 500 ms |
 | Error rate (5xx) | < 0.5% |
-
-See `docs/IMPLEMENTATION_PLAN.md` §7.4 for full table and chaos overlays.
-
----
-
-## Observability
-
-### Key metrics to watch
-
-| Meter | What it means | Alert threshold |
-|-------|---------------|-----------------|
-| `chassis_commands_duration_seconds{module,command}` | Handler latency | p95 > 200 ms |
-| `chassis_outbox_lag_seconds{module}` | Time from DB commit to bus delivery | p99 > 500 ms |
-| `chassis_outbox_depth{module}` | Undelivered messages in outbox table | > 1000 |
-| `chassis_rls_denials_total{module,table}` | RLS policy rejections | > 0 (investigate) |
-| `chassis_saga_active_count{saga}` | In-flight sagas | > 1000 (saturation) |
-| `chassis_module_load_duration_seconds{module}` | Startup time per module | > 5 s (slow loader) |
-
-### Dashboards
-
-Grafana dashboards are JSON-provisioned under `deploy/grafana/provisioning/dashboards/`:
-- `chassis-overview.json` — health traffic light per module
-- `module-latency.json` — per-module p50/p95/p99
-- `saga-health.json` — saga states, time-in-state, failures
-- `rls-denial-rate.json` — multi-tenant isolation health
-- `outbox-lag.json` — delivery SLO tracking
-
-### Adding a new meter to a module
-
-In your handler, inject `IMetricsCollector` (or use `System.Diagnostics.Metrics.Meter` directly):
-
-```csharp
-private static readonly Meter _meter = new("YourModule.Application", "1.0.0");
-private static readonly Counter<long> _transactionsProcessed = 
-    _meter.CreateCounter<long>("ledger.transactions.processed");
-
-public async Task Consume(ConsumeContext<PostTransactionCommand> context)
-{
-    // ... business logic
-    
-    _transactionsProcessed.Add(1, new KeyValuePair<string, object?>(
-        "tenant_id", context.Message.TenantId));
-}
-```
-
-Register the meter in `Program.cs`:
-```csharp
-services.AddOpenTelemetry()
-    .WithMetrics(b => b
-        .AddMeter("YourModule.Application"));
-```
 
 ---
 
@@ -1143,16 +974,16 @@ git push --tags
 
 ### Outbox lag growing
 
-**Symptoms:** `chassis_outbox_lag_seconds` p99 > 500 ms and growing.
+**Symptoms:** `saasbuilder_outbox_lag_seconds` p99 > 500 ms and growing.
 
 **Diagnosis:**
 1. Is RabbitMQ alive? `rabbitmqctl ping`
 2. Is the consumer running? Check `rabbitmqctl list_consumers`
 3. Is the outbox table locked? `SELECT * FROM pg_locks WHERE relation = (SELECT oid FROM pg_class WHERE relname = 'outbox')`
-4. What's in the DLQ? Check `Ledger.TransactionPosted.DLQ` queue
+4. What's in the DLQ? Check queues in RabbitMQ dashboard
 
 **Fix:**
-- Restart the delivery service: `dotnet run --project src/Chassis.Host`
+- Restart the delivery service: `dotnet run --project samples/SaasBuilder.Sample.Host`
 - Increase `PrefetchCount` in appsettings if consumer is starved
 - Check Grafana `outbox-lag.json` dashboard
 
@@ -1172,51 +1003,33 @@ git push --tags
 - Sync server clocks
 - Check ProblemDetails response body for the specific failure reason
 
-### Saga stuck
-
-**Symptoms:** Saga is in `UserCreated` state for hours; no progress.
-
-**Diagnosis:**
-1. Query saga state: `SELECT * FROM registration.association_registrations WHERE correlation_id = '<id>'`
-2. Is the next event published? Check RabbitMQ queue depth
-3. Is the consumer crashed? Check logs
-4. Did it timeout? Check `Timeout` event in saga
-
-**Fix:**
-- Replay the next command: publish `InitLedgerCommand` with the correct saga CorrelationId
-- Check Grafana `saga-health.json` for failure counts
-- Inspect saga-health logs for the stuck saga's correlation_id
-
-### NetArchTest failing on a new module
-
-**Symptoms:** Build fails: "YourModule.Domain must not reference MassTransit"
-
-**Diagnosis:** Domain layer has a using statement for `MassTransit`, EF Core, or another infra library.
-
-**Fix:** Move the problematic code to Application or Infrastructure layer. Domain is intentionally isolated.
-
 ---
 
-## Keeping This Handbook Up to Date
+## PR Checklist
 
-When architecture changes, update this document:
+Before opening a pull request:
 
-- **§2 Mental model** — when `IModuleStartup`, `IModuleDispatcher`, or tenancy flow changes
-- **§3 Module recipe** — when Clean Architecture shape or scaffolding changes
-- **§4/5 Command/query handlers** — when MassTransit consumer API or validation pattern changes
-- **§6 Tenancy** — when context propagation or RLS policy template changes
-- **§10 Observability** — when new chassis meters are added
-- **§11 Publishing** — when NuGet feed or versioning strategy changes
-
-Suggested cadence: review this handbook at each phase completion. If drift is detected, open a task.
+- [ ] `dotnet build SaasBuilder.sln -warnaserror` passes with zero warnings
+- [ ] `dotnet test` passes (note: Testcontainers tests require Docker)
+- [ ] Architecture tests pass: `dotnet test tests/SaasBuilder.ArchitectureTests/`
+  - Every tenant-scoped entity has a CREATE POLICY in `migrations/{module}/*.sql`
+- [ ] New `IBlobStore`, `INotificationDispatcher`, `IJobScheduler`, etc. implementations log a startup WARNING when env vars are missing (silent degradation, not crash)
+- [ ] New tenant-scoped feature has a cross-tenant leak integration test
+- [ ] New endpoints documented in Swagger/Scalar
+- [ ] Request DTOs have FluentValidation validators
+- [ ] New endpoints have `[Authorize]` or explicit `[AllowAnonymous]`
+- [ ] EF Core migrations reviewed for correctness (no raw SQL with user input)
+- [ ] No secrets in source code
+- [ ] No breaking changes to existing API contracts (or versioned)
 
 ---
 
 ## Further Reading
 
 - **`README.md`** (root) — project elevator pitch and quickstart
-- **`docs/IMPLEMENTATION_PLAN.md`** — full architecture, phases, decisions, load-testing strategy, security posture (local repo only, not pushed)
-- **`.claude/memory/decisions.md`** — Approach A+ rationale and consequences
+- **`docs/SAAS_SDK_IMPLEMENTATION_PLAN.md`** — full architecture, phases, decisions, load-testing strategy, security posture
+- **`docs/TASK_LIST.md`** — canonical phase-by-phase task checklist
+- **`.claude/memory/decisions.md`** — design rationale and consequences
 - **`.claude/CLAUDE.md`** — .NET standards, language rules, required project settings
 - **`.claude/rules/backend.md`** — layer boundaries, EF Core rules, validation, UX requirements
 - **`.claude/rules/testing.md`** — test policy, load-bearing filter, test budget per change type
@@ -1224,6 +1037,9 @@ Suggested cadence: review this handbook at each phase completion. If drift is de
 - **Entity Framework Core documentation** — global query filters, interceptors, migrations
 - **OpenIddict documentation** — OIDC flows, token validation, claim customization
 - **OpenTelemetry .NET documentation** — instrumentation, exporters, custom meters
+- **OpenFeature specification** — feature flagging interface (Phase 4)
+- **Standard Webhooks specification** — `webhook-id`, `webhook-timestamp`, `webhook-signature` (Phase 5)
+- **OWASP ASVS Level 2** — security requirements for multi-tenant SaaS
 
 ---
 

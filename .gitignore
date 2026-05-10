@@ -7,8 +7,13 @@
 # -----------------------------------------------------------------------------
 # Project-specific
 # -----------------------------------------------------------------------------
-# Local-only implementation plan and working docs (not committed per team policy)
-docs/
+# Working docs are local-only by default; user-facing guides are committed.
+docs/*
+!docs/USER_GUIDE.md
+!docs/DEPLOYMENT_GUIDE.md
+!docs/SAAS_SDK_IMPLEMENTATION_PLAN.md
+!docs/SAAS_BUILDER_REVIEW.md
+!docs/TASK_LIST.md
 
 # Load-test artifacts and local observability volumes
 loadtests/results/
