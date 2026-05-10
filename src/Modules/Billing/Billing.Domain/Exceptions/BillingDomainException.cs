@@ -8,6 +8,12 @@ namespace Billing.Domain.Exceptions;
 /// </summary>
 public sealed class BillingDomainException : Exception
 {
+    /// <summary>Initializes a new instance with default message.</summary>
+    public BillingDomainException()
+        : base("A billing domain invariant was violated.")
+    {
+    }
+
     /// <summary>Initializes a new instance with the specified message.</summary>
     public BillingDomainException(string message)
         : base(message)

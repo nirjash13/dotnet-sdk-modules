@@ -2,6 +2,7 @@ using Audit.Application.Abstractions;
 using Audit.Infrastructure.Loggers;
 using Audit.Infrastructure.Options;
 using Audit.Infrastructure.Persistence;
+using Audit.Infrastructure.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +46,8 @@ public static class AuditInfrastructureExtensions
             {
                 services.AddScoped<IAuditLogger, EfCoreAuditLogger>();
             }
+
+            services.AddScoped<IAuditEventQuery, EfCoreAuditEventQuery>();
         }
         else
         {

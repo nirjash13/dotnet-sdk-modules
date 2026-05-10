@@ -141,7 +141,7 @@ public sealed class Subscription : ITenantScoped
             throw new BillingDomainException("New planId must not be empty.");
         }
 
-        if (Status is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing))
+        if (Status is not SubscriptionStatus.Active and not SubscriptionStatus.Trialing)
         {
             throw new BillingDomainException("Plan can only be changed on active or trialing subscriptions.");
         }

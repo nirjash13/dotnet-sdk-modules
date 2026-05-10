@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup Label="Phase 5 modules under test">
+    <!-- Notifications -->
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Application\Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj" />
+    <!-- Files -->
+    <ProjectReference Include="..\..\src\Modules\Files\Files.Application\Files.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Files\Files.Infrastructure\Files.Infrastructure.csproj" />
+    <!-- Jobs -->
+    <ProjectReference Include="..\..\src\Modules\Jobs\Jobs.Application\Jobs.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Jobs\Jobs.Infrastructure\Jobs.Infrastructure.csproj" />
+    <!-- Audit -->
+    <ProjectReference Include="..\..\src\Modules\Audit\Audit.Application\Audit.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj" />
+    <!-- Webhooks -->
+    <ProjectReference Include="..\..\src\Modules\Webhooks\Webhooks.Application\Webhooks.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\Webhooks.Domain\Webhooks.Domain.csproj" />
+    <!-- Search -->
+    <ProjectReference Include="..\..\src\Modules\Search\Search.Application\Search.Application.csproj" />
+    <!-- Realtime -->
+    <ProjectReference Include="..\..\src\Modules\Realtime\Realtime.Application\Realtime.Application.csproj" />
+    <!-- SharedKernel -->
+    <ProjectReference Include="..\..\src\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test framework">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging for DI setup in tests">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;IDE0032;xUnit1030</NoWarn>
+  </PropertyGroup>
+
+</Project>

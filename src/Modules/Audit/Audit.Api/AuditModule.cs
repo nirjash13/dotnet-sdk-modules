@@ -1,18 +1,15 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Audit.Application.Abstractions;
-using Audit.Contracts;
 using Audit.Infrastructure.Extensions;
-using Audit.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SaasBuilder.SharedKernel.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Audit.Api;
 
@@ -40,7 +37,8 @@ public sealed class AuditModule : IModuleStartup
     }
 
     private static async Task<IResult> GetEventsAsync(
-        AuditDbContext db,
+        IAuditEventQuery query,
+        ITenantContextAccessor tenantAccessor,
         DateTimeOffset? from = null,
         DateTimeOffset? to = null,
         string? actor = null,
@@ -49,47 +47,15 @@ public sealed class AuditModule : IModuleStartup
         int pageSize = 50,
         CancellationToken ct = default)
     {
-        IQueryable<Audit.Infrastructure.Entities.AuditEntry> query = db.AuditEntries
-            .AsNoTracking()
-            .OrderByDescending(e => e.Timestamp);
-
-        if (from.HasValue)
+        ITenantContext? ctx = tenantAccessor.Current;
+        if (ctx is null)
         {
-            query = query.Where(e => e.Timestamp >= from.Value);
+            return Results.Unauthorized();
         }
 
-        if (to.HasValue)
-        {
-            query = query.Where(e => e.Timestamp <= to.Value);
-        }
-
-        if (!string.IsNullOrEmpty(actor))
-        {
-            query = query.Where(e => e.ActorId == actor);
-        }
-
-        if (!string.IsNullOrEmpty(resource))
-        {
-            query = query.Where(e => e.ResourceType == resource);
-        }
-
-        int total = await query.CountAsync(ct).ConfigureAwait(false);
-
-        System.Collections.Generic.List<AuditEventDto> items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(e => new AuditEventDto(
-                e.Id,
-                e.TenantId,
-                e.ActorId,
-                e.Action,
-                e.ResourceType,
-                e.ResourceId,
-                e.IpAddress,
-                e.CorrelationId,
-                e.Timestamp))
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        (int total, System.Collections.Generic.IReadOnlyList<Audit.Contracts.AuditEventDto> items) =
+            await query.QueryAsync(ctx.TenantId, from, to, actor, resource, page, pageSize, ct)
+                .ConfigureAwait(false);
 
         return Results.Ok(new { Total = total, Page = page, PageSize = pageSize, Items = items });
     }

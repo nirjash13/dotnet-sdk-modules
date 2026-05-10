@@ -14,6 +14,10 @@
     <!-- Sample host is the WebApplicationFactory<Program> entry point; SaasBuilder.Host is the library under test -->
     <ProjectReference Include="..\..\samples\SaasBuilder.Sample.Host\SaasBuilder.Sample.Host.csproj" />
     <ProjectReference Include="..\..\src\SaasBuilder.Host\SaasBuilder.Host.csproj" />
+    <!-- Phase 2: Identity module — needed for organization domain tests and RBAC handler tests -->
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Domain\Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
     <!-- Phase 3: Ledger module — needed for seed access (LedgerDbContext, Account) in IDOR test -->
     <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
@@ -23,6 +27,15 @@
     <!-- Phase 5: Registration saga — needed for saga state machine tests -->
     <ProjectReference Include="..\..\src\Modules\Registration\Registration.Application\Registration.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Registration\Registration.Contracts\Registration.Contracts.csproj" />
+    <!-- Phase 4 (new): Billing, Entitlements, FeatureFlags modules -->
+    <ProjectReference Include="..\..\src\Modules\Billing\Billing.Application\Billing.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Entitlements\Entitlements.Domain\Entitlements.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Entitlements\Entitlements.Application\Entitlements.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Entitlements\Entitlements.Infrastructure\Entitlements.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Contracts\FeatureFlags.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Application\FeatureFlags.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\FeatureFlags.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Test framework">
@@ -75,7 +88,7 @@
     <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed project-wide per xUnit1030 rule:
          test methods run in xUnit's synchronization context and must not bypass it.
          InitializeAsync/DisposeAsync are excluded from this rule and use ConfigureAwait(false). -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;IDE0032;xUnit1030</NoWarn>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;IDE0032;xUnit1030</NoWarn>
   </PropertyGroup>
 
 </Project>
