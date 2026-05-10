@@ -56,21 +56,13 @@ public sealed class SaasBuilderOptions
     }
 
     /// <summary>
-    /// Selects the tenant isolation strategy. Shorthand for <c>opts.Tenancy.Use*()</c>.
-    /// Throws <see cref="NotSupportedException"/> for isolation modes not yet implemented.
+    /// Selects the tenant isolation strategy. Shorthand for <c>opts.Tenancy.UseTenancy(isolation)</c>.
+    /// For modes other than <see cref="TenantIsolation.PoolWithRls"/>, a startup warning is logged
+    /// and <see cref="NotSupportedException"/> is thrown on first provider dispatch (not at startup).
     /// </summary>
     public SaasBuilderOptions UseTenancy(TenantIsolation isolation)
     {
-        // Store and validate — AssertSupported is called later during host build.
-        if (isolation != TenantIsolation.PoolWithRls)
-        {
-            throw new NotSupportedException(
-                $"TenantIsolation.{isolation} is not yet implemented. " +
-                "Only PoolWithRls is supported in Phase 1. " +
-                "See Phase 3 of the roadmap for additional isolation modes.");
-        }
-
-        Tenancy.UsePoolWithRls();
+        Tenancy.UseTenancy(isolation);
         return this;
     }
 }

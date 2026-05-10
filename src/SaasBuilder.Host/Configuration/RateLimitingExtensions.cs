@@ -115,7 +115,16 @@ public static class RateLimitingExtensions
 
     private static string ResolvePartitionKey(HttpContext httpContext)
     {
-        // Prefer client_id from form body (OAuth token requests use application/x-www-form-urlencoded).
+        // 1. Per-tenant partition: tenant_id claim (preferred for authenticated API traffic).
+        //    This ensures each tenant's budget is tracked independently of the client IP.
+        string? tenantId = httpContext.User?.FindFirst("tenant_id")?.Value;
+        if (!string.IsNullOrWhiteSpace(tenantId))
+        {
+            return $"tenant:{tenantId}";
+        }
+
+        // 2. OAuth token endpoint: client_id from form body (application/x-www-form-urlencoded).
+        //    OpenIddict token requests carry client_id in the body, not in a JWT claim.
         string? clientId = null;
         if (httpContext.Request.HasFormContentType
             && httpContext.Request.Form.TryGetValue("client_id", out var formValue))
@@ -123,8 +132,12 @@ public static class RateLimitingExtensions
             clientId = formValue.ToString();
         }
 
-        return !string.IsNullOrWhiteSpace(clientId)
-            ? clientId
-            : httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!string.IsNullOrWhiteSpace(clientId))
+        {
+            return $"client:{clientId}";
+        }
+
+        // 3. Fallback: remote IP address.
+        return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 }

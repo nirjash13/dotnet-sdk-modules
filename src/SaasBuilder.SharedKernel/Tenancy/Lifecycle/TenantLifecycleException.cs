@@ -8,14 +8,23 @@ namespace SaasBuilder.SharedKernel.Tenancy.Lifecycle;
 /// </summary>
 public sealed class TenantLifecycleException : Exception
 {
-    /// <summary>Gets the tenant identifier involved in the failed transition.</summary>
-    public Guid TenantId { get; }
+    /// <summary>Initializes a new instance of <see cref="TenantLifecycleException"/>.</summary>
+    public TenantLifecycleException()
+        : base("A tenant lifecycle transition failed.")
+    {
+    }
 
-    /// <summary>Gets the lifecycle operation that failed.</summary>
-    public string Operation { get; }
+    /// <summary>Initializes a new instance of <see cref="TenantLifecycleException"/> with a message.</summary>
+    public TenantLifecycleException(string message)
+        : base(message)
+    {
+    }
 
-    /// <summary>Gets the name of the handler type that threw.</summary>
-    public string HandlerTypeName { get; }
+    /// <summary>Initializes a new instance of <see cref="TenantLifecycleException"/> with a message and inner exception.</summary>
+    public TenantLifecycleException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
 
     /// <summary>
     /// Initializes a new instance of <see cref="TenantLifecycleException"/>.
@@ -37,4 +46,13 @@ public sealed class TenantLifecycleException : Exception
         Operation = operation ?? throw new ArgumentNullException(nameof(operation));
         HandlerTypeName = handlerTypeName ?? throw new ArgumentNullException(nameof(handlerTypeName));
     }
+
+    /// <summary>Gets the tenant identifier involved in the failed transition.</summary>
+    public Guid TenantId { get; }
+
+    /// <summary>Gets the lifecycle operation that failed.</summary>
+    public string? Operation { get; }
+
+    /// <summary>Gets the name of the handler type that threw.</summary>
+    public string? HandlerTypeName { get; }
 }

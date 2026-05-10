@@ -1,10 +1,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
+// HttpContext is only available on net10.0 (ASP.NET Core shared framework).
+// The netstandard2.0 target omits this interface; Host-layer code targets net10.0.
+#if NET5_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 
 namespace SaasBuilder.SharedKernel.Tenancy.Resolution;
 
+#if NET5_0_OR_GREATER
 /// <summary>
 /// Resolves a tenant identifier from an incoming HTTP request.
 /// Multiple resolvers are evaluated in descending <see cref="Priority"/> order;
@@ -35,3 +41,4 @@ public interface ITenantResolver
     /// <returns>The resolved <see cref="Guid"/>, or <see langword="null"/> if this resolver cannot determine the tenant.</returns>
     ValueTask<Guid?> ResolveAsync(HttpContext context, CancellationToken ct = default);
 }
+#endif

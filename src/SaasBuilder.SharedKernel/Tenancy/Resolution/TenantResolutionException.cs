@@ -8,6 +8,12 @@ namespace SaasBuilder.SharedKernel.Tenancy.Resolution;
 /// </summary>
 public sealed class TenantResolutionException : Exception
 {
+    /// <summary>Initializes a new instance of <see cref="TenantResolutionException"/>.</summary>
+    public TenantResolutionException()
+        : base("Tenant could not be resolved for the current request.")
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of <see cref="TenantResolutionException"/> with a
     /// descriptive message about why resolution failed.

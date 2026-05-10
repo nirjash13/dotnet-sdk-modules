@@ -11,9 +11,12 @@ using SaasBuilder.Host.Modules;
 using SaasBuilder.Host.Observability;
 using SaasBuilder.Host.Tenancy;
 using SaasBuilder.Host.Transport;
+using SaasBuilder.Persistence.Tenancy;
+using SaasBuilder.Persistence.Tenancy.Lifecycle;
 using SaasBuilder.SharedKernel.Abstractions;
 using SaasBuilder.SharedKernel.Configuration;
 using SaasBuilder.SharedKernel.Tenancy;
+using SaasBuilder.SharedKernel.Tenancy.Lifecycle;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Sinks.OpenTelemetry;
@@ -90,6 +93,31 @@ public static class SaasBuilderHostExtensions
         // idempotent when the same concrete type is registered — the DI container
         // honours the first registration and ignores duplicates.
         services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
+
+        // ── Tenant isolation — register ITenantResourcesProvider for the chosen mode ──
+        // For deferred modes (non-PoolWithRls), log a startup warning and register the stub.
+        // The stub throws NotSupportedException on first dispatch, not at startup.
+        RegisterTenantResourcesProvider(services, options.Tenancy);
+
+        // ── Tenant resolver pipeline ───────────────────────────────────────────────
+        // Register all configured resolvers. UseDefaults() applies the built-in set when
+        // the caller has not explicitly configured any resolvers.
+        options.Tenancy.Resolvers.UseDefaults(services);
+
+        // ── TenantMiddleware options — snapshot anonymous bypass list ─────────────
+        // Convert the mutable ISet to an immutable snapshot for the middleware.
+        // Registered as singleton so TenantMiddleware constructor resolves IOptions<TenantMiddlewareOptions>.
+        var middlewareOptions = new Tenancy.TenantMiddlewareOptions
+        {
+            AnonymousBypass = new System.Collections.Generic.HashSet<string>(
+                options.Tenancy.AnonymousBypass,
+                StringComparer.OrdinalIgnoreCase),
+        };
+        services.AddSingleton(
+            Microsoft.Extensions.Options.Options.Create(middlewareOptions));
+
+        // ── Tenant lifecycle service ──────────────────────────────────────────────
+        services.AddScoped<ITenantLifecycleService, TenantLifecycleService>();
 
         // ── Authentication — JWT Bearer via Identity module (OpenIddict) ──────────
         services.AddSaasBuilderAuthentication(config, builder.Environment);
@@ -207,5 +235,58 @@ public static class SaasBuilderHostExtensions
         }
 
         return app;
+    }
+
+    /// <summary>
+    /// Registers the appropriate <see cref="ITenantResourcesProvider"/> for the configured
+    /// isolation mode. For deferred modes, registers the stub and logs a warning.
+    /// </summary>
+    private static void RegisterTenantResourcesProvider(
+        IServiceCollection services,
+        SaasBuilderTenancyOptions tenancyOptions)
+    {
+        switch (tenancyOptions.Isolation)
+        {
+            case TenantIsolation.PoolWithRls:
+                services.AddScoped<ITenantResourcesProvider, PoolWithRlsTenantResourcesProvider>();
+                break;
+
+            case TenantIsolation.PoolShared:
+                LogDeferredIsolationMode(services, tenancyOptions.Isolation);
+                services.AddScoped<ITenantResourcesProvider, PoolSharedTenantResourcesProvider>();
+                break;
+
+            case TenantIsolation.SiloedSchema:
+                LogDeferredIsolationMode(services, tenancyOptions.Isolation);
+                services.AddScoped<ITenantResourcesProvider, SiloedSchemaTenantResourcesProvider>();
+                break;
+
+            case TenantIsolation.SiloedDatabase:
+                LogDeferredIsolationMode(services, tenancyOptions.Isolation);
+                services.AddScoped<ITenantResourcesProvider, SiloedDatabaseTenantResourcesProvider>();
+                break;
+
+            case TenantIsolation.SiloedStamp:
+                LogDeferredIsolationMode(services, tenancyOptions.Isolation);
+                services.AddScoped<ITenantResourcesProvider, SiloedStampTenantResourcesProvider>();
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(tenancyOptions),
+                    tenancyOptions.Isolation,
+                    "Unknown TenantIsolation value.");
+        }
+    }
+
+    private static void LogDeferredIsolationMode(
+        IServiceCollection services,
+        TenantIsolation isolation)
+    {
+        // Log the warning via a startup filter so the real ILogger<T> is available.
+        // We cannot use ILogger here because the DI container is not yet built.
+        // Instead, register a no-op startup action that logs once during application startup.
+        services.AddSingleton(new DeferredIsolationWarning(isolation));
+        services.AddHostedService<DeferredIsolationWarningLogger>();
     }
 }

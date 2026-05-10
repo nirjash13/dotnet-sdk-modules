@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using Identity.Domain.Exceptions;
 
 namespace Identity.Domain.Organizations;
 
@@ -9,7 +8,7 @@ namespace Identity.Domain.Organizations;
 /// Every organization must have at least one active Owner at all times.
 /// </summary>
 [Serializable]
-public sealed class LastOwnerProtectionException : IdentityDomainException
+public sealed class LastOwnerProtectionException : Exception
 {
     /// <summary>Initializes a new instance with the standard protection message.</summary>
     public LastOwnerProtectionException()
