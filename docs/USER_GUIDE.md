@@ -501,104 +501,273 @@ public async Task<CreateProductResult> CreateAsync(
 
 ## 7. User Journeys
 
+Each journey shows the developer's path through the SDK with a diagram of the runtime flow. Diagrams use Mermaid (rendered natively in GitHub, GitLab, Bitbucket, VS Code).
+
+---
+
 ### Journey 1: Solo Founder, B2B App
 
-**Timeline:** 2 weeks to MVP
+**Timeline:** 2 weeks to MVP. **Goal:** sign up the first paying tenant.
 
-1. **Day 1–2:** Scaffold the SaaS and integrate Identity module.
-   ```bash
-   dotnet new saas-api -n Acme.Saas
-   ```
-   Configure OpenIddict for Google OAuth.
+```mermaid
+flowchart LR
+    A[Day 1-2<br/>dotnet new saas-api] --> B[Day 3-5<br/>Add ProjectsModule]
+    B --> C[Day 6-7<br/>Wire Stripe adapter]
+    C --> D[Day 8-10<br/>Invitations + RBAC]
+    D --> E[Day 11-14<br/>Deploy to Azure]
+    E --> F((First<br/>paying tenant))
 
-2. **Day 3–5:** Build your core domain (e.g., projects, tasks). Register as a module.
-   ```csharp
-   opts.Modules.ScanAssemblyContaining<ProjectsModule>();
-   ```
+    style A fill:#dbeafe,stroke:#2563eb
+    style F fill:#dcfce7,stroke:#16a34a
+```
 
-3. **Day 6–7:** Set up Stripe Billing (Phase 4, consumer-wired).
-   ```csharp
-   var services = builder.Services;
-   services.AddStripeAdapter(stripeSk: config["Stripe:SecretKey"]);
-   ```
+**Day 1-2 — Scaffold and identity:**
+```bash
+dotnet new install SaasBuilder.Templates
+dotnet new saas-api -n Acme.Saas
+cd Acme.Saas
+docker compose up -d
+dotnet run
+```
+Configure OpenIddict + Google OAuth via `appsettings.json`.
 
-4. **Day 8–10:** Add tenant invitations and RBAC checks to endpoints.
-   ```csharp
-   [RequiresPermission("projects.write")]
-   public async Task<IResult> CreateProject(...)
-   ```
+**Day 3-5 — Your core domain:** create a `ProjectsModule` implementing `IModuleStartup` and register it:
+```csharp
+opts.Modules.ScanAssemblyContaining<ProjectsModule>();
+```
 
-5. **Day 11–14:** Deploy to Azure App Service. Observability dashboard live in Grafana Cloud.
+**Day 6-7 — Stripe Billing.** The `IBillingProvider` abstraction is shipped; the Stripe adapter is `TODO(Phase 4.1)` so you wire `Stripe.NET` directly:
+```csharp
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
+builder.Services.AddSingleton<IBillingProvider, StripeBillingProvider>();
+```
+
+**Day 8-10 — Invitations + RBAC.** `POST /api/v1/organizations/{id}/members:invite` ships out of the box; gate your endpoints:
+```csharp
+[RequiresPermission("projects.write")]
+public async Task<IResult> CreateProject(...) { ... }
+```
+
+**Day 11-14 — Deploy.** Azure App Service + Postgres Flexible Server; OTLP endpoint pointed at Grafana Cloud. See [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) §7.
+
+#### Runtime: a single signed-in request
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant H as SaasBuilder.Host
+    participant TR as Tenant Resolver Pipeline
+    participant A as Auth (JWT Bearer)
+    participant M as Mediator (MassTransit)
+    participant DB as Postgres + RLS
+
+    U->>H: GET /api/v1/projects (Bearer JWT)
+    H->>A: Validate signature, audience, issuer
+    A-->>H: ClaimsPrincipal (sub, tenant_id, roles)
+    H->>TR: ResolveAsync(JWT 100, Header 50, Path 30, Subdomain 20)
+    TR-->>H: tenantId
+    H->>H: TenantContextAccessor.Current = tenantId
+    H->>M: Send GetProjectsQuery
+    M->>DB: SET LOCAL app.tenant_id = '<guid>'
+    M->>DB: SELECT * FROM projects (RLS + EF filter)
+    DB-->>M: rows where tenant_id = current_setting
+    M-->>H: ProjectDto[]
+    H-->>U: 200 OK
+```
+
+---
 
 ### Journey 2: Existing SaaS Team, Incremental Adoption
 
-**Scenario:** You have a working SaaS but want to adopt the SDK's Identity and Audit modules.
+**Scenario:** you already have a working SaaS in .NET 8/10 and want SOC 2 audit + outbound webhooks without a rewrite. You'll wrap your existing auth as an `IModuleStartup` and bolt on the SDK's Audit + Webhooks modules.
 
-1. **Week 1:** Stand up a new SaaS-Builder Host in a separate repo.
-   ```bash
-   dotnet new saas-api -n Acme.SaasBuilder
-   ```
+```mermaid
+flowchart TB
+    subgraph Existing["Your existing app"]
+        E1[Your DbContext]
+        E2[Your Auth code]
+        E3[Your CRUD endpoints]
+    end
 
-2. **Week 2:** Wrap your existing auth module as a custom `IModuleStartup`.
-   - Keep your DbContext, your auth endpoints, your JWT logic.
-   - Register with `opts.Modules.AddType<YourAuthModule>()`.
+    subgraph SDK["SaaS Builder SDK (added)"]
+        S1[SaasBuilder.Host]
+        S2[Audit Module]
+        S3[Webhooks Module]
+    end
 
-3. **Week 3:** Add the Audit module for compliance.
-   ```csharp
-   opts.Modules.ScanAssemblyContaining<AuditModule>();
-   ```
+    Existing -->|wrap as<br/>IModuleStartup| S1
+    S1 --> S2
+    S1 --> S3
+    S2 -->|writes to| EFCore[(audit_entries<br/>append-only)]
+    S3 -->|signs + sends| Customer[(Customer<br/>webhook URL)]
 
-4. **Week 4:** Migrate users in batches using a reconciliation job.
+    style Existing fill:#fef3c7,stroke:#d97706
+    style SDK fill:#dbeafe,stroke:#2563eb
+```
+
+**Week 1 — host stand-up.** Add `SaasBuilder.Host` as a `<PackageReference>` to your existing API project (no new repo needed):
+```xml
+<PackageReference Include="SaasBuilder.Host" Version="0.1.*" />
+<PackageReference Include="SaasBuilder.Modules.Audit.Api" Version="0.1.*" />
+<PackageReference Include="SaasBuilder.Modules.Webhooks.Api" Version="0.1.*" />
+```
+
+**Week 2 — wrap your auth as a module:**
+```csharp
+public sealed class LegacyAuthModule : IModuleStartup
+{
+    public void ConfigureServices(IServiceCollection services, IConfiguration config)
+    {
+        services.AddDbContext<LegacyAuthDbContext>(/* keep your existing wiring */);
+        services.AddScoped<IUserService, LegacyUserService>();
+    }
+
+    public void Configure(IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost("/auth/login", LegacyLoginHandler);  // your existing endpoint
+    }
+}
+
+builder.AddSaasBuilderHost(opts =>
+{
+    opts.Modules.AddType<LegacyAuthModule>();
+    opts.Modules.ScanAssemblyContaining<AuditModule>();
+    opts.Modules.ScanAssemblyContaining<WebhooksModule>();
+});
+```
+
+**Week 3 — turn on hash-chained audit** for SOC 2 tamper-evidence:
+```csharp
+builder.Services.Decorate<IAuditLogger, HashChainedAuditLogger>();
+```
+
+**Week 4 — expose webhook subscriptions** to your customers via `POST /api/v1/webhooks/endpoints` (ships in `Webhooks.Api`). Your domain code then fires `await _webhookSender.SendAsync(new ProjectCreatedEvent { … });` and the Standard-Webhooks-spec retry/dunning is handled.
+
+---
 
 ### Journey 3: Enterprise Customer, Tenant Isolation Upgrade
 
-**Scenario:** Your largest customer needs data residency. Promote from `PoolWithRls` to `SiloedDatabase`.
+**Scenario:** your default `PoolWithRls` deployment fits 99% of customers but a regulated enterprise customer demands a dedicated database. Today: the abstraction is shipped, the dedicated-DB provider is `TODO(Phase 3.1)` — you implement a thin custom provider using the same `ITenantResourcesProvider` shape.
 
-1. **Phase 3 (future):** The SDK will provide `ITenantResources` lookup and a migration tool.
+```mermaid
+flowchart LR
+    Req[Incoming request<br/>tenantId X] --> R(Tenant resolver)
+    R --> P{ITenantResourcesProvider<br/>.GetAsync x}
+    P -->|PoolWithRls| Pool[(Shared Postgres<br/>app.tenant_id session var<br/>RLS policies)]
+    P -->|SiloedDatabase<br/>your custom impl| Silo1[(Customer A<br/>dedicated DB)]
+    P -->|SiloedStamp<br/>TODO Phase 3.1| Silo2[Region-pinned<br/>stamp router]
 
-2. **In your code:** Check tenant tier; switch connection string at request time.
-   ```csharp
-   var tenantResources = _tenantResourceProvider.GetResources(tenantId);
-   var isolationMode = tenantResources.IsolationMode;
-   
-   if (isolationMode == TenantIsolation.SiloedDatabase)
-   {
-       // Use tenant-specific connection string
-       var connStr = tenantResources.ConnectionString;
-   }
-   ```
+    style Pool fill:#dcfce7,stroke:#16a34a
+    style Silo1 fill:#fef3c7,stroke:#d97706
+    style Silo2 fill:#fee2e2,stroke:#dc2626
+```
+
+**Step 1 — implement the custom provider:**
+```csharp
+public sealed class TierAwareTenantResourcesProvider(
+    IConfiguration cfg,
+    ITenantTierLookup tiers) : ITenantResourcesProvider
+{
+    public async ValueTask<ITenantResources> GetAsync(Guid tenantId, CancellationToken ct)
+    {
+        var tier = await tiers.GetAsync(tenantId, ct);
+        if (tier == TenantTier.Enterprise)
+        {
+            // Per-tenant connection string from secrets manager
+            string conn = cfg[$"TenantConnections:{tenantId}"]
+                ?? throw new InvalidOperationException($"No conn for {tenantId}");
+            return new SiloedTenantResources(conn);
+        }
+        return new PoolWithRlsTenantResources(cfg.GetConnectionString("SaasBuilder")!);
+    }
+}
+```
+
+**Step 2 — register it (replaces the default):**
+```csharp
+builder.Services.RemoveAll<ITenantResourcesProvider>();
+builder.Services.AddScoped<ITenantResourcesProvider, TierAwareTenantResourcesProvider>();
+```
+
+**Step 3 — provision and migrate the new DB.** Run `dotnet ef database update` against the per-tenant connection string. Add the customer's connection string to your secrets manager. Done — no app code changes; the EF Core context picks up the per-tenant connection through `ITenantResourcesProvider`.
+
+> The full `SiloedDatabase` provider with automatic provisioning + migration runner ships in Phase 3.1. Today's path keeps you unblocked with ~30 lines of glue code.
+
+---
 
 ### Journey 4: New Internal Feature in an Existing Module
 
-**Scenario:** You need to add an "advanced reporting" endpoint to your reports module.
+**Scenario:** add `GET /api/v1/reports/advanced` gated by both an entitlement (paid Pro tier) and a feature flag (gradual rollout).
 
-1. Add the endpoint to your Reports module:
-   ```csharp
-   group.MapGet("/reports/advanced", GetAdvancedReports)
-       .RequireAuthorization()
-       .WithName("GetAdvancedReports")
-       .WithOpenApi();
-   ```
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant E as Endpoint Handler
+    participant En as IEntitlementService
+    participant FF as IFeatureClient
+    participant DB as Reports DB
 
-2. Add permission check:
-   ```csharp
-   [RequiresPermission("reporting.advanced.read")]
-   private static async Task<IResult> GetAdvancedReports(...)
-   ```
+    U->>E: GET /api/v1/reports/advanced
+    E->>En: HasAsync("advanced_reporting")
+    En-->>E: true (Pro plan)
+    E->>FF: GetBooleanValueAsync("new-reports-engine", false)
+    FF-->>E: true (90% rollout matched this tenant)
+    E->>DB: query (RLS-scoped)
+    DB-->>E: rows
+    E-->>U: 200 OK + report JSON
 
-3. Add integration test ensuring cross-tenant leak cannot occur:
-   ```csharp
-   [Fact]
-   public async Task GetAdvancedReports_WhenCalledByTenantA_ReturnsTenantADataOnly()
-   {
-       var clientA = factory.CreateAuthenticatedClient(tenantIdA);
-       var response = await clientA.GetAsync("/api/v1/reports/advanced");
-       var body = await response.Content.ReadFromJsonAsync<AdvancedReportDto[]>();
-       
-       Assert.All(body!, report => 
-           Assert.Equal(tenantIdA, report.TenantId));
-   }
-   ```
+    Note over En: Returns 402 Payment Required<br/>if tenant lacks entitlement
+    Note over FF: Returns false -> falls through to<br/>old engine (gradual rollout)
+```
+
+**Step 1 — endpoint with entitlement attribute and feature-flag branch:**
+```csharp
+group.MapGet("/reports/advanced", async (
+    IEntitlementService entitlements,
+    IFeatureClient flags,
+    IReportsService reports,
+    CancellationToken ct) =>
+{
+    if (!await entitlements.HasAsync("advanced_reporting", ct))
+        return Results.Problem(statusCode: 402, type: "https://saasbuilder.dev/errors/entitlement-required",
+            detail: "Advanced reporting requires the Pro plan or higher.");
+
+    bool useNewEngine = await flags.GetBooleanValueAsync("new-reports-engine", false, ct: ct);
+    var data = useNewEngine
+        ? await reports.AdvancedV2Async(ct)
+        : await reports.AdvancedV1Async(ct);
+
+    return Results.Ok(data);
+})
+.RequireAuthorization()
+.WithName("GetAdvancedReports");
+```
+
+**Step 2 — cross-tenant leak test (required for every new tenant-scoped endpoint):**
+```csharp
+[Fact]
+public async Task GetAdvancedReports_WhenCalledByTenantA_ReturnsTenantADataOnly()
+{
+    var clientA = factory.CreateAuthenticatedClient(tenantIdA);
+    var response = await clientA.GetAsync("/api/v1/reports/advanced");
+    var body = await response.Content.ReadFromJsonAsync<AdvancedReportDto[]>();
+
+    body.Should().NotBeNull();
+    body!.Should().AllSatisfy(r => r.TenantId.Should().Be(tenantIdA));
+}
+```
+
+**Step 3 — register the entitlement** in your billing seed so editions can grant it:
+```csharp
+public sealed class BillingEntitlementProvider : IEntitlementDefinitionProvider
+{
+    public IEnumerable<EntitlementDefinition> Define() =>
+    [
+        new("advanced_reporting", EntitlementType.Boolean, "Access to advanced reports"),
+        new("max_seats",          EntitlementType.Numeric, "Maximum members per organization"),
+    ];
+}
+```
 
 ---
 
@@ -1110,118 +1279,104 @@ public class ProjectRepositoryTests : IClassFixture<PostgresFixture>
 
 ## 13. Roadmap & Maturity
 
-### Phase 1: SDK Extraction & Packaging ✓ (In Flight)
+> **Reading guide.** "Shipped" = the abstraction + a working default provider are in `main` and tested. "Scaffolded" = abstraction + default provider in `main`, but specific cloud/SaaS adapters listed are stubs that throw `NotImplementedException` with a `TODO(Phase X.Y)` marker until you (or a future SDK release) wire them. "Planned" = no code yet, only the design. Use [`docs/TASK_LIST.md`](TASK_LIST.md) for the canonical line-item status.
 
-**Status:** ~60% complete on `feature/phase1-sdk-extraction`.
+### Phase 1: SDK Extraction & Packaging — **Shipped**
 
-**What's working:**
-- Fluent options API for Host configuration
-- In-process (Mediator) transport
-- PoolWithRls tenancy + RLS migrations
-- Module discovery via assembly scanning
-- Observability (OTel) instrumentation
-- Basic rate limiting
+- Fluent options API (`AddSaasBuilderHost(opts => …)`)
+- In-process (Mediator) and Bus (RabbitMQ) transports — same handler code
+- `PoolWithRls` tenancy + RLS migrations + EF query filters + command interceptor
+- Module discovery via assembly scanning (`ReflectionModuleLoader`)
+- OpenTelemetry traces + metrics + Serilog logs with `tenant_id` enrichment
+- Per-tenant sliding-window rate limiting
+- `dotnet new saas-api` template (smoke-tests green)
+- NuGet packaging: `SaasBuilder.SharedKernel`, `SaasBuilder.Persistence`, `SaasBuilder.Host` ship clean (zero leaked module DLLs)
 
-**What's scaffolded (not fully implemented):**
-- `dotnet new saas-api` template (skeleton exists, needs refinement)
+### Phase 2: Identity, Organizations & RBAC — **Scaffolded**
 
-**Exit gate:** `dotnet new saas-api -n Acme && cd Acme && dotnet run` produces a healthy server with `/health` endpoint and a tenant-scoped request succeeds end-to-end.
+**Shipped (callable today):**
+- `Organization`, `Member`, `Invitation` aggregates with last-owner-protection invariant
+- `IPermissionDefinitionProvider`, `[RequiresPermission(...)]` ASP.NET Core authorization handler
+- Built-in seed roles: `Owner`, `Admin`, `Member`, `ReadOnly`
+- OpenIddict-based JWT issuer (existing) with tenant-claim enrichment
+- `POST /api/v1/organizations`, invitation create/accept, role change, member remove endpoints
 
-### Phase 2: Identity, Organizations & RBAC (Next)
+**Stubbed (`TODO(Phase 2.x)`):**
+- SAML 2.0 per-organization (2.7), SCIM 2.0 inbound (2.8), MFA — TOTP / WebAuthn / recovery codes (2.2), social login adapters — Google / Microsoft / GitHub / Apple (2.3), magic-link / password reset flows (2.1), API keys / M2M tokens (2.9), safe impersonation with audit trail (2.10), account deletion with grace period (2.11), Argon2id swap from PBKDF2 (2.1).
 
-**Status:** Scaffolded (Identity module partially implemented).
+### Phase 3: Tenancy Enhancements — **Scaffolded**
 
-**Includes:**
-- Local auth (email/password, magic links, password reset)
-- Social login (Google, Microsoft, GitHub, Apple)
-- MFA (TOTP, WebAuthn)
-- Organizations & member management
-- Invitations
-- RBAC (roles + permissions)
-- SSO per organization (SAML, OIDC)
-- SCIM 2.0 inbound provisioning
-- API keys & M2M tokens
-- Safe impersonation
-- Account lifecycle (deletion with grace period)
+**Shipped:**
+- `ITenantResources`, `ITenantResourcesProvider` abstractions
+- `PoolWithRls` provider (the default — what runs in production today)
+- `ITenantLifecycleHandler` + `ITenantLifecycleService` orchestrator
+- `ITenantResolver` pipeline: `JwtClaimTenantResolver` (priority 100), `HeaderTenantResolver` (50), `PathTenantResolver` (30), `SubdomainTenantResolver` (20)
+- `IMigrationRunner` + `PostgresAdvisoryLockMigrationRunner` (real implementation)
+- `EditionRateLimitProfile` enum + `IRateLimitProfileSelector`
 
-### Phase 3: Tenancy Enhancements
+**Stubbed (`TODO(Phase 3.x)`):**
+- `SiloedSchema`, `SiloedDatabase`, `SiloedStamp` providers (3.1)
+- `IStampRouter` for region-pinned multi-tenant routing (3.1)
+- KMS adapters: Azure Key Vault, AWS KMS, Google Cloud KMS (3.4); `EncryptedString`/`EncryptedBytes` value converters are pass-through with a WARNING in dev mode
+- `ApiKeyTenantResolver` (depends on Phase 2.9)
+- Account-tier-aware `IRateLimitProfileSelector` (depends on Phase 4 entitlements)
 
-**Status:** Deferred. Roadmap drafted.
+### Phase 4: Billing, Entitlements & Feature Flags — **Scaffolded**
 
-**Includes:**
-- Additional isolation modes (SiloedSchema, SiloedDatabase, SiloedStamp)
-- Tenant lifecycle state machine
-- Pluggable tenant resolver pipeline
-- Per-tenant envelope encryption
-- Per-tenant quotas & throttling
-- Migration runner with leader election
+**Shipped:**
+- `IBillingProvider` abstraction
+- Domain entities: `Product`, `Price`, `Edition`, `Plan`, `Subscription`, `EntitlementGrant`
+- Standard-Webhooks-spec receiver scaffold: HMAC-SHA256, 5-minute replay window, idempotency-key dedup
+- `IEntitlementService` + `[RequiresEntitlement("key")]` attribute (boolean and numeric-limit modes)
+- OpenFeature-shaped `IFeatureClient` + `DatabaseFeatureProvider` (real — supports targeting, percentage rollout, kill-switch)
+- Tenant-level entitlement override path (sales-driven exceptions)
 
-### Phase 4: Billing, Entitlements & Feature Flags
+**Stubbed (`TODO(Phase 4.x)`):**
+- `StripeBillingProvider`, `PaddleBillingProvider`, `LemonSqueezyBillingProvider`, `ChargebeeBillingProvider` (4.1) — wire `Stripe.NET` / Paddle SDK in your composition root
+- Tax adapters: Stripe Tax, Avalara, TaxJar (4.1)
+- Metered/usage billing aggregation pipeline (4.5)
+- Customer portal session generator (4.6)
+- Dunning email sequence (4.7)
+- LaunchDarkly, Unleash, Flagsmith, Flagd `IFeatureProvider` adapters (4.9)
 
-**Status:** Deferred. Roadmap drafted. Consumer-wired adapters available.
+### Phase 5: Cross-Cutting Primitives — **Scaffolded**
 
-**Includes:**
-- Stripe billing adapter (primary), Paddle, Lemon Squeezy, Chargebee
-- Plan catalog (Products → Prices → Editions → Plans)
-- Subscription lifecycle
-- Metered usage billing
-- Tax integration
-- Entitlements (paid gates)
-- Feature flags (OpenFeature-compatible)
-- Dunning workflow
+**Shipped (with default in-process providers):**
+- `INotificationDispatcher` — `SmtpEmailNotificationDispatcher` works; falls back to `NoOpNotificationDispatcher` with a startup WARNING when SMTP config is absent
+- `IBlobStore` — `FileSystemBlobStore` (per-tenant subfolder, signed local URLs)
+- `IJobScheduler` — `InProcessJobScheduler` (in-memory queue + `BackgroundService`, tenant-aware envelope, idempotency-key dedup)
+- `IAuditLogger` — `EfCoreAuditLogger` + `HashChainedAuditLogger` decorator (SHA-256 chain for SOC 2 tamper-evidence)
+- `IWebhookSender` — full Standard Webhooks spec + Svix-style retry schedule (5s / 5min / 30min / 2h / 5h / 10h / 14h / 20h / 24h)
+- `ISearchClient` — `PostgresFullTextSearchClient` with mandatory tenant scope
+- `IRealtimeBroadcaster` — `SignalRRealtimeBroadcaster` with auto-joined `tenant:{id}` groups
+- `IInAppNotificationStore`, `ISuppressionList`, `ITenantQuotaCounter`
 
-### Phase 5: Cross-Cutting Primitives
+**Stubbed (`TODO(Phase 5.x)`):**
+- Email: SendGrid, AWS SES, Postmark, Resend, Mailgun (5.1)
+- SMS: Twilio, MessageBird (5.1) · Push: APNs, FCM (5.1)
+- Blob: Azure Blob, S3, GCS, R2 (5.2) · Image processing via ImageSharp (5.2)
+- Jobs: Hangfire, Quartz.NET, MassTransit scheduled redelivery (5.3)
+- SIEM forwarders: Splunk HEC, Datadog, syslog (5.4)
+- Search: OpenSearch, Meilisearch, Typesense, Algolia (5.6)
+- Realtime: Redis backplane, SQL backplane (5.7)
 
-**Status:** Deferred. Scaffolded modules exist but require consumer wiring.
+### Phase 6: Admin / Control Plane — **Planned**
 
-**Includes:**
-- Notifications (email, in-app, push, SMS, webhooks)
-- File storage (S3, Azure Blob, GCS, R2, filesystem)
-- Background jobs (Hangfire, Quartz.NET, scheduled redelivery)
-- Audit logging (centralized, SOC 2 hash-chain mode)
-- Outbound webhooks (Standard Webhooks spec)
-- Full-text search (Postgres FTS, OpenSearch, Meilisearch)
-- Realtime (SignalR + Redis backplane)
+Tenant directory, inspector, impersonation launcher, entitlement/feature-flag overrides, job/webhook dashboards, ops health, support actions (resend invite, force reset, refund, credit grant), approval workflows.
 
-### Phase 6: Admin Control Plane
+### Phase 7: Frontend SDK & Starter — **Planned**
 
-**Status:** Deferred.
+TypeScript client codegen via Kiota (`@saasbuilder/client`), Next.js 16 starter, Blazor WASM starter, hosted UI pages, admin UI.
 
-### Phase 7: Frontend SDK & Starter
+### Phase 8: Compliance & Deployment — **Planned**
 
-**Status:** Deferred.
+GDPR module (export / right-to-be-forgotten / consent), DB TDE guidance, SOC 2 hash-chain audit mode (decorator already shipped in 5.4), Helm chart, Bicep + Terraform IaC, blue/green and canary recipes.
 
-**Includes:**
-- TypeScript client codegen (`@saasbuilder/client`)
-- Next.js 16 starter + Blazor WASM starter
-- Admin UI
-- Hosted UI pages
+### Phase 9: Developer Experience & Tooling — **Planned**
 
-### Phase 8: Compliance & Deployment
+`SaasBuilder.Cli` (`saas new`, `saas add module`, `saas add feature`, `saas migrate`, `saas tenant create`, `saas pack`, `saas doctor`), additional templates (`saas-module`, `saas-feature`, `saas-microservice`), Aspire AppHost orchestration, Docusaurus docs site.
 
-**Status:** Deferred.
-
-**Includes:**
-- GDPR module (export, erasure, consent)
-- Encryption guidance
-- SOC 2 audit-trail mode
-- Helm chart for Kubernetes
-- IaC samples (Bicep, Terraform)
-- Blue/green & canary deployment recipes
-
-### Phase 9: Developer Experience & Tooling
-
-**Status:** Deferred.
-
-**Includes:**
-- `SaasBuilder.Cli` (`dotnet tool`)
-- Enhanced `dotnet new` templates
-- Aspire AppHost orchestration
-- Docs site (Docusaurus)
-
-### Phase 10: AI Primitives & Marketplace
-
-**Status:** Deferred.
+### Phase 10: AI Primitives & Marketplace — **Planned**
 
 **Includes:**
 - LLM client abstraction over `Microsoft.Extensions.AI`
