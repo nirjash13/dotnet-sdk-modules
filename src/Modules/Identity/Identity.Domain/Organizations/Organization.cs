@@ -21,6 +21,7 @@ namespace Identity.Domain.Organizations;
 public sealed class Organization : ITenantScoped
 {
     private readonly List<Member> _members = new List<Member>();
+    private readonly List<OrganizationDomainClaim> _domainClaims = new List<OrganizationDomainClaim>();
 
     // Private constructor — use factory method to enforce invariants.
     private Organization()
@@ -65,6 +66,9 @@ public sealed class Organization : ITenantScoped
 
     /// <summary>Gets the organization's members (read-only projection).</summary>
     public IReadOnlyList<Member> Members => _members;
+
+    /// <summary>Gets the organization's email domain claims (read-only projection).</summary>
+    public IReadOnlyList<OrganizationDomainClaim> DomainClaims => _domainClaims;
 
     /// <summary>
     /// Creates a new <see cref="Organization"/> with the given identity.
@@ -156,4 +160,9 @@ public sealed class Organization : ITenantScoped
     /// Internal helper called by <see cref="Member"/> to register a member with this aggregate.
     /// </summary>
     internal void AddMemberInternal(Member member) => _members.Add(member);
+
+    /// <summary>
+    /// Internal helper used by EF Core to populate the domain claims collection.
+    /// </summary>
+    internal void AddDomainClaimInternal(OrganizationDomainClaim claim) => _domainClaims.Add(claim);
 }

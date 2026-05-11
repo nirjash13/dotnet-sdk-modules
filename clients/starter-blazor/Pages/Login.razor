@@ -1,53 +1,126 @@
 @page "/login"
+@layout EmptyLayout
 @using MudBlazor
 @using SaasBuilder.Starter.Blazor.Services
 @inject SaasBuilderClientService Client
 @inject NavigationManager Nav
 
-<PageTitle>Sign In</PageTitle>
+<PageTitle>Sign In — SaasBuilder</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
-    <MudCard>
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h5">Sign In</MudText>
-            </CardHeaderContent>
-        </MudCardHeader>
-        <MudCardContent>
-            @if (!string.IsNullOrEmpty(_error))
-            {
-                <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
-            }
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height:100vh;">
+    <MudPaper Elevation="3" Class="pa-8" Style="width:100%;max-width:420px;">
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-1">Welcome back</MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary" Class="mb-6">
+            Sign in to your SaasBuilder workspace
+        </MudText>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@_error</MudAlert>
+        }
+
+        @if (_mfaRequired)
+        {
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Enter your authenticator code</MudText>
+            <MudTextField @bind-Value="_mfaCode" Label="6-digit code" Variant="Variant.Outlined"
+                          InputType="InputType.Number" MaxLength="6" Class="mb-4"
+                          HelperText="Open your authenticator app" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       OnClick="HandleMfa" Disabled="_loading">
+                @(_loading ? "Verifying..." : "Verify")
+            </MudButton>
+            <MudButton Variant="Variant.Text" FullWidth="true" Class="mt-2"
+                       OnClick="ResetMfa">Back</MudButton>
+        }
+        else
+        {
             <MudTextField @bind-Value="_email" Label="Email" InputType="InputType.Email"
-                          Variant="Variant.Outlined" Class="mb-3" />
+                          Variant="Variant.Outlined" Class="mb-3" Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Email" />
             <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
-                          Variant="Variant.Outlined" Class="mb-3" />
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="HandleLogin" Disabled="_loading" FullWidth="true">
+                          Variant="Variant.Outlined" Class="mb-1" Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Lock" />
+            <MudLink Href="/forgot-password" Typo="Typo.caption" Class="mb-4 d-block" Align="Align.Right">
+                Forgot password?
+            </MudLink>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       OnClick="HandleLogin" Disabled="_loading" Class="mb-3">
                 @(_loading ? "Signing in..." : "Sign In")
             </MudButton>
-        </MudCardActions>
-    </MudCard>
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                       OnClick="SendMagicLink" Disabled="_magicLinkSent || _loading" Class="mb-4">
+                @(_magicLinkSent ? "Magic link sent — check your inbox" : "Send Magic Link")
+            </MudButton>
+
+            <MudDivider Class="mb-4">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">or continue with</MudText>
+            </MudDivider>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="6">
+                    <MudButton FullWidth="true" Variant="Variant.Outlined"
+                               StartIcon="@Icons.Custom.Brands.Google"
+                               Href="/connect/authorize?provider=Google&redirect_uri=/dashboard">
+                        Google
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton FullWidth="true" Variant="Variant.Outlined"
+                               StartIcon="@Icons.Custom.Brands.MicrosoftAzure"
+                               Href="/connect/authorize?provider=Microsoft&redirect_uri=/dashboard">
+                        Microsoft
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton FullWidth="true" Variant="Variant.Outlined"
+                               StartIcon="@Icons.Custom.Brands.GitHub"
+                               Href="/connect/authorize?provider=GitHub&redirect_uri=/dashboard">
+                        GitHub
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton FullWidth="true" Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Apple"
+                               Href="/connect/authorize?provider=Apple&redirect_uri=/dashboard">
+                        Apple
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudPaper>
 </MudContainer>
 
 @code {
     private string _email = string.Empty;
     private string _password = string.Empty;
+    private string _mfaCode = string.Empty;
     private string? _error;
     private bool _loading;
+    private bool _mfaRequired;
+    private bool _magicLinkSent;
 
     private async Task HandleLogin()
     {
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Email and password are required.";
+            return;
+        }
+
         _loading = true;
         _error = null;
         try
         {
-            var success = await Client.LoginAsync(_email, _password);
-            if (success)
+            var result = await Client.LoginAsync(_email, _password);
+            if (result == LoginResult.Success)
             {
                 Nav.NavigateTo("/dashboard");
+            }
+            else if (result == LoginResult.MfaRequired)
+            {
+                _mfaRequired = true;
             }
             else
             {
@@ -63,4 +136,69 @@
             _loading = false;
         }
     }
+
+    private async Task HandleMfa()
+    {
+        if (_mfaCode.Length != 6)
+        {
+            _error = "Enter the 6-digit code from your authenticator app.";
+            return;
+        }
+
+        _loading = true;
+        _error = null;
+        try
+        {
+            var ok = await Client.VerifyMfaAsync(_email, _mfaCode);
+            if (ok)
+            {
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                _error = "Invalid code. Try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SendMagicLink()
+    {
+        if (string.IsNullOrWhiteSpace(_email))
+        {
+            _error = "Enter your email address first.";
+            return;
+        }
+
+        _loading = true;
+        _error = null;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/magic-link", new { Email = _email });
+            _magicLinkSent = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetMfa()
+    {
+        _mfaRequired = false;
+        _mfaCode = string.Empty;
+        _error = null;
+    }
+
 }

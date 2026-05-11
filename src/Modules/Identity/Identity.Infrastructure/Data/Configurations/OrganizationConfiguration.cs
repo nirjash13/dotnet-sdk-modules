@@ -29,5 +29,15 @@ internal sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organ
         builder.Metadata
             .FindNavigation(nameof(Organization.Members))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // DomainClaims navigation — field-backed, not loaded by default.
+        builder.HasMany(o => o.DomainClaims)
+            .WithOne()
+            .HasForeignKey(c => c.OrganizationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(Organization.DomainClaims))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

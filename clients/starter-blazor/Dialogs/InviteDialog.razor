@@ -1,0 +1,42 @@
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_email" Label="Email address" InputType="InputType.Email"
+                      Variant="Variant.Outlined" Immediate="true"
+                      HelperText="An invitation link will be sent to this address." />
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@_error</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@string.IsNullOrWhiteSpace(_email)">
+            Send Invitation
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private string _email = string.Empty;
+    private string? _error;
+
+    private void Submit()
+    {
+        if (!_email.Contains('@'))
+        {
+            _error = "Enter a valid email address.";
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_email));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

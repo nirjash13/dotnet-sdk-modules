@@ -14,6 +14,8 @@
   <ItemGroup>
     <!-- MudBlazor provides Material Design components for clean default styling. -->
     <PackageReference Include="MudBlazor" Version="7.6.0" />
+    <!-- SignalR client for real-time notifications hub -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>

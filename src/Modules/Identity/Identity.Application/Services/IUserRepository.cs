@@ -26,6 +26,15 @@ public interface IUserRepository
     /// <summary>Adds a new user to the persistent store (no save; call SaveChangesAsync separately).</summary>
     void Add(User user);
 
+    /// <summary>
+    /// Returns all users whose <c>DeletionScheduledFor</c> is on or before <paramref name="asOf"/>
+    /// and who have not yet been hard-deleted (i.e., <c>DeletedAt</c> is non-null).
+    /// Bypasses the soft-delete global query filter so that pending deletions are visible.
+    /// </summary>
+    Task<System.Collections.Generic.IReadOnlyList<User>> FindExpiredDeletionsAsync(
+        DateTimeOffset asOf,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Persists all pending changes to the database.</summary>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

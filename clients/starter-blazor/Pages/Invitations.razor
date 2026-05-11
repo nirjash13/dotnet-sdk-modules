@@ -1,0 +1,118 @@
+@page "/invitations/accept"
+@layout EmptyLayout
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+
+<PageTitle>Accept Invitation — SaasBuilder</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
+    <MudPaper Elevation="3" Class="pa-8">
+        @if (_loading)
+        {
+            <div class="d-flex flex-column align-center">
+                <MudProgressCircular Indeterminate="true" Class="mb-4" />
+                <MudText>Verifying invitation...</MudText>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+            <MudButton Href="/login" Variant="Variant.Outlined" FullWidth="true">Back to Sign In</MudButton>
+        }
+        else if (_accepted)
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                You have joined <strong>@_orgName</strong>!
+            </MudAlert>
+            <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                Go to Dashboard
+            </MudButton>
+        }
+        else if (_invitation is not null)
+        {
+            <MudText Typo="Typo.h5" Class="mb-2">You're invited!</MudText>
+            <MudText Typo="Typo.body1" Class="mb-6">
+                <strong>@_invitation.InvitedBy</strong> has invited you to join
+                <strong>@_invitation.OrgName</strong> as <strong>@_invitation.Role</strong>.
+            </MudText>
+
+            @if (!string.IsNullOrEmpty(_acceptError))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_acceptError</MudAlert>
+            }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       OnClick="AcceptInvitation" Disabled="_accepting" Class="mb-2">
+                @(_accepting ? "Accepting..." : "Accept Invitation")
+            </MudButton>
+            <MudButton Href="/login" Variant="Variant.Text" FullWidth="true">Decline</MudButton>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "token")]
+    private string? Token { get; set; }
+
+    private bool _loading = true;
+    private string? _error;
+    private string? _acceptError;
+    private bool _accepting;
+    private bool _accepted;
+    private string _orgName = string.Empty;
+    private InvitationDto? _invitation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            _error = "Invalid invitation link.";
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _invitation = await Client.GetAsync<InvitationDto>(
+                $"/api/v1/identity/invitations/{Uri.EscapeDataString(Token)}");
+
+            if (_invitation is null)
+            {
+                _error = "Invitation not found or has expired.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AcceptInvitation()
+    {
+        _accepting = true;
+        _acceptError = null;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/invitations/accept",
+                new { Token });
+            _orgName = _invitation?.OrgName ?? string.Empty;
+            _accepted = true;
+        }
+        catch (Exception ex)
+        {
+            _acceptError = ex.Message;
+        }
+        finally
+        {
+            _accepting = false;
+        }
+    }
+
+    private sealed record InvitationDto(string OrgName, string InvitedBy, string Role);
+}

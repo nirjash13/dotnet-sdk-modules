@@ -62,6 +62,17 @@ public sealed class User
     /// <summary>Gets a value indicating whether TOTP MFA is enabled for this user.</summary>
     public bool IsMfaEnabled { get; private set; }
 
+    // ── Account deletion grace period (Phase 2.11) ───────────────────────────
+
+    /// <summary>Gets the UTC time the deletion was requested, or null if the account is active.</summary>
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    /// <summary>Gets the UTC time the account is scheduled for hard-deletion (DeletedAt + 30 days), or null.</summary>
+    public DateTimeOffset? DeletionScheduledFor { get; private set; }
+
+    /// <summary>Gets a value indicating whether this account is in the soft-deleted (grace) state.</summary>
+    public bool IsDeleted => DeletedAt.HasValue && DeletionScheduledFor.HasValue;
+
     /// <summary>Gets the tenant memberships for this user (read-only projection).</summary>
     public IReadOnlyList<UserTenantMembership> Memberships => _memberships;
 
@@ -186,4 +197,43 @@ public sealed class User
 
     /// <summary>Clears all pending domain events (called after events are dispatched).</summary>
     public void ClearDomainEvents() => _domainEvents.Clear();
+
+    /// <summary>
+    /// Initiates a soft-delete. Sets <see cref="DeletedAt"/> to now and
+    /// <see cref="DeletionScheduledFor"/> to <paramref name="gracePeriodDays"/> days from now.
+    /// </summary>
+    public void RequestDeletion(int gracePeriodDays = 30)
+    {
+        if (gracePeriodDays < 0)
+        {
+            throw new IdentityDomainException("Grace period days must be non-negative.");
+        }
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DeletedAt = now;
+        DeletionScheduledFor = now.AddDays(gracePeriodDays);
+        UpdatedAt = now;
+    }
+
+    /// <summary>
+    /// Restores the account, cancelling the scheduled hard-deletion.
+    /// </summary>
+    public void RestoreAccount()
+    {
+        DeletedAt = null;
+        DeletionScheduledFor = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Redacts all PII for a hard-deleted user. Replaces identifiable fields with tombstone values.
+    /// </summary>
+    public void RedactForHardDelete()
+    {
+        Email = $"deleted-{Id:N}@tombstone.invalid";
+        DisplayName = "Deleted User";
+        DeletedAt = null;  // tombstone record will carry the audit trail
+        DeletionScheduledFor = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

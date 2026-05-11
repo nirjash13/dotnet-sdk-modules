@@ -1,0 +1,142 @@
+@page "/files"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Files — SaasBuilder</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Files</MudText>
+
+<MudPaper Elevation="1" Class="pa-6 mb-6"
+          Style="border:2px dashed var(--mud-palette-primary);cursor:pointer;"
+          @onclick="TriggerFilePicker"
+          @ondragover:preventDefault
+          @ondrop="HandleDrop">
+    <div class="d-flex flex-column align-center">
+        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
+        <MudText Typo="Typo.body1" Class="mt-2">Drop files here or click to browse</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Max 50 MB per file</MudText>
+    </div>
+</MudPaper>
+
+<InputFile id="fileInput" OnChange="FilesSelected" style="display:none;" multiple />
+
+@if (_uploads.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Uploads</MudText>
+    <MudList T="UploadEntry" Dense="false">
+        @foreach (var upload in _uploads)
+        {
+            <MudListItem T="UploadEntry">
+                <div class="d-flex align-center" style="width:100%;">
+                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Class="mr-3" />
+                    <div style="flex:1;">
+                        <MudText Typo="Typo.body2">@upload.FileName</MudText>
+                        <MudProgressLinear Value="@upload.Progress" Color="Color.Primary"
+                                          Rounded="true" Size="Size.Small" Class="mt-1" />
+                    </div>
+                    <MudChip T="string" Size="Size.Small" Class="ml-3"
+                             Color="@StatusColor(upload.Status)">
+                        @upload.Status
+                    </MudChip>
+                </div>
+            </MudListItem>
+        }
+    </MudList>
+}
+
+@code {
+    private List<UploadEntry> _uploads = new();
+
+    protected override void OnInitialized()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+
+    private async Task TriggerFilePicker()
+    {
+        await JS.InvokeVoidAsync("document.getElementById('fileInput').click");
+    }
+
+    private async Task FilesSelected(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles: 20))
+        {
+            await UploadFile(file);
+        }
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        // Browser drag-drop requires JS interop to extract DataTransfer files.
+        // Wire in via a JS function if full drag-drop is needed beyond the InputFile.
+        await JS.InvokeVoidAsync("document.getElementById('fileInput').click");
+    }
+
+    private async Task UploadFile(IBrowserFile file)
+    {
+        var entry = new UploadEntry(file.Name, 0, "Requesting URL");
+        _uploads.Add(entry);
+        StateHasChanged();
+
+        try
+        {
+            var urlResp = await Client.PostAsync<PresignedUrlResponse>(
+                "/api/v1/files/upload-url",
+                new { FileName = file.Name, ContentType = file.ContentType, SizeBytes = file.Size });
+
+            if (urlResp?.UploadUrl is null)
+            {
+                entry.Status = "Failed";
+                return;
+            }
+
+            entry.Status = "Uploading";
+            entry.Progress = 10;
+            StateHasChanged();
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 52_428_800L);
+            using var content = new StreamContent(stream);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+
+            // Direct PUT to presigned URL — no auth header required on the upload request.
+            using var http = new System.Net.Http.HttpClient();
+            var putResponse = await http.PutAsync(urlResp.UploadUrl, content);
+
+            entry.Progress = 100;
+            entry.Status = putResponse.IsSuccessStatusCode ? "Complete" : "Failed";
+        }
+        catch (Exception ex)
+        {
+            entry.Status = "Error";
+            Snackbar.Add($"{file.Name}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Complete" => Color.Success,
+        "Uploading" => Color.Info,
+        "Failed" or "Error" => Color.Error,
+        _ => Color.Default,
+    };
+
+    private sealed class UploadEntry(string fileName, double progress, string status)
+    {
+        public string FileName { get; } = fileName;
+        public double Progress { get; set; } = progress;
+        public string Status { get; set; } = status;
+    }
+
+    private sealed record PresignedUrlResponse(string UploadUrl, string FileId);
+}

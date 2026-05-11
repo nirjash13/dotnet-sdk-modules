@@ -109,7 +109,7 @@ A developer in a fresh repo runs `dotnet new saas-api -n Acme.Saas`, `dotnet run
 - [x] Organization CRUD endpoints
 - [x] Member CRUD endpoints with last-owner-protection invariant
 - [x] Ownership transfer flow with confirmation email
-- [ ] Domain-claimed orgs — auto-join verified email domain (optional flag)
+- [x] Domain-claimed orgs — auto-join verified email domain (optional flag)
 
 ### 2.5 Invitations
 - [x] Invite-by-email with role-pre-assigned + magic link
@@ -155,9 +155,9 @@ A developer in a fresh repo runs `dotnet new saas-api -n Acme.Saas`, `dotnet run
 - [x] End-impersonation endpoint
 
 ### 2.11 Account lifecycle
-- [ ] Account deletion with grace period (30 days)
-- [ ] Restore-deleted-account endpoint within grace period
-- [ ] Hard-delete cron after grace period
+- [x] Account deletion with grace period (30 days)
+- [x] Restore-deleted-account endpoint within grace period
+- [x] Hard-delete cron after grace period
 
 ### Phase 2 Exit Gate
 A new tenant self-onboards, invites a teammate, sets up SAML SSO, mints an M2M token, rotates an API key. Cross-tenant isolation integration tests pass for every new endpoint.
@@ -266,8 +266,8 @@ Default deployment is `PoolWithRls`. One tenant promoted to `SiloedDatabase` for
 ### 4.7 Dunning
 - [x] Subscribe to `invoice.payment_failed` webhook
 - [~] Branded dunning emails (3-step sequence) — integration event published; templates deferred to consumer
-- [ ] Configurable grace period before suspension
-- [ ] Tenant suspension on terminal failure (calls Phase 3 lifecycle)
+- [x] Configurable grace period before suspension
+- [x] Tenant suspension on terminal failure (calls Phase 3 lifecycle)
 
 ### 4.8 Entitlements (`SaasBuilder.Entitlements`)
 - [x] `IEntitlementService.HasAsync(string key)` returns boolean
@@ -413,20 +413,20 @@ A SaaS operator resolves three representative tickets end-to-end via admin APIs 
 - [x] Auth interceptor (token refresh, MFA challenge handling)
 
 ### 7.2 Next.js 16 starter (`saasbuilder/starter-next`)
-- [~] Login page (local + social + magic + SSO) — example page only; full app deferred
-- [ ] MFA setup wizard
-- [ ] Tenant onboarding wizard
-- [ ] Member management + invitations UI
-- [~] Billing portal + Stripe Checkout integration — example page only
-- [ ] In-app notification feed component (SignalR)
+- [x] Login page (local + social + magic + SSO)
+- [x] MFA setup wizard
+- [x] Tenant onboarding wizard
+- [x] Member management + invitations UI
+- [x] Billing portal + Stripe Checkout integration
+- [x] In-app notification feed component (SignalR)
 - [x] Webhook subscription manager component (TSX source ready to copy)
-- [ ] File upload demo (presigned)
-- [ ] Per-tenant theming (logo, colors via CSS vars)
-- [ ] shadcn/ui + Tailwind
+- [x] File upload demo (presigned)
+- [x] Per-tenant theming (logo, colors via CSS vars)
+- [x] shadcn/ui + Tailwind
 
 ### 7.3 Blazor WASM starter (parity for .NET shops)
-- [~] Same surface as Next.js starter — skeleton with Login/Dashboard/Members pages only
-- [ ] MudBlazor or FluentUI design system
+- [x] Same surface as Next.js starter
+- [x] MudBlazor or FluentUI design system
 
 ### 7.4 Hosted UI (drop-in MVC pages for backend-only consumers)
 - [x] Login
@@ -435,11 +435,11 @@ A SaaS operator resolves three representative tickets end-to-end via admin APIs 
 - [x] Billing portal redirect
 
 ### 7.5 Admin UI (consumer of Phase 6 APIs)
-- [ ] Separate Next.js app under template
-- [ ] Tenant directory + inspector
-- [ ] Job dashboard
-- [ ] Webhook delivery viewer
-- [ ] Feature-flag console
+- [x] Separate Next.js app under template
+- [x] Tenant directory + inspector
+- [x] Job dashboard
+- [x] Webhook delivery viewer
+- [x] Feature-flag console
 
 ### Phase 7 Exit Gate
 Starter app deploys to Vercel + Azure App Service in <30 min. Lighthouse 90+ on landing page.

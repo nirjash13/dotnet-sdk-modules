@@ -1,0 +1,157 @@
+@page "/mfa-setup"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>MFA Setup — SaasBuilder</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">Two-Factor Authentication</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+    Secure your account with a time-based one-time password (TOTP) app.
+</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_setup is not null && !_verified)
+{
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-6">
+                <MudText Typo="Typo.h6" Class="mb-3">Step 1 — Scan QR code</MudText>
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    Open your authenticator app (e.g. Google Authenticator, Authy) and scan:
+                </MudText>
+                @if (!string.IsNullOrEmpty(_setup.QrCodeUri))
+                {
+                    <img src="@_setup.QrCodeUri" alt="TOTP QR code"
+                         style="width:200px;height:200px;display:block;margin-bottom:16px;" />
+                }
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Manual key: <code>@_setup.ManualKey</code>
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-6">
+                <MudText Typo="Typo.h6" Class="mb-3">Step 2 — Verify code</MudText>
+                <MudTextField @bind-Value="_code" Label="6-digit code" Variant="Variant.Outlined"
+                              InputType="InputType.Number" MaxLength="6" Class="mb-4"
+                              HelperText="Enter the code shown in your app" />
+                @if (!string.IsNullOrEmpty(_verifyError))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_verifyError</MudAlert>
+                }
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="VerifyCode" Disabled="_verifying">
+                    @(_verifying ? "Verifying..." : "Verify & Enable")
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+else if (_verified && _recoveryCodes.Count > 0)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">
+        Two-factor authentication enabled!
+    </MudAlert>
+
+    <MudPaper Elevation="2" Class="pa-6">
+        <MudText Typo="Typo.h6" Class="mb-2">Recovery codes</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Save these codes somewhere safe. Each can be used once if you lose your device.
+        </MudText>
+        <MudGrid>
+            @foreach (var code in _recoveryCodes)
+            {
+                <MudItem xs="6" sm="4">
+                    <code style="font-size:1rem;">@code</code>
+                </MudItem>
+            }
+        </MudGrid>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                   OnClick="() => Nav.NavigateTo("/dashboard")">
+            Done
+        </MudButton>
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private MfaSetupDto? _setup;
+    private string _code = string.Empty;
+    private string? _verifyError;
+    private bool _verifying;
+    private bool _verified;
+    private List<string> _recoveryCodes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            _setup = await Client.GetAsync<MfaSetupDto>("/api/v1/identity/mfa/setup/totp");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task VerifyCode()
+    {
+        if (_code.Length != 6)
+        {
+            _verifyError = "Enter the 6-digit code from your authenticator app.";
+            return;
+        }
+
+        _verifying = true;
+        _verifyError = null;
+        try
+        {
+            var result = await Client.PostAsync<MfaVerifyResponse>(
+                "/api/v1/identity/mfa/setup/totp/verify",
+                new { Code = _code });
+
+            if (result?.Success == true)
+            {
+                _verified = true;
+                _recoveryCodes = result.RecoveryCodes ?? new();
+            }
+            else
+            {
+                _verifyError = "Invalid code. Try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _verifyError = ex.Message;
+        }
+        finally
+        {
+            _verifying = false;
+        }
+    }
+
+    private sealed record MfaSetupDto(string QrCodeUri, string ManualKey);
+    private sealed record MfaVerifyResponse(bool Success, List<string>? RecoveryCodes);
+}

@@ -1,16 +1,26 @@
 @page "/members"
 @using MudBlazor
 @using SaasBuilder.Starter.Blazor.Services
-@inject SaasBuilderClientService Client
+@inject ApiClient Client
 @inject NavigationManager Nav
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
-<PageTitle>Team Members</PageTitle>
+<PageTitle>Team Members — SaasBuilder</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Team Members</MudText>
+<div class="d-flex align-center mb-4">
+    <MudText Typo="Typo.h4">Team Members</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.PersonAdd"
+               OnClick="OpenInviteDialog">
+        Invite Member
+    </MudButton>
+</div>
 
 @if (_loading)
 {
-    <MudProgressCircular Indeterminate="true" />
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
 else if (!string.IsNullOrEmpty(_error))
 {
@@ -18,49 +28,68 @@ else if (!string.IsNullOrEmpty(_error))
 }
 else
 {
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _showInvite = true" Class="mb-4">
-        Invite Member
-    </MudButton>
-
-    @if (_showInvite)
-    {
-        <MudCard Class="mb-4">
-            <MudCardContent>
-                <MudTextField @bind-Value="_inviteEmail" Label="Email address" InputType="InputType.Email"
-                              Variant="Variant.Outlined" />
-                @if (!string.IsNullOrEmpty(_inviteError))
-                {
-                    <MudAlert Severity="Severity.Error" Class="mt-2">@_inviteError</MudAlert>
-                }
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton OnClick="SendInvite" Variant="Variant.Filled" Color="Color.Primary"
-                           Disabled="_inviting">
-                    @(_inviting ? "Sending..." : "Send Invite")
-                </MudButton>
-                <MudButton OnClick="() => _showInvite = false" Variant="Variant.Text">Cancel</MudButton>
-            </MudCardActions>
-        </MudCard>
-    }
-
-    <MudDataGrid Items="_members" Striped="true" Hover="true">
-        <Columns>
-            <PropertyColumn Property="x => x.Name" Title="Name" />
-            <PropertyColumn Property="x => x.Email" Title="Email" />
-            <PropertyColumn Property="x => x.Role" Title="Role" />
-            <PropertyColumn Property="x => x.Status" Title="Status" />
-        </Columns>
-    </MudDataGrid>
+    <MudTable Items="_members" Hover="true" Striped="true" Dense="false"
+              Loading="_loading" LoadingProgressColor="Color.Primary"
+              Filter="FilterMember" @bind-SelectedItem="_selected">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchTerm" Placeholder="Search members"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Role</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">
+                <div class="d-flex align-center">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-2">
+                        @context.Name[0]
+                    </MudAvatar>
+                    @context.Name
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Role">
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(context.Role == "Owner" ? Color.Primary : Color.Default)">
+                    @context.Role
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(context.Status == "Active" ? Color.Success : Color.Warning)">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                    <MudMenuItem OnClick="() => OpenRoleDialog(context)">Change Role</MudMenuItem>
+                    <MudMenuItem OnClick="() => RemoveMember(context)"
+                                 Disabled="@(context.Role == "Owner")">
+                        Remove
+                    </MudMenuItem>
+                </MudMenu>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No members found.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
 }
 
 @code {
     private bool _loading = true;
     private string? _error;
     private List<MemberDto> _members = new();
-    private bool _showInvite;
-    private string _inviteEmail = string.Empty;
-    private bool _inviting;
-    private string? _inviteError;
+    private MemberDto? _selected;
+    private string _searchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,6 +105,7 @@ else
     private async Task LoadMembersAsync()
     {
         _loading = true;
+        _error = null;
         try
         {
             var result = await Client.GetAsync<MembersResponse>("/api/v1/identity/members");
@@ -91,24 +121,84 @@ else
         }
     }
 
-    private async Task SendInvite()
+    private bool FilterMember(MemberDto member)
     {
-        _inviting = true;
-        _inviteError = null;
+        if (string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            return true;
+        }
+
+        return member.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || member.Email.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task OpenInviteDialog()
+    {
+        var parameters = new DialogParameters<InviteDialog>();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<InviteDialog>("Invite Member", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var email = (string)result.Data!;
+            await SendInviteAsync(email);
+        }
+    }
+
+    private async Task SendInviteAsync(string email)
+    {
         try
         {
-            await Client.PostAsync("/api/v1/identity/invitations", new { Email = _inviteEmail, Role = "Member" });
-            _showInvite = false;
-            _inviteEmail = string.Empty;
+            await Client.PostAsync("/api/v1/identity/invitations", new { Email = email, Role = "Member" });
+            Snackbar.Add($"Invitation sent to {email}", Severity.Success);
             await LoadMembersAsync();
         }
         catch (Exception ex)
         {
-            _inviteError = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
         }
-        finally
+    }
+
+    private async Task OpenRoleDialog(MemberDto member)
+    {
+        var parameters = new DialogParameters<RoleChangeDialog>
         {
-            _inviting = false;
+            { d => d.MemberName, member.Name },
+            { d => d.CurrentRole, member.Role },
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<RoleChangeDialog>("Change Role", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var newRole = (string)result.Data!;
+            try
+            {
+                await Client.PostAsync($"/api/v1/identity/members/{member.Email}/role",
+                    new { Role = newRole });
+                Snackbar.Add("Role updated.", Severity.Success);
+                await LoadMembersAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task RemoveMember(MemberDto member)
+    {
+        try
+        {
+            await Client.DeleteAsync($"/api/v1/identity/members/{member.Email}");
+            Snackbar.Add($"{member.Name} removed.", Severity.Info);
+            await LoadMembersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 

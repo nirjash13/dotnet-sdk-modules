@@ -2,14 +2,21 @@
 @page "/dashboard"
 @using MudBlazor
 @using SaasBuilder.Starter.Blazor.Services
-@inject SaasBuilderClientService Client
+@inject ApiClient Client
 @inject NavigationManager Nav
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Dashboard — SaasBuilder</PageTitle>
 
 @if (_loading)
 {
-    <MudProgressCircular Indeterminate="true" />
+    <MudGrid>
+        @for (var i = 0; i < 3; i++)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="140px" />
+            </MudItem>
+        }
+    </MudGrid>
 }
 else if (!string.IsNullOrEmpty(_error))
 {
@@ -21,29 +28,87 @@ else
 
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
-            <MudCard>
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Team</MudText>
-                    <MudText>@_memberCount members</MudText>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Class="mr-2" />
+                        <MudText Typo="Typo.h6">Team</MudText>
+                    </div>
+                    <MudText Typo="Typo.h4">@_memberCount</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Active members</MudText>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudButton Href="/members" Variant="Variant.Text" Color="Color.Primary">Manage</MudButton>
+                    <MudButton Href="/members" Variant="Variant.Text" Color="Color.Primary">
+                        Manage Members
+                    </MudButton>
                 </MudCardActions>
             </MudCard>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudCard>
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Subscription</MudText>
-                    <MudText>@(_planName ?? "No active plan")</MudText>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.CreditCard" Color="Color.Secondary" Class="mr-2" />
+                        <MudText Typo="Typo.h6">Subscription</MudText>
+                    </div>
+                    <MudText Typo="Typo.h6">@(_planName ?? "No active plan")</MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@(_planStatus == "active" ? Color.Success : Color.Warning)">
+                        @(_planStatus ?? "inactive")
+                    </MudChip>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudButton Href="/billing" Variant="Variant.Text" Color="Color.Primary">Billing</MudButton>
+                    <MudButton Href="/billing" Variant="Variant.Text" Color="Color.Primary">
+                        Manage Billing
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex align-center mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Tertiary" Class="mr-2" />
+                        <MudText Typo="Typo.h6">Notifications</MudText>
+                    </div>
+                    <MudText Typo="Typo.h4">@_unreadCount</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Unread</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Href="/notifications" Variant="Variant.Text" Color="Color.Primary">
+                        View All
+                    </MudButton>
                 </MudCardActions>
             </MudCard>
         </MudItem>
     </MudGrid>
+
+    <MudText Typo="Typo.h6" Class="mt-8 mb-3">Recent Activity</MudText>
+    @if (_activity.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No recent activity yet.</MudAlert>
+    }
+    else
+    {
+        <MudList T="ActivityItem" Dense="true">
+            @foreach (var item in _activity)
+            {
+                <MudListItem T="ActivityItem">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
+                                 Color="Color.Primary" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">@item.Description</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @item.OccurredAt.ToString("MMM d, yyyy h:mm tt")
+                            </MudText>
+                        </div>
+                    </div>
+                </MudListItem>
+            }
+        </MudList>
+    }
 }
 
 @code {
@@ -52,6 +117,9 @@ else
     private string _userName = string.Empty;
     private int _memberCount;
     private string? _planName;
+    private string? _planStatus;
+    private int _unreadCount;
+    private List<ActivityItem> _activity = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,6 +139,13 @@ else
 
             var sub = await Client.GetAsync<SubscriptionDto>("/api/v1/billing/subscription");
             _planName = sub?.PlanName;
+            _planStatus = sub?.Status;
+
+            var notifs = await Client.GetAsync<NotificationsDto>("/api/v1/notifications?unread=true&pageSize=1");
+            _unreadCount = notifs?.Total ?? 0;
+
+            var events = await Client.GetAsync<ActivityResponse>("/api/v1/audit-log?pageSize=5");
+            _activity = events?.Items ?? new();
         }
         catch (Exception ex)
         {
@@ -85,4 +160,7 @@ else
     private sealed record MeDto(string Name, string Email, string Role);
     private sealed record MembersDto(int Total);
     private sealed record SubscriptionDto(string PlanName, string Status);
+    private sealed record NotificationsDto(int Total);
+    private sealed record ActivityResponse(List<ActivityItem> Items);
+    private sealed record ActivityItem(string Description, DateTimeOffset OccurredAt);
 }

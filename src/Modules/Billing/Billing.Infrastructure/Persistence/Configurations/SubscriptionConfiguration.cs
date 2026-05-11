@@ -50,6 +50,21 @@ internal sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subsc
         builder.Property(s => s.TrialEndsAt)
             .HasColumnName("trial_ends_at");
 
+        // Phase 4.7 — dunning fields.
+        builder.Property(s => s.PaymentFailedAt)
+            .HasColumnName("payment_failed_at");
+
+        builder.Property(s => s.LastPaymentFailureAt)
+            .HasColumnName("last_payment_failure_at");
+
+        builder.Property(s => s.FailedPaymentCount)
+            .HasColumnName("failed_payment_count")
+            .HasDefaultValue(0);
+
+        builder.Property(s => s.TerminalFailedInvoiceId)
+            .HasColumnName("terminal_failed_invoice_id")
+            .HasMaxLength(255);
+
         // One active subscription per tenant (enforced at DB level).
         builder.HasIndex(s => s.TenantId)
             .HasDatabaseName("ix_subscriptions_tenant_id");

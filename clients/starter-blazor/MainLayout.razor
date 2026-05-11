@@ -1,24 +1,53 @@
 @inherits LayoutComponentBase
 @using MudBlazor
+@inject NavigationManager Nav
 
 <MudLayout>
-    <MudAppBar Color="Color.Primary" Elevation="1">
-        <MudText Typo="Typo.h6" Class="ml-3">SaasBuilder</MudText>
+    <MudAppBar Color="Color.Primary" Elevation="1" Dense="false">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                       Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-2">SaasBuilder</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Href="/dashboard" />
+        <MudTooltip Text="Profile">
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle"
+                           Color="Color.Inherit" Href="/profile" />
+        </MudTooltip>
+        <MudTooltip Text="Notifications">
+            <MudIconButton Icon="@Icons.Material.Filled.Notifications"
+                           Color="Color.Inherit" Href="/notifications" />
+        </MudTooltip>
     </MudAppBar>
 
-    <MudDrawer Open="true" Variant="DrawerVariant.Persistent" Elevation="2">
+    <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Responsive"
+               Elevation="2" ClipMode="DrawerClipMode.Always">
         <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-            <MudNavLink Href="/members" Icon="@Icons.Material.Filled.People">Members</MudNavLink>
-            <MudNavLink Href="/billing" Icon="@Icons.Material.Filled.CreditCard">Billing</MudNavLink>
+            <MudNavLink Href="/" Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="/members"
+                        Icon="@Icons.Material.Filled.People">Members</MudNavLink>
+            <MudNavLink Href="/billing"
+                        Icon="@Icons.Material.Filled.CreditCard">Billing</MudNavLink>
+            <MudNavLink Href="/files"
+                        Icon="@Icons.Material.Filled.UploadFile">Files</MudNavLink>
+            <MudNavLink Href="/notifications"
+                        Icon="@Icons.Material.Filled.Notifications">Notifications</MudNavLink>
+            <MudNavLink Href="/profile"
+                        Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/mfa-setup"
+                        Icon="@Icons.Material.Filled.Security">MFA Setup</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 mb-6">
             @Body
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

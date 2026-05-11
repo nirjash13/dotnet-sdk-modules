@@ -1,0 +1,157 @@
+@page "/notifications"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@implements IAsyncDisposable
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject NotificationsHubClient HubClient
+
+<PageTitle>Notifications — SaasBuilder</PageTitle>
+
+<div class="d-flex align-center mb-4">
+    <MudText Typo="Typo.h4">Notifications</MudText>
+    <MudSpacer />
+    @if (_items.Any(n => !n.IsRead))
+    {
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="MarkAllRead">
+            Mark all as read
+        </MudButton>
+    }
+</div>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        You're all caught up — no notifications.
+    </MudAlert>
+}
+else
+{
+    <MudList T="NotificationItem" Dense="false">
+        @foreach (var item in _items)
+        {
+            <MudListItem T="NotificationItem" Style="@(item.IsRead ? "" : "background:var(--mud-palette-action-hover)")">
+                <div class="d-flex align-center" style="width:100%;">
+                    @if (!item.IsRead)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
+                                 Color="Color.Primary" Class="mr-2" Style="font-size:8px;" />
+                    }
+                    else
+                    {
+                        <div style="width:20px;" />
+                    }
+                    <div style="flex:1;">
+                        <MudText Typo="Typo.body2">@item.Title</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Body</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @item.CreatedAt.ToString("MMM d, yyyy h:mm tt")
+                        </MudText>
+                    </div>
+                    @if (!item.IsRead)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.MarkEmailRead"
+                                       Size="Size.Small" OnClick="() => MarkRead(item)" />
+                    }
+                </div>
+            </MudListItem>
+        }
+    </MudList>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<NotificationItem> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        HubClient.OnNotificationReceived += OnLiveNotification!;
+
+        try
+        {
+            await HubClient.StartAsync();
+            var result = await Client.GetAsync<NotificationsResponse>("/api/v1/notifications?pageSize=50");
+            _items = result?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnLiveNotification(NotificationsHubClient.NotificationMessage msg)
+    {
+        var item = new NotificationItem
+        {
+            Id = msg.Id,
+            Title = msg.Title,
+            Body = msg.Body,
+            CreatedAt = msg.CreatedAt,
+            IsRead = msg.IsRead,
+        };
+        _items.Insert(0, item);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task MarkRead(NotificationItem item)
+    {
+        try
+        {
+            await Client.PostAsync($"/api/v1/notifications/{item.Id}/read", new { });
+            item.IsRead = true;
+        }
+        catch
+        {
+            // Non-critical — ignore silently
+        }
+    }
+
+    private async Task MarkAllRead()
+    {
+        try
+        {
+            await Client.PostAsync("/api/v1/notifications/read-all", new { });
+            foreach (var n in _items) n.IsRead = true;
+        }
+        catch
+        {
+            // Non-critical
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        HubClient.OnNotificationReceived -= OnLiveNotification!;
+        await HubClient.StopAsync().ConfigureAwait(false);
+    }
+
+    private sealed class NotificationItem
+    {
+        public string Id { get; init; } = string.Empty;
+        public string Title { get; init; } = string.Empty;
+        public string Body { get; init; } = string.Empty;
+        public DateTimeOffset CreatedAt { get; init; }
+        public bool IsRead { get; set; }
+    }
+
+    private sealed record NotificationsResponse(List<NotificationItem> Items, int Total);
+}

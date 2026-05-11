@@ -5,6 +5,68 @@ Each entry documents what was built, decisions made, and version adjustments rel
 
 ---
 
+## 2026-05-11 — Phase 7 frontend SDKs + remaining backend gaps (sequential agents)
+
+**Goal:** Replace the stub Next.js / Blazor / Admin scaffolds with real apps, and close the three backend feature gaps still marked `[ ]`: domain-claimed orgs (2.4), account deletion with grace (2.11), Stripe dunning → tenant suspension (4.7).
+
+**Build state:** `dotnet build SaasBuilder.sln -warnaserror` — 0 errors, 0 warnings.
+
+### Phase 7.2 — Next.js 16 starter (`clients/starter-next/`)
+- Next.js 16 / React 19 / TypeScript strict / Tailwind 4 / Radix-based UI primitives.
+- App Router with auth/onboarding/app route groups; 12 pages including login, MFA setup, accept-invitation, onboarding wizard, dashboard, members, billing, files (presigned PUT), notifications (SignalR), webhooks, profile, branding.
+- `lib/api.ts` fetch wrapper with bearer + auto-refresh on 401 + MFA passthrough.
+- `lib/signalr.ts` reconnecting `HubConnection` singleton.
+- Middleware redirects unauthenticated `(app)` requests to `/login`.
+- Per-tenant theming via CSS vars sourced from `/api/v1/branding`.
+
+### Phase 7.3 — Blazor WASM starter (`clients/starter-blazor/`)
+- MudBlazor 7.6.0 wired in (`MudLayout` + `MudAppBar` + `MudDrawer`).
+- 10 pages: Login (password + magic link + MFA inline + 4 social providers), Dashboard, Members (MudTable + invite dialog + role menu), MfaSetup (QR + TOTP + recovery codes), TenantOnboarding (wizard), Invitations, Billing, FileUpload (drag-drop + presigned), Notifications (SignalR), Profile.
+- Services: `ApiClient` (bearer + 401 refresh), `NotificationsHubClient`, `BrandingService` (applies CSS vars to `MudTheme`).
+
+### Phase 7.5 — Admin UI (`clients/admin-next/`)
+- New Next.js 16 sibling app for platform operators (admin role-gated).
+- Pages: tenant directory + inspector (suspend/restore), background-job dashboard, webhook delivery viewer + replay, feature-flag console, admin login.
+- Middleware enforces `role=admin` JWT claim.
+
+### Phase 2.4 — Domain-claimed organizations
+- `OrganizationDomainClaim` entity + EF migration `20260511000003_Phase24_DomainClaims` + unique index on `Domain`.
+- `IDomainOwnershipVerifier` with `DnsTxtDomainOwnershipVerifier` (System.Net.NameResolution UDP DNS query) and `NoopDomainOwnershipVerifier` (dev-only).
+- `ClaimDomain` / `VerifyDomainClaim` / `DeleteDomainClaim` commands + handlers + FluentValidation.
+- Auto-join hook in the email-verification flow: matches verified email domain → adds Member to the claiming org. Gated by `Identity:DomainClaims:AutoJoinEnabled` (default true).
+- Endpoints: `POST/POST:verify/DELETE /api/v1/organizations/{id}/domain-claims*` under permission `org.manage`.
+
+### Phase 2.11 — Account deletion with 30-day grace
+- `User.DeletedAt` + `User.DeletionScheduledFor` (UTC nullable); global query filter `IsDeleted == false` with `IgnoreDeletionFilter()` override for admin queries.
+- `UserTombstone` entity (PII-redacted audit trail) + `AccountRestoreToken` (single-use, 30d).
+- `RequestAccountDeletionHandler` — sets deletion timestamps, generates restore token, dispatches restore email.
+- `RestoreAccountHandler` — validates token, clears deletion flags.
+- `HardDeleteExpiredAccountsHandler` — redacts PII (`deleted-{guid}@tombstone.invalid`, "Deleted User"), drops password hash / API keys / MFA credentials / social logins, inserts tombstone.
+- Login flows (password grant + MFA verify + magic link) reject deletion-state users with `account_deleted` error.
+- `HardDeleteJobScheduler` `BackgroundService` runs daily at 03:00 UTC (no Hangfire dep — kept Identity.Infrastructure clean).
+- Endpoints: `DELETE /api/v1/identity/me` (auth), `POST /api/v1/identity/account/restore` (anonymous, token).
+- EF migration `20260511000004_Phase211_AccountDeletion`.
+
+### Phase 4.7 — Stripe dunning grace + tenant suspension
+- `BillingOptions.DunningGraceDays` (default 7) + `BillingOptions.SuspendOnTerminalPaymentFailure` (default true).
+- `invoice.payment_failed` webhook: terminal failure (`next_payment_attempt == null`) schedules `SuspendTenantForUnpaidInvoiceJob` for `now + GraceDays`; non-terminal increments `FailedPaymentCount` only.
+- `SuspendTenantForUnpaidInvoiceJob` re-checks invoice paid-status, then invokes every registered `ITenantLifecycleHandler.OnSuspend(tenantId, "payment_failed_terminal")` and sets `Subscription.Status = Suspended`.
+- `invoice.payment_succeeded` for a suspended tenant calls `OnResume(tenantId)` and flips status back to Active.
+
+### Files
+- 50+ files under `clients/starter-next/src/`, 35 under `clients/admin-next/`, 23 under `clients/starter-blazor/`.
+- 28 new files under `src/Modules/Identity/` (domain/app/infra/api), 2 EF migrations, 6 new files under `src/Modules/Billing/`.
+
+### Items NOT delivered (still `[ ]` in TASK_LIST)
+- Phase 2.7 SAML / OIDC per-org SSO
+- Phase 2.8 SCIM 2.0
+- Phase 5.1 push adapters / preferences / digest
+- Phase 5.2 ClamAV malware scan integration
+- Phase 9.3 MarketplaceSample
+- Phase 10.1 SSE streaming / MCP server / RAG store
+
+---
+
 ## 2026-05-11 — Phases 2–10 finishing sweep (parallel agents, 3 waves)
 
 **Goal:** Complete the remaining work across all phases. Dispatched 9 builder agents in 3 waves of 3 parallel agents (per user constraint: ≤3 agents at a time).

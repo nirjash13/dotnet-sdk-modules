@@ -1,0 +1,170 @@
+@page "/onboarding"
+@layout EmptyLayout
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Get Started — SaasBuilder</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2">Set up your workspace</MudText>
+    <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="mb-6">
+        Step @_step of 3
+    </MudText>
+
+    <MudStepper @bind-ActiveIndex="_step" Linear="true" DisableRipple="true">
+        <MudStep Title="Organization">
+            <MudText Typo="Typo.h6" Class="mb-4">Name your organization</MudText>
+            <MudTextField @bind-Value="_orgName" Label="Organization name" Variant="Variant.Outlined"
+                          Class="mb-3" HelperText="You can change this later." />
+            <MudTextField @bind-Value="_orgSlug" Label="URL slug" Variant="Variant.Outlined"
+                          HelperText="e.g. acme-corp → saasbuilder.io/acme-corp" />
+            @if (!string.IsNullOrEmpty(_orgError))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@_orgError</MudAlert>
+            }
+            <div class="d-flex justify-end mt-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="CreateOrg" Disabled="_busy">
+                    @(_busy ? "Creating..." : "Next")
+                </MudButton>
+            </div>
+        </MudStep>
+
+        <MudStep Title="Invite Members">
+            <MudText Typo="Typo.h6" Class="mb-4">Invite your team</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                Add emails separated by commas, or skip for now.
+            </MudText>
+            <MudTextField @bind-Value="_inviteEmails" Label="Email addresses" Variant="Variant.Outlined"
+                          Lines="3" HelperText="comma-separated" />
+            <div class="d-flex justify-space-between mt-4">
+                <MudButton Variant="Variant.Text" OnClick="SkipInvites">Skip</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="SendInvites" Disabled="_busy">
+                    @(_busy ? "Sending..." : "Send Invites & Next")
+                </MudButton>
+            </div>
+        </MudStep>
+
+        <MudStep Title="Plan">
+            <MudText Typo="Typo.h6" Class="mb-4">Choose a plan</MudText>
+            <MudGrid>
+                @foreach (var plan in _plans)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudCard Elevation="@(_selectedPlan == plan.Id ? 6 : 1)"
+                                 Style="cursor:pointer;border:2px solid transparent;"
+                                 Class="@(_selectedPlan == plan.Id ? "mud-border-primary" : "")"
+                                 @onclick="() => _selectedPlan = plan.Id">
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@plan.Name</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Primary">@plan.Price</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">per month</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+            <div class="d-flex justify-end mt-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="FinishOnboarding" Disabled="_busy || _selectedPlan is null">
+                    @(_busy ? "Saving..." : "Finish Setup")
+                </MudButton>
+            </div>
+        </MudStep>
+    </MudStepper>
+</MudContainer>
+
+@code {
+    private int _step;
+    private bool _busy;
+    private string _orgName = string.Empty;
+    private string _orgSlug = string.Empty;
+    private string? _orgError;
+    private string _inviteEmails = string.Empty;
+    private string? _selectedPlan;
+
+    private List<PlanDto> _plans = new()
+    {
+        new("starter", "Starter", "$0"),
+        new("pro", "Pro", "$29"),
+        new("enterprise", "Enterprise", "$99"),
+    };
+
+    private async Task CreateOrg()
+    {
+        if (string.IsNullOrWhiteSpace(_orgName))
+        {
+            _orgError = "Organization name is required.";
+            return;
+        }
+
+        _busy = true;
+        _orgError = null;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/organizations",
+                new { Name = _orgName, Slug = _orgSlug });
+            _step = 1;
+        }
+        catch (Exception ex)
+        {
+            _orgError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendInvites()
+    {
+        _busy = true;
+        try
+        {
+            var emails = _inviteEmails
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var email in emails)
+            {
+                await Client.PostAsync("/api/v1/identity/invitations", new { Email = email, Role = "Member" });
+            }
+
+            Snackbar.Add($"Invites sent to {emails.Length} address(es).", Severity.Success);
+            _step = 2;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void SkipInvites() => _step = 2;
+
+    private async Task FinishOnboarding()
+    {
+        _busy = true;
+        try
+        {
+            await Client.PostAsync("/api/v1/billing/subscription", new { PlanId = _selectedPlan });
+            Nav.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed record PlanDto(string Id, string Name, string Price);
+}

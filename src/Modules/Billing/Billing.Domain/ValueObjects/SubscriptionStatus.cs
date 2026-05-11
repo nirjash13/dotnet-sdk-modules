@@ -22,4 +22,7 @@ public enum SubscriptionStatus
 
     /// <summary>The subscription is temporarily paused.</summary>
     Paused = 5,
+
+    /// <summary>The subscription is suspended due to terminal payment failure (dunning exhausted).</summary>
+    Suspended = 6,
 }

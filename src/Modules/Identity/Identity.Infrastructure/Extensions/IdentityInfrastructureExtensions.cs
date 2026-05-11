@@ -5,6 +5,7 @@ using Identity.Application.ApiKeys;
 using Identity.Application.Auth;
 using Identity.Application.Authorization;
 using Identity.Application.Impersonation;
+using Identity.Application.Lifecycle;
 using Identity.Application.Mfa;
 using Identity.Application.Organizations;
 using Identity.Application.Services;
@@ -14,8 +15,11 @@ using Identity.Infrastructure.Auth;
 using Identity.Infrastructure.Authorization;
 using Identity.Infrastructure.Certificates;
 using Identity.Infrastructure.Claims;
+using Identity.Infrastructure.DomainClaims;
 using Identity.Infrastructure.Impersonation;
+using Identity.Infrastructure.Jobs;
 using Identity.Infrastructure.Mfa;
+using Identity.Infrastructure.Notifications;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Seeding;
 using Identity.Infrastructure.SocialLogin;
@@ -23,6 +27,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
 using SaasBuilder.Persistence;
 
@@ -116,6 +121,36 @@ public static class IdentityInfrastructureExtensions
         services.AddSingleton<ISocialLoginAdapter, MicrosoftProvider>();
         services.AddSingleton<ISocialLoginAdapter, GitHubProvider>();
         services.AddSingleton<ISocialLoginAdapter, AppleProvider>();
+
+        // Phase 2.4 — Domain-claimed organizations.
+        services.AddScoped<IOrganizationDomainClaimRepository, OrganizationDomainClaimRepository>();
+        services.AddScoped<ClaimDomainHandler>();
+        services.AddScoped<VerifyDomainClaimHandler>();
+        services.AddScoped<DeleteDomainClaimHandler>();
+
+        // Phase 2.4 — Domain ownership verifier: noop for dev (AutoVerify=true), DNS for prod.
+        bool autoVerify = configuration.GetValue<bool>("Identity:DomainClaims:AutoVerify");
+        if (autoVerify || environment.IsDevelopment())
+        {
+            services.AddScoped<IDomainOwnershipVerifier, NoopDomainOwnershipVerifier>();
+        }
+        else
+        {
+            services.AddScoped<IDomainOwnershipVerifier, DnsTxtDomainOwnershipVerifier>();
+        }
+
+        // Phase 2.11 — Account deletion grace period.
+        services.AddScoped<IAccountRestoreTokenStore, AccountRestoreTokenStore>();
+        services.AddScoped<IUserTombstoneRepository, UserTombstoneRepository>();
+        services.AddScoped<RequestAccountDeletionHandler>();
+        services.AddScoped<RestoreAccountHandler>();
+        services.AddScoped<HardDeleteExpiredAccountsHandler>();
+
+        // Phase 2.11 — Notification dispatcher: logging-only by default; host can override.
+        services.AddScoped<INotificationDispatcherAdapter, LoggingOnlyNotificationDispatcherAdapter>();
+
+        // Phase 2.11 — Hangfire recurring job (registered only if Hangfire is available).
+        RegisterHardDeleteJobIfHangfirePresent(services);
 
         // 3. Scoped OpenIddict sign-in event handler.
         services.AddScoped<TenantClaimEventHandler>();
@@ -211,6 +246,19 @@ public static class IdentityInfrastructureExtensions
             validation.UseLocalServer();
             validation.UseAspNetCore();
         });
+    }
+
+    /// <summary>
+    /// Registers the <see cref="HardDeleteExpiredAccountsJob"/> Hangfire recurring job
+    /// if Hangfire's <c>RecurringJob</c> type is available at runtime.
+    /// Skips silently with a log warning if Hangfire is not in the assembly graph.
+    /// </summary>
+    private static void RegisterHardDeleteJobIfHangfirePresent(IServiceCollection services)
+    {
+        services.AddSingleton<HardDeleteExpiredAccountsJob>();
+
+        // Use a hosted service to schedule the recurring job after the DI container is built.
+        services.AddHostedService<HardDeleteJobScheduler>();
     }
 
     /// <summary>

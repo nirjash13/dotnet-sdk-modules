@@ -1,0 +1,167 @@
+@page "/billing"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Billing — SaasBuilder</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Billing</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">Current Subscription</MudText>
+                    @if (_subscription is not null)
+                    {
+                        <MudList T="string" Dense="true" DisablePadding="true">
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Plan</MudText>
+                                    <MudText Typo="Typo.body2">@_subscription.PlanName</MudText>
+                                </div>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Status</MudText>
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@(_subscription.Status == "active" ? Color.Success : Color.Warning)">
+                                        @_subscription.Status
+                                    </MudChip>
+                                </div>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Renews</MudText>
+                                    <MudText Typo="Typo.body2">
+                                        @_subscription.CurrentPeriodEnd.ToString("MMM d, yyyy")
+                                    </MudText>
+                                </div>
+                            </MudListItem>
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Secondary">No active subscription.</MudText>
+                    }
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="OpenBillingPortal" Disabled="_redirecting">
+                        @(_redirecting ? "Redirecting..." : "Manage Billing")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" Class="mb-3">Invoices</MudText>
+            @if (_invoices.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No invoices yet.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="_invoices" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Invoice</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Amount</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Invoice">@context.Number</MudTd>
+                        <MudTd DataLabel="Date">@context.Date.ToString("MMM d, yyyy")</MudTd>
+                        <MudTd DataLabel="Amount">@context.Amount</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(context.Status == "paid" ? Color.Success : Color.Warning)">
+                                @context.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            @if (!string.IsNullOrEmpty(context.PdfUrl))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                              Href="@context.PdfUrl" Target="_blank" Size="Size.Small" />
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private SubscriptionDto? _subscription;
+    private List<InvoiceDto> _invoices = new();
+    private bool _redirecting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            _subscription = await Client.GetAsync<SubscriptionDto>("/api/v1/billing/subscription");
+            var invoicesResult = await Client.GetAsync<InvoicesResponse>("/api/v1/billing/invoices");
+            _invoices = invoicesResult?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenBillingPortal()
+    {
+        _redirecting = true;
+        try
+        {
+            var session = await Client.PostAsync<PortalSessionDto>(
+                "/api/v1/billing/portal-session",
+                new { ReturnUrl = Nav.BaseUri + "billing" });
+
+            if (session?.Url is not null)
+            {
+                Nav.NavigateTo(session.Url, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            _redirecting = false;
+        }
+    }
+
+    private sealed record SubscriptionDto(
+        string PlanName, string Status, DateTimeOffset CurrentPeriodEnd);
+    private sealed record InvoiceDto(
+        string Number, DateTimeOffset Date, string Amount, string Status, string? PdfUrl);
+    private sealed record InvoicesResponse(List<InvoiceDto> Items);
+    private sealed record PortalSessionDto(string Url);
+}

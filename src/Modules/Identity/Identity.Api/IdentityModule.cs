@@ -4,6 +4,7 @@ using Identity.Api.ApiKeys;
 using Identity.Api.Auth;
 using Identity.Api.Authorization;
 using Identity.Api.Impersonation;
+using Identity.Api.Lifecycle;
 using Identity.Api.Mfa;
 using Identity.Api.Organizations;
 using Identity.Api.SocialLogin;
@@ -88,6 +89,12 @@ public sealed class IdentityModule : IModuleStartup
 
         // Phase 2 — Social login scaffold endpoints.
         SocialLoginEndpoints.MapSocialLoginEndpoints(endpoints);
+
+        // Phase 2.4 — Organization domain-claim endpoints.
+        DomainClaimEndpoints.MapDomainClaimEndpoints(endpoints);
+
+        // Phase 2.11 — Account lifecycle (deletion + restore) endpoints.
+        AccountLifecycleEndpoints.MapAccountLifecycleEndpoints(endpoints);
     }
 
     private static IResult GetCurrentUser(HttpContext context)

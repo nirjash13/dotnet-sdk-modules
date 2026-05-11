@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Identity.Application.Services;
@@ -38,6 +40,19 @@ internal sealed class UserRepository(IdentityDbContext db) : IUserRepository
                 m => m.UserId == userId && m.IsPrimary,
                 cancellationToken)
             .ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<User>> FindExpiredDeletionsAsync(
+        DateTimeOffset asOf,
+        CancellationToken cancellationToken = default)
+    {
+        // Must bypass the global soft-delete query filter to find users in deletion state.
+        return await db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.DeletionScheduledFor != null && u.DeletionScheduledFor <= asOf && u.DeletedAt != null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
     public void Add(User user) => db.Users.Add(user);

@@ -1,0 +1,196 @@
+@page "/profile"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject ApiClient Client
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Profile — SaasBuilder</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">My Profile</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <MudAlert Severity="Severity.Error">@_loadError</MudAlert>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-4">Personal Information</MudText>
+                    <MudTextField @bind-Value="_name" Label="Full name" Variant="Variant.Outlined"
+                                  Class="mb-3" />
+                    <MudTextField @bind-Value="_email" Label="Email" InputType="InputType.Email"
+                                  Variant="Variant.Outlined" Class="mb-3" ReadOnly="true"
+                                  HelperText="Email cannot be changed here." />
+                    <MudTextField @bind-Value="_phone" Label="Phone" InputType="InputType.Telephone"
+                                  Variant="Variant.Outlined" Class="mb-3" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="SaveProfile" Disabled="_saving">
+                        @(_saving ? "Saving..." : "Save Changes")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-4">Change Password</MudText>
+                    <MudTextField @bind-Value="_currentPassword" Label="Current password"
+                                  InputType="InputType.Password" Variant="Variant.Outlined"
+                                  Class="mb-3" />
+                    <MudTextField @bind-Value="_newPassword" Label="New password"
+                                  InputType="InputType.Password" Variant="Variant.Outlined"
+                                  Class="mb-3" />
+                    <MudTextField @bind-Value="_confirmPassword" Label="Confirm new password"
+                                  InputType="InputType.Password" Variant="Variant.Outlined"
+                                  Class="mb-3" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               OnClick="ChangePassword" Disabled="_changingPassword">
+                        @(_changingPassword ? "Changing..." : "Change Password")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Two-Factor Authentication</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                        @(_mfaEnabled
+                            ? "Two-factor authentication is enabled on your account."
+                            : "Add an extra layer of security to your account.")
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (_mfaEnabled)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                   OnClick="DisableMfa">Disable MFA</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   Href="/mfa-setup">Enable MFA</MudButton>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _loadError;
+    private string _name = string.Empty;
+    private string _email = string.Empty;
+    private string _phone = string.Empty;
+    private bool _mfaEnabled;
+    private bool _saving;
+    private bool _changingPassword;
+    private string _currentPassword = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            var me = await Client.GetAsync<ProfileDto>("/api/v1/identity/me");
+            if (me is not null)
+            {
+                _name = me.Name;
+                _email = me.Email;
+                _phone = me.Phone ?? string.Empty;
+                _mfaEnabled = me.MfaEnabled;
+            }
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveProfile()
+    {
+        _saving = true;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/me",
+                new { Name = _name, Phone = _phone });
+            Snackbar.Add("Profile updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        if (_newPassword != _confirmPassword)
+        {
+            Snackbar.Add("Passwords do not match.", Severity.Error);
+            return;
+        }
+
+        _changingPassword = true;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/change-password",
+                new { CurrentPassword = _currentPassword, NewPassword = _newPassword });
+            Snackbar.Add("Password changed.", Severity.Success);
+            _currentPassword = _newPassword = _confirmPassword = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _changingPassword = false;
+        }
+    }
+
+    private async Task DisableMfa()
+    {
+        try
+        {
+            await Client.DeleteAsync("/api/v1/identity/mfa");
+            _mfaEnabled = false;
+            Snackbar.Add("MFA disabled.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private sealed record ProfileDto(string Name, string Email, string? Phone, bool MfaEnabled);
+}

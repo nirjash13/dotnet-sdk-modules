@@ -75,6 +75,19 @@ public sealed class IdentityDbContext(
     /// <summary>Gets the impersonation session set.</summary>
     public DbSet<ImpersonationSessionEntity> ImpersonationSessions => Set<ImpersonationSessionEntity>();
 
+    // ── Phase 2.4 — Domain-claimed organizations ─────────────────────────────
+
+    /// <summary>Gets the organization domain claims set.</summary>
+    public DbSet<OrganizationDomainClaim> OrganizationDomainClaims => Set<OrganizationDomainClaim>();
+
+    // ── Phase 2.11 — Account deletion grace period ───────────────────────────
+
+    /// <summary>Gets the account restore tokens set.</summary>
+    public DbSet<AccountRestoreToken> AccountRestoreTokens => Set<AccountRestoreToken>();
+
+    /// <summary>Gets the user tombstones set.</summary>
+    public DbSet<UserTombstone> UserTombstones => Set<UserTombstone>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,6 +114,17 @@ public sealed class IdentityDbContext(
         modelBuilder.ApplyConfiguration(new TotpCredentialConfiguration());
         modelBuilder.ApplyConfiguration(new ApiKeyConfiguration());
         modelBuilder.ApplyConfiguration(new ImpersonationSessionConfiguration());
+
+        // Phase 2.4 — domain-claimed organizations.
+        modelBuilder.ApplyConfiguration(new OrganizationDomainClaimConfiguration());
+
+        // Phase 2.11 — account deletion grace period.
+        modelBuilder.ApplyConfiguration(new AccountRestoreTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new UserTombstoneConfiguration());
+
+        // Phase 2.11 — soft-delete global query filter on users.
+        modelBuilder.Entity<User>()
+            .HasQueryFilter(u => u.DeletedAt == null);
     }
 
     private static void ConfigureUser(ModelBuilder modelBuilder)
@@ -131,6 +155,10 @@ public sealed class IdentityDbContext(
 
             // Phase 2 — MFA flag.
             entity.Property(u => u.IsMfaEnabled).IsRequired();
+
+            // Phase 2.11 — account deletion grace period.
+            entity.Property(u => u.DeletedAt);
+            entity.Property(u => u.DeletionScheduledFor);
 
             entity.HasIndex(u => u.Email).IsUnique();
 

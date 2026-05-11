@@ -1,0 +1,31 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Class="mb-3">Change role for <strong>@MemberName</strong>:</MudText>
+        <MudSelect T="string" @bind-Value="_selectedRole" Label="Role" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("Member")">Member</MudSelectItem>
+            <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+            <MudSelectItem Value="@("Billing")">Billing</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string MemberName { get; set; } = string.Empty;
+    [Parameter] public string CurrentRole { get; set; } = "Member";
+
+    private string _selectedRole = "Member";
+
+    protected override void OnParametersSet() => _selectedRole = CurrentRole;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(_selectedRole));
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -14,13 +14,24 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? builder.HostEnvironment.BaseAddress;
 
-// Register the SaasBuilder API client
 builder.Services.AddScoped(sp =>
     new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 
-builder.Services.AddScoped<SaasBuilderClientService>();
+// Core API client with Bearer token management + 401 refresh
+builder.Services.AddScoped<ApiClient>();
 
-// MudBlazor for Material Design components
-builder.Services.AddMudServices();
+// Notification hub (SignalR to /hubs/notifications)
+builder.Services.AddScoped<NotificationsHubClient>();
+
+// Branding: reads /api/v1/branding and applies MudTheme + CSS vars
+builder.Services.AddScoped<BrandingService>();
+
+// MudBlazor Material Design components
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.PreventDuplicates = false;
+    config.SnackbarConfiguration.VisibleStateDuration = 4000;
+});
 
 await builder.Build().RunAsync().ConfigureAwait(false);

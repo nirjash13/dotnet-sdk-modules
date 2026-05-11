@@ -43,6 +43,23 @@ public sealed class Subscription : ITenantScoped
     /// <summary>Gets the UTC end of the trial period (null if not in trial).</summary>
     public DateTimeOffset? TrialEndsAt { get; private set; }
 
+    // ── Phase 4.7 — Dunning ─────────────────────────────────────────────────
+
+    /// <summary>Gets the UTC time of the terminal payment failure, or null if not in dunning.</summary>
+    public DateTimeOffset? PaymentFailedAt { get; private set; }
+
+    /// <summary>Gets the UTC time of the most recent (non-terminal) payment failure, or null.</summary>
+    public DateTimeOffset? LastPaymentFailureAt { get; private set; }
+
+    /// <summary>Gets the count of non-terminal payment failures in the current dunning cycle.</summary>
+    public int FailedPaymentCount { get; private set; }
+
+    /// <summary>Gets the provider invoice ID that triggered the terminal failure, or null.</summary>
+    public string? TerminalFailedInvoiceId { get; private set; }
+
+    /// <summary>Gets a value indicating whether the subscription is currently in a paid state.</summary>
+    public bool IsPaid => Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing;
+
     /// <summary>
     /// Creates a new subscription for a tenant in the <see cref="SubscriptionStatus.Incomplete"/> state.
     /// The status transitions to <see cref="SubscriptionStatus.Active"/> once the provider confirms payment.
@@ -154,6 +171,51 @@ public sealed class Subscription : ITenantScoped
     public SubscriptionStatusChangedDomainEvent MarkPastDue()
     {
         Status = SubscriptionStatus.PastDue;
+        return new SubscriptionStatusChangedDomainEvent(Id, TenantId, PlanId, Status);
+    }
+
+    /// <summary>
+    /// Records a non-terminal payment failure (retry will be attempted by the provider).
+    /// Increments the failure counter and updates the last-failure timestamp.
+    /// </summary>
+    public void RecordPaymentFailure()
+    {
+        LastPaymentFailureAt = DateTimeOffset.UtcNow;
+        FailedPaymentCount++;
+        Status = SubscriptionStatus.PastDue;
+    }
+
+    /// <summary>
+    /// Records the terminal payment failure (no more retries). Sets <see cref="PaymentFailedAt"/>.
+    /// The caller is responsible for scheduling the grace-period suspension job.
+    /// </summary>
+    /// <param name="providerInvoiceId">The invoice that failed definitively.</param>
+    public void RecordTerminalPaymentFailure(string providerInvoiceId)
+    {
+        PaymentFailedAt = DateTimeOffset.UtcNow;
+        TerminalFailedInvoiceId = providerInvoiceId;
+        FailedPaymentCount++;
+        Status = SubscriptionStatus.PastDue;
+    }
+
+    /// <summary>Suspends the subscription after the dunning grace period expires.</summary>
+    public SubscriptionStatusChangedDomainEvent Suspend()
+    {
+        Status = SubscriptionStatus.Suspended;
+        return new SubscriptionStatusChangedDomainEvent(Id, TenantId, PlanId, Status);
+    }
+
+    /// <summary>
+    /// Reactivates the subscription after a successful payment on a suspended/past-due subscription.
+    /// Clears all dunning state.
+    /// </summary>
+    public SubscriptionStatusChangedDomainEvent MarkPaid()
+    {
+        Status = SubscriptionStatus.Active;
+        PaymentFailedAt = null;
+        LastPaymentFailureAt = null;
+        FailedPaymentCount = 0;
+        TerminalFailedInvoiceId = null;
         return new SubscriptionStatusChangedDomainEvent(Id, TenantId, PlanId, Status);
     }
 }
