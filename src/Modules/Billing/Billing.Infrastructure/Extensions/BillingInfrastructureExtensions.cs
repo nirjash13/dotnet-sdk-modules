@@ -1,6 +1,7 @@
 using System;
 using Billing.Application.Abstractions;
 using Billing.Application.Commands;
+using Billing.Application.Services;
 using Billing.Infrastructure.Jobs;
 using Billing.Infrastructure.Persistence;
 using Billing.Infrastructure.Providers;
@@ -50,7 +51,10 @@ public static class BillingInfrastructureExtensions
         services.AddScoped<UpgradePlanHandler>();
         services.AddScoped<PauseResumeSubscriptionHandler>();
 
-        // 4. Provider stubs — default to Stripe (throws NotImplementedException until Phase 4 integration).
+        // 3b. Application services.
+        services.AddScoped<SeatSyncService>();
+
+        // 4. Provider — default to Stripe; consumer can override after this call.
         // Consumer can call services.AddSingleton<IBillingProvider, MyProvider>() after this call
         // to override the default.
         services.AddSingleton<IBillingProvider, StripeBillingProvider>();

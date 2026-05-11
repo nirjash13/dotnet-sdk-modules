@@ -62,21 +62,31 @@ public sealed class SaasBuilderTenancyOptions
     /// Returns <see langword="true"/> when the chosen isolation mode is fully implemented.
     /// Deferred modes log a startup warning but do not fail until first dispatch.
     /// </summary>
-    internal bool IsIsolationModeSupported()
-        => Isolation == TenantIsolation.PoolWithRls;
+    /// <remarks>
+    /// All five modes are implemented as of Phase 3.
+    /// <see cref="TenantIsolation.SiloedStamp"/> is a pass-through stub that logs a warning;
+    /// the caller is expected to override with a custom <c>ITenantResourcesProvider</c>.
+    /// </remarks>
+    internal bool IsIsolationModeSupported() => Isolation switch
+    {
+        TenantIsolation.PoolWithRls => true,
+        TenantIsolation.PoolShared => true,
+        TenantIsolation.SiloedSchema => true,
+        TenantIsolation.SiloedDatabase => true,
+        TenantIsolation.SiloedStamp => true,
+        _ => false,
+    };
 
     /// <summary>
-    /// Validates that the chosen isolation mode is supported in the current phase.
-    /// Throws <see cref="NotSupportedException"/> for modes not yet implemented.
+    /// Validates that the chosen isolation mode is supported.
+    /// Throws <see cref="NotSupportedException"/> for unknown modes.
     /// </summary>
     internal void AssertSupported()
     {
         if (!IsIsolationModeSupported())
         {
             throw new NotSupportedException(
-                $"TenantIsolation.{Isolation} is not yet implemented. " +
-                "Only PoolWithRls is supported in Phase 1. " +
-                "See Phase 3 of the roadmap for additional isolation modes.");
+                $"TenantIsolation.{Isolation} is not a recognised isolation mode.");
         }
     }
 }

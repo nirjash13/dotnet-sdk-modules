@@ -36,7 +36,9 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <!-- SA1313: StyleCop incorrectly flags PascalCase record positional parameters. -->
+    <!-- SA1201: StyleCop crashes on RecordDeclaration in 1.1.x (KeyNotFoundException). -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313;SA1201</NoWarn>
   </PropertyGroup>
 
 </Project>

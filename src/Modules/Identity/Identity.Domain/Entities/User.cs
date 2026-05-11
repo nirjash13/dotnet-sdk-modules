@@ -38,6 +38,30 @@ public sealed class User
     /// <summary>Gets the UTC timestamp of the user's last modification, if any.</summary>
     public DateTimeOffset? UpdatedAt { get; private set; }
 
+    // ── Email verification ────────────────────────────────────────────────────
+
+    /// <summary>Gets a value indicating whether the user's email has been verified.</summary>
+    public bool IsEmailVerified { get; private set; }
+
+    /// <summary>Gets the UTC time the email was verified, or <see langword="null"/> if unverified.</summary>
+    public DateTimeOffset? EmailVerifiedAt { get; private set; }
+
+    // ── Account lockout ───────────────────────────────────────────────────────
+
+    /// <summary>Gets the number of consecutive failed login attempts.</summary>
+    public int FailedLoginAttempts { get; private set; }
+
+    /// <summary>Gets the UTC time the account lockout expires, or <see langword="null"/> if not locked.</summary>
+    public DateTimeOffset? LockoutUntil { get; private set; }
+
+    /// <summary>Gets a value indicating whether the account is currently locked out.</summary>
+    public bool IsLockedOut => LockoutUntil is not null && DateTimeOffset.UtcNow < LockoutUntil.Value;
+
+    // ── TOTP MFA ─────────────────────────────────────────────────────────────
+
+    /// <summary>Gets a value indicating whether TOTP MFA is enabled for this user.</summary>
+    public bool IsMfaEnabled { get; private set; }
+
     /// <summary>Gets the tenant memberships for this user (read-only projection).</summary>
     public IReadOnlyList<UserTenantMembership> Memberships => _memberships;
 
@@ -98,6 +122,66 @@ public sealed class User
         _memberships.Add(membership);
         UpdatedAt = DateTimeOffset.UtcNow;
         return membership;
+    }
+
+    /// <summary>Marks the user's email as verified.</summary>
+    public void MarkEmailVerified()
+    {
+        IsEmailVerified = true;
+        EmailVerifiedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Records a failed login attempt. Increments counter but does NOT lock — callers
+    /// must call <see cref="LockOut"/> when threshold is reached.
+    /// </summary>
+    public void RecordFailedLogin()
+    {
+        FailedLoginAttempts++;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Resets the failed login counter after a successful login.</summary>
+    public void ResetFailedLogins()
+    {
+        FailedLoginAttempts = 0;
+        LockoutUntil = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Locks the account until the specified UTC time.</summary>
+    public void LockOut(DateTimeOffset until)
+    {
+        if (until <= DateTimeOffset.UtcNow)
+        {
+            throw new IdentityDomainException("Lockout expiry must be in the future.");
+        }
+
+        LockoutUntil = until;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Administratively unlocks the account immediately.</summary>
+    public void AdminUnlock()
+    {
+        LockoutUntil = null;
+        FailedLoginAttempts = 0;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Enables TOTP MFA for this user (called after successful TOTP confirmation).</summary>
+    public void EnableMfa()
+    {
+        IsMfaEnabled = true;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Disables TOTP MFA for this user.</summary>
+    public void DisableMfa()
+    {
+        IsMfaEnabled = false;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>Clears all pending domain events (called after events are dispatched).</summary>

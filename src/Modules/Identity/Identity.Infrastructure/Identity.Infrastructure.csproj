@@ -13,6 +13,11 @@
     <PackageTags>saasbuilder;identity;infrastructure;efcore;openiddict</PackageTags>
   </PropertyGroup>
 
+  <!-- ASP.NET Core shared framework — includes Microsoft.IdentityModel.Tokens, JwtBearer, etc. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
@@ -21,6 +26,20 @@
   <ItemGroup Label="OpenIddict">
     <PackageReference Include="OpenIddict.AspNetCore" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="JWT token creation — for ImpersonationService">
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
+  </ItemGroup>
+
+  <ItemGroup Label="Phase 2 — auth flows and MFA">
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
+    <PackageReference Include="Otp.NET" />
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" />
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">

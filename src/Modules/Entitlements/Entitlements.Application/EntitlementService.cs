@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Entitlements.Application.Abstractions;
 using Entitlements.Domain;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SaasBuilder.SharedKernel.Tenancy;
 
@@ -13,23 +13,26 @@ namespace Entitlements.Application;
 
 /// <summary>
 /// Default <see cref="IEntitlementService"/> implementation.
-/// Reads entitlement grants from cache → DB → active edition.
-/// Cache key: (tenantId, entitlementKey). Invalidated on SubscriptionUpdated.
 ///
-/// TODO(Phase 4): Replace the in-process ConcurrentDictionary cache with IDistributedCache (Redis)
-/// for multi-instance deployments. Subscribe to SubscriptionUpdatedIntegrationEvent via MassTransit
-/// to invalidate the cache entry for the affected tenant.
+/// Evaluation order:
+/// 1. Return from IMemoryCache (5-minute TTL) when present.
+/// 2. Load effective grants from DB via <see cref="IEntitlementRepository"/>.
+/// 3. Cache the result; return.
+///
+/// Cache invalidation: call <see cref="InvalidateCache"/> when a
+/// <c>SubscriptionUpdatedIntegrationEvent</c> is received for the tenant.
+/// Register a MassTransit consumer in Infrastructure that calls this method.
 /// </summary>
 public sealed class EntitlementService(
     IEntitlementRepository repository,
     ITenantContextAccessor tenantAccessor,
+    IMemoryCache cache,
     ILogger<EntitlementService> logger)
     : IEntitlementService
 {
-    // Simple in-process cache: (tenantId, key) → grants snapshot.
-    // In production this should be IDistributedCache with a short TTL.
-    private readonly ConcurrentDictionary<(Guid, Guid?), IReadOnlyList<EntitlementGrant>> _cache =
-        new ConcurrentDictionary<(Guid, Guid?), IReadOnlyList<EntitlementGrant>>();
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
+
+    private static string BuildCacheKey(Guid tenantId) => $"entitlements:{tenantId:D}";
 
     /// <inheritdoc />
     public async Task<bool> HasAsync(string key, CancellationToken ct)
@@ -67,14 +70,15 @@ public sealed class EntitlementService(
         return grant?.StringValue;
     }
 
-    /// <summary>Invalidates the cache for the specified tenant (called on subscription update).</summary>
+    /// <summary>
+    /// Invalidates the entitlement cache for the specified tenant.
+    /// Called by the MassTransit consumer for <c>SubscriptionUpdatedIntegrationEvent</c>.
+    /// </summary>
     public void InvalidateCache(Guid tenantId)
     {
-        foreach ((Guid tid, Guid? _) key in _cache.Keys.Where(k => k.Item1 == tenantId).ToList())
-        {
-            _cache.TryRemove(key, out _);
-        }
-
+        // Remove all cache entries for this tenant. The tenant's grants are stored under
+        // a single composite key regardless of edition ID.
+        cache.Remove(BuildCacheKey(tenantId));
         logger.LogDebug("Entitlement cache invalidated for tenant {TenantId}.", tenantId);
     }
 
@@ -87,21 +91,20 @@ public sealed class EntitlementService(
             return Array.Empty<EntitlementGrant>();
         }
 
-        // TODO(Phase 4): Resolve the active edition ID from the Billing module's subscription.
-        // For scaffold: editionId is null so only tenant-level overrides are returned from the repository.
-        Guid? editionId = null;
-        var cacheKey = (tenant.TenantId, editionId);
+        string cacheKey = BuildCacheKey(tenant.TenantId);
 
-        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<EntitlementGrant>? cached))
+        if (cache.TryGetValue(cacheKey, out IReadOnlyList<EntitlementGrant>? cached) && cached is not null)
         {
             return cached;
         }
 
+        // TODO(Phase 4.x): resolve editionId from Billing module's active subscription.
+        // For now pass null so the repository returns all tenant-level overrides.
         IReadOnlyList<EntitlementGrant> grants = await repository
-            .GetEffectiveGrantsAsync(tenant.TenantId, editionId, ct)
+            .GetEffectiveGrantsAsync(tenant.TenantId, editionId: null, ct)
             .ConfigureAwait(false);
 
-        _cache[cacheKey] = grants;
+        cache.Set(cacheKey, grants, CacheTtl);
         return grants;
     }
 }

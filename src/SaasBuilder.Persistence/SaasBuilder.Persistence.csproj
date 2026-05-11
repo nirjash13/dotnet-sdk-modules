@@ -45,4 +45,9 @@
     <NoWarn>$(NoWarn);SA1101;SA1309;SA0001</NoWarn>
   </PropertyGroup>
 
+  <!-- Expose internals to the tenancy unit test project. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="SaasBuilder.Tenancy.Tests" />
+  </ItemGroup>
+
 </Project>

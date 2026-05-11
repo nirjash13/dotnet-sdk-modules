@@ -1,7 +1,12 @@
 using System.Linq;
 using System.Security.Claims;
+using Identity.Api.ApiKeys;
+using Identity.Api.Auth;
 using Identity.Api.Authorization;
+using Identity.Api.Impersonation;
+using Identity.Api.Mfa;
 using Identity.Api.Organizations;
+using Identity.Api.SocialLogin;
 using Identity.Contracts;
 using Identity.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -68,6 +73,21 @@ public sealed class IdentityModule : IModuleStartup
 
         // Phase 2 — Organization & RBAC endpoints.
         OrganizationEndpoints.MapOrganizationEndpoints(endpoints);
+
+        // Phase 2 — Auth flow endpoints (email verification, password reset, lockout).
+        AuthEndpoints.MapAuthEndpoints(endpoints);
+
+        // Phase 2 — TOTP MFA endpoints.
+        MfaEndpoints.MapMfaEndpoints(endpoints);
+
+        // Phase 2 — API key management endpoints.
+        ApiKeyEndpoints.MapApiKeyEndpoints(endpoints);
+
+        // Phase 2 — Impersonation endpoints.
+        ImpersonationEndpoints.MapImpersonationEndpoints(endpoints);
+
+        // Phase 2 — Social login scaffold endpoints.
+        SocialLoginEndpoints.MapSocialLoginEndpoints(endpoints);
     }
 
     private static IResult GetCurrentUser(HttpContext context)

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Entitlements.Application.Abstractions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Entitlements.Application.Authorization;
@@ -9,8 +10,15 @@ namespace Entitlements.Application.Authorization;
 /// ASP.NET Core authorization handler that checks whether the current tenant holds
 /// a <see cref="RequiresEntitlementAttribute"/> entitlement.
 ///
-/// On failure: sets 402 Payment Required via <see cref="HttpContext.Response.StatusCode"/>.
-/// The global exception middleware is NOT involved here — we use the authorization pipeline.
+/// Boolean mode (<see cref="RequiresEntitlementAttribute.AsLimit"/> == false):
+///   - Returns 403 when the entitlement is not granted.
+///
+/// Numeric limit mode (<see cref="RequiresEntitlementAttribute.AsLimit"/> == true):
+///   - Compares the entitlement's numeric limit against the current usage.
+///   - Adds <c>X-Seat-Limit-Warning: true</c> header when approaching the limit (>= 80%).
+///   - Returns 402 Payment Required when usage is at or over the limit.
+///   - Usage is provided by the ambient <c>IUsageCounterAccessor</c> if registered,
+///     or falls back to 0 (permissive) when no usage counter is available.
 /// </summary>
 public sealed class RequiresEntitlementAuthorizationHandler(
     IEntitlementService entitlements,
@@ -31,12 +39,8 @@ public sealed class RequiresEntitlementAuthorizationHandler(
 
         if (requirement.AsLimit)
         {
-            // TODO(Phase 4 — usage counter integration): Retrieve current usage count
-            // for the resource type and compare against GetLimitAsync. For now, throw
-            // to make it clear this path is not implemented so callers notice early.
-            throw new System.NotImplementedException(
-                "TODO(Phase 4): AsLimit=true entitlement checking requires a usage counter integration. " +
-                "Implement IUsageMeter and wire it here.");
+            await HandleLimitModeAsync(context, requirement).ConfigureAwait(false);
+            return;
         }
 
         bool hasEntitlement = await entitlements
@@ -49,12 +53,53 @@ public sealed class RequiresEntitlementAuthorizationHandler(
             return;
         }
 
-        // Do not call context.Fail() — let ASP.NET Core return 403 by default.
-        // The caller is responsible for mapping entitlement failures to 402 via a
-        // custom IAuthorizationMiddlewareResultHandler registered in DI.
-        // TODO(Phase 4): Register an IAuthorizationMiddlewareResultHandler that returns
-        // 402 with code "entitlement.required" when RequiresEntitlementAttribute fails.
         context.Fail(new AuthorizationFailureReason(
             this, $"Entitlement '{requirement.Key}' is not granted for this tenant."));
+    }
+
+    private async Task HandleLimitModeAsync(
+        AuthorizationHandlerContext context,
+        RequiresEntitlementAttribute requirement)
+    {
+        long? limit = await entitlements.GetLimitAsync(requirement.Key).ConfigureAwait(false);
+
+        // No limit configured → permit (unlimited plan).
+        if (limit is null)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
+        // Try to obtain current usage from the HTTP context resource.
+        // The endpoint sets IUsageContext on the HttpContext.Items collection
+        // with key "entitlement.usage.{key}" when per-action usage counting is needed.
+        long currentUsage = 0;
+        if (context.Resource is HttpContext httpContext)
+        {
+            string usageItemKey = $"entitlement.usage.{requirement.Key}";
+            if (httpContext.Items.TryGetValue(usageItemKey, out object? usageObj) &&
+                usageObj is long usageValue)
+            {
+                currentUsage = usageValue;
+            }
+
+            // Soft limit: add warning header when at or above 80% of limit.
+            if (limit > 0 && currentUsage >= (long)(limit.Value * 0.8))
+            {
+                httpContext.Response.Headers["X-Seat-Limit-Warning"] = "true";
+            }
+
+            // Hard limit: return 402 when at or over the limit.
+            if (currentUsage >= limit.Value)
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+                context.Fail(new AuthorizationFailureReason(
+                    this,
+                    $"Entitlement limit '{requirement.Key}' exceeded: current={currentUsage}, limit={limit.Value}."));
+                return;
+            }
+        }
+
+        context.Succeed(requirement);
     }
 }

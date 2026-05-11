@@ -37,7 +37,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009</NoWarn>
+    <!-- SA1202: public/private member ordering — relaxed for static helper methods in primary constructor classes. -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1202</NoWarn>
   </PropertyGroup>
 
 </Project>

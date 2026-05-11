@@ -6,6 +6,7 @@ using Entitlements.Application;
 using Entitlements.Application.Abstractions;
 using Entitlements.Domain;
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using SaasBuilder.SharedKernel.Tenancy;
@@ -44,9 +45,11 @@ public sealed class EntitlementServiceTests
         repo.Setup(r => r.GetEffectiveGrantsAsync(TenantId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<EntitlementGrant>());
 
+        using IMemoryCache memCache = new MemoryCache(new MemoryCacheOptions());
         EntitlementService service = new EntitlementService(
             repo.Object,
             BuildAccessor(TenantId),
+            memCache,
             NullLogger<EntitlementService>.Instance);
 
         // Act
@@ -66,9 +69,11 @@ public sealed class EntitlementServiceTests
         repo.Setup(r => r.GetEffectiveGrantsAsync(TenantId, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<EntitlementGrant> { grant });
 
+        using IMemoryCache memCache = new MemoryCache(new MemoryCacheOptions());
         EntitlementService service = new EntitlementService(
             repo.Object,
             BuildAccessor(TenantId),
+            memCache,
             NullLogger<EntitlementService>.Instance);
 
         // Act
@@ -76,5 +81,36 @@ public sealed class EntitlementServiceTests
 
         // Assert
         result.Should().BeTrue(because: "a tenant override must grant the entitlement");
+    }
+
+    [Fact]
+    public async Task HasAsync_SecondCall_ServesFromCacheWithoutHittingRepository()
+    {
+        // Arrange — repository should only be called once; second call uses the 5-min TTL cache.
+        EntitlementGrant grant = EntitlementGrant.ForTenantOverrideBoolean(TenantId, "feature_x", true);
+
+        Mock<IEntitlementRepository> repo = new Mock<IEntitlementRepository>();
+        repo.Setup(r => r.GetEffectiveGrantsAsync(TenantId, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<EntitlementGrant> { grant });
+
+        using IMemoryCache memCache = new MemoryCache(new MemoryCacheOptions());
+        EntitlementService service = new EntitlementService(
+            repo.Object,
+            BuildAccessor(TenantId),
+            memCache,
+            NullLogger<EntitlementService>.Instance);
+
+        // Act — two sequential calls for the same tenant.
+        bool first = await service.HasAsync("feature_x", CancellationToken.None);
+        bool second = await service.HasAsync("feature_x", CancellationToken.None);
+
+        // Assert
+        first.Should().BeTrue();
+        second.Should().BeTrue();
+
+        // Repository called exactly once — second call is served from IMemoryCache.
+        repo.Verify(
+            r => r.GetEffectiveGrantsAsync(TenantId, null, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

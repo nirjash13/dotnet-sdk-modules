@@ -1,14 +1,24 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 using FluentValidation;
+using Identity.Application.ApiKeys;
+using Identity.Application.Auth;
 using Identity.Application.Authorization;
+using Identity.Application.Impersonation;
+using Identity.Application.Mfa;
 using Identity.Application.Organizations;
 using Identity.Application.Services;
+using Identity.Application.Social;
+using Identity.Infrastructure.ApiKeys;
+using Identity.Infrastructure.Auth;
 using Identity.Infrastructure.Authorization;
 using Identity.Infrastructure.Certificates;
 using Identity.Infrastructure.Claims;
+using Identity.Infrastructure.Impersonation;
+using Identity.Infrastructure.Mfa;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Seeding;
+using Identity.Infrastructure.SocialLogin;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,6 +89,33 @@ public static class IdentityInfrastructureExtensions
         // Note: RequiresPermissionAuthorizationHandler is registered in the API layer (IdentityModule)
         // to keep the IAuthorizationHandler dependency out of Infrastructure.
         services.AddValidatorsFromAssemblyContaining<CreateOrganizationValidator>();
+
+        // Phase 2 — Auth flows: Argon2id, email verification, password reset, lockout.
+        services.AddSingleton<IArgon2idHasher, Argon2idPasswordHasher>();
+        services.AddScoped<IEmailVerificationTokenStore, EmailVerificationTokenStore>();
+        services.AddScoped<IPasswordResetTokenStore, PasswordResetTokenStore>();
+        services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IAccountLockoutService, AccountLockoutService>();
+        services.Configure<LockoutOptions>(configuration.GetSection("Identity:Lockout"));
+
+        // Phase 2 — TOTP MFA.
+        services.AddScoped<ITotpCredentialStore, TotpCredentialStore>();
+        services.AddScoped<ITotpService, TotpService>();
+
+        // Phase 2 — API keys.
+        services.AddScoped<IApiKeyStore, ApiKeyStore>();
+        services.AddScoped<IApiKeyService, ApiKeyService>();
+
+        // Phase 2 — Impersonation.
+        services.AddScoped<IImpersonationSessionStore, ImpersonationSessionStore>();
+        services.AddScoped<IImpersonationService, ImpersonationService>();
+
+        // Phase 2 — Social login adapters (scaffold).
+        services.AddSingleton<ISocialLoginAdapter, GoogleProvider>();
+        services.AddSingleton<ISocialLoginAdapter, MicrosoftProvider>();
+        services.AddSingleton<ISocialLoginAdapter, GitHubProvider>();
+        services.AddSingleton<ISocialLoginAdapter, AppleProvider>();
 
         // 3. Scoped OpenIddict sign-in event handler.
         services.AddScoped<TenantClaimEventHandler>();

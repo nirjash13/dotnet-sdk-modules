@@ -44,7 +44,11 @@ public static class EntitlementsInfrastructureExtensions
         // 2. Repository.
         services.AddScoped<IEntitlementRepository, EntitlementRepository>();
 
-        // 3. Application service (singleton so the in-process cache is shared within a process).
+        // 3. IMemoryCache — required by EntitlementService for 5-min TTL caching.
+        // AddMemoryCache is idempotent — safe to call multiple times.
+        services.AddMemoryCache();
+
+        // Application service. Singleton so the IMemoryCache is shared within a process.
         services.AddSingleton<EntitlementService>();
         services.AddSingleton<IEntitlementService>(sp => sp.GetRequiredService<EntitlementService>());
 

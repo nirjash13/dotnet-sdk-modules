@@ -33,7 +33,8 @@
       SA1313: StyleCop 1.1.x incorrectly flags PascalCase record positional parameters (idiomatic C# 9+).
       SA1512: single-line comment followed by blank line — false positive in method bodies.
     -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313;SA1512</NoWarn>
+    <!-- SA1201: StyleCop 1.1.x crashes on RecordDeclaration (KeyNotFoundException bug). -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313;SA1512;SA1201</NoWarn>
   </PropertyGroup>
 
 </Project>

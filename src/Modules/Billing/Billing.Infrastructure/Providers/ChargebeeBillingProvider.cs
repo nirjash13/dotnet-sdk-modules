@@ -8,7 +8,11 @@ namespace Billing.Infrastructure.Providers;
 
 /// <summary>
 /// Chargebee billing provider stub (enterprise billing platform).
-/// TODO(Phase 4): Implement using the Chargebee .NET SDK or REST API.
+///
+/// Configure via:
+/// - Billing:Chargebee:ApiKey
+/// - Billing:Chargebee:Site
+/// - Billing:Chargebee:WebhookPassword
 /// </summary>
 public sealed class ChargebeeBillingProvider : IBillingProvider
 {
@@ -18,30 +22,54 @@ public sealed class ChargebeeBillingProvider : IBillingProvider
     /// <inheritdoc />
     public Task<Result<string>> CreateCheckoutSessionAsync(
         Guid tenantId, string priceId, string successUrl, string cancelUrl, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<string>.Failure(
+            "Chargebee CreateCheckoutSession is not yet implemented. Use Chargebee Hosted Pages API."));
 
     /// <inheritdoc />
     public Task<Result<string>> CreatePortalSessionAsync(
         Guid tenantId, string returnUrl, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<string>.Failure(
+            "Chargebee CreatePortalSession is not yet implemented. Use Chargebee Portal Session API."));
 
     /// <inheritdoc />
     public Task<Result<bool>> CancelSubscriptionAsync(
         string providerSubscriptionId, bool atPeriodEnd, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee CancelSubscription is not yet implemented."));
 
     /// <inheritdoc />
     public Task<Result<bool>> PauseSubscriptionAsync(
         string providerSubscriptionId, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee PauseSubscription is not yet implemented."));
 
     /// <inheritdoc />
     public Task<Result<bool>> ResumeSubscriptionAsync(
         string providerSubscriptionId, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee ResumeSubscription is not yet implemented."));
 
     /// <inheritdoc />
     public Task<Result<bool>> UpgradeSubscriptionAsync(
         string providerSubscriptionId, string newPriceId, CancellationToken ct)
-        => throw new NotImplementedException("TODO(Phase 4): Chargebee integration.");
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee UpgradeSubscription is not yet implemented."));
+
+    /// <inheritdoc />
+    public Task<Result<ProviderSubscriptionInfo?>> GetSubscriptionAsync(
+        string providerSubscriptionId, CancellationToken ct)
+        => Task.FromResult(Result<ProviderSubscriptionInfo?>.Failure(
+            "Chargebee GetSubscription is not yet implemented."));
+
+    /// <inheritdoc />
+    public Task<Result<bool>> RecordUsageAsync(
+        string providerSubscriptionId, string meterId, long quantity, string idempotencyKey, CancellationToken ct)
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee RecordUsage is not yet implemented."));
+
+    /// <inheritdoc />
+    public Task<Result<bool>> UpdateQuantityAsync(
+        string providerSubscriptionId, int quantity, CancellationToken ct)
+        => Task.FromResult(Result<bool>.Failure(
+            "Chargebee UpdateQuantity is not yet implemented."));
 }

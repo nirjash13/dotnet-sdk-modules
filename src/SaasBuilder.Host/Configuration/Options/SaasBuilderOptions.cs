@@ -38,6 +38,9 @@ public sealed class SaasBuilderOptions
     /// <summary>Gets options that control rate limiting.</summary>
     public SaasBuilderRateLimitingOptions RateLimiting { get; } = new SaasBuilderRateLimitingOptions();
 
+    /// <summary>Gets options that control EF Core persistence behavior (e.g., automatic migration on startup).</summary>
+    public SaasBuilderPersistenceOptions Persistence { get; } = new SaasBuilderPersistenceOptions();
+
     /// <summary>
     /// Selects the MassTransit transport. Shorthand for <c>opts.Transport.Use*()</c>.
     /// </summary>

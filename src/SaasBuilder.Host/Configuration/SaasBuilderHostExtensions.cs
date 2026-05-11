@@ -9,8 +9,10 @@ using SaasBuilder.Host.Configuration.Options;
 using SaasBuilder.Host.ErrorHandling;
 using SaasBuilder.Host.Modules;
 using SaasBuilder.Host.Observability;
+using SaasBuilder.Host.RateLimiting;
 using SaasBuilder.Host.Tenancy;
 using SaasBuilder.Host.Transport;
+using SaasBuilder.Persistence.Migrations;
 using SaasBuilder.Persistence.Tenancy;
 using SaasBuilder.Persistence.Tenancy.Lifecycle;
 using SaasBuilder.SharedKernel.Abstractions;
@@ -191,7 +193,21 @@ public static class SaasBuilderHostExtensions
         // ── Rate limiting ──────────────────────────────────────────────────────────
         if (options.RateLimiting.IsEnabled)
         {
-            services.AddSaasBuilderRateLimiting(config);
+            if (options.RateLimiting.UsePerTenantWindow)
+            {
+                services.AddPerTenantSlidingWindowRateLimiting(config);
+            }
+            else
+            {
+                services.AddSaasBuilderRateLimiting(config);
+            }
+        }
+
+        // ── Migration on startup ───────────────────────────────────────────────────
+        if (options.Persistence.MigrateOnStartup)
+        {
+            services.AddScoped<IMigrationRunner, PostgresAdvisoryLockMigrationRunner>();
+            services.AddHostedService<MigrationStartupService>();
         }
 
         return builder;

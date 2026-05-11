@@ -2,6 +2,7 @@ using Identity.Domain.Authorization;
 using Identity.Domain.Entities;
 using Identity.Domain.Organizations;
 using Identity.Infrastructure.Data.Configurations;
+using Identity.Infrastructure.Data.Configurations.AuthFlows;
 using Microsoft.EntityFrameworkCore;
 using SaasBuilder.Persistence;
 using SaasBuilder.SharedKernel.Tenancy;
@@ -57,6 +58,23 @@ public sealed class IdentityDbContext(
     /// <summary>Gets the role-permission join set.</summary>
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
+    // ── Phase 2 — Auth flows & MFA ────────────────────────────────────────────
+
+    /// <summary>Gets the email verification token set.</summary>
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
+
+    /// <summary>Gets the password reset token set.</summary>
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
+    /// <summary>Gets the TOTP credential set.</summary>
+    public DbSet<TotpCredential> TotpCredentials => Set<TotpCredential>();
+
+    /// <summary>Gets the API key set.</summary>
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+
+    /// <summary>Gets the impersonation session set.</summary>
+    public DbSet<ImpersonationSessionEntity> ImpersonationSessions => Set<ImpersonationSessionEntity>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +94,13 @@ public sealed class IdentityDbContext(
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
         modelBuilder.ApplyConfiguration(new PermissionConfiguration());
         modelBuilder.ApplyConfiguration(new RolePermissionConfiguration());
+
+        // Phase 2 — auth flows and MFA.
+        modelBuilder.ApplyConfiguration(new EmailVerificationTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new PasswordResetTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new TotpCredentialConfiguration());
+        modelBuilder.ApplyConfiguration(new ApiKeyConfiguration());
+        modelBuilder.ApplyConfiguration(new ImpersonationSessionConfiguration());
     }
 
     private static void ConfigureUser(ModelBuilder modelBuilder)
@@ -95,6 +120,17 @@ public sealed class IdentityDbContext(
 
             entity.Property(u => u.CreatedAt).IsRequired();
             entity.Property(u => u.UpdatedAt);
+
+            // Phase 2 — email verification.
+            entity.Property(u => u.IsEmailVerified).IsRequired();
+            entity.Property(u => u.EmailVerifiedAt);
+
+            // Phase 2 — account lockout.
+            entity.Property(u => u.FailedLoginAttempts).IsRequired();
+            entity.Property(u => u.LockoutUntil);
+
+            // Phase 2 — MFA flag.
+            entity.Property(u => u.IsMfaEnabled).IsRequired();
 
             entity.HasIndex(u => u.Email).IsUnique();
 

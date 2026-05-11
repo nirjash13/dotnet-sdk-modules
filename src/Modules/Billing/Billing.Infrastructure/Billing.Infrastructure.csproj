@@ -26,6 +26,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Stripe.net" />
   </ItemGroup>
 
   <ItemGroup Label="MassTransit EF Core Outbox">
@@ -52,7 +53,12 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118</NoWarn>
+    <!-- SA1202: member ordering — relaxed in Infrastructure -->
+    <!-- SA1122: prefer string.Empty — already applied in fixed provider -->
+    <!-- SA1000: new() target-typed expression — flagged incorrectly by SA 1.1.x -->
+    <!-- SA1206: required modifier ordering conflict with IDE0036 -->
+    <!-- IDE0032: _stripeClient is a mutable lazy-init field, cannot be auto-property -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1122;SA1000;SA1202;SA1206;IDE0032</NoWarn>
   </PropertyGroup>
 
 </Project>

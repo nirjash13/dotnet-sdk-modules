@@ -17,6 +17,7 @@
     <!-- Phase 2: Identity module — needed for organization domain tests and RBAC handler tests -->
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Domain\Identity.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
     <!-- Phase 3: Ledger module — needed for seed access (LedgerDbContext, Account) in IDOR test -->
     <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj" />
@@ -45,6 +46,8 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Moq" />
     <PackageReference Include="coverlet.collector" />
+    <!-- Phase 2 tests: Otp.NET needed for TOTP test code generation -->
+    <PackageReference Include="Otp.NET" />
   </ItemGroup>
 
   <ItemGroup Label="Integration test infrastructure">
