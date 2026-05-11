@@ -31,6 +31,14 @@
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
   </ItemGroup>
 
+  <!--
+    TypeScript client codegen — disabled by default.
+    To regenerate the @saasbuilder/client TypeScript types, build with:
+      dotnet build -p:GenerateTsClient=true
+    Prerequisites: npm install run in clients/typescript; dotnet swagger tool restored.
+  -->
+  <Import Project="..\..\tools\codegen\saasbuilder-codegen.targets" />
+
   <!-- Expose the top-level Program class to integration and security test projects. -->
   <ItemGroup>
     <InternalsVisibleTo Include="SaasBuilder.IntegrationTests" />

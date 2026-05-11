@@ -1,0 +1,24 @@
+apiVersion: v2
+name: saasbuilder
+description: SaasBuilder — .NET 10 modular monolith SaaS SDK
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+maintainers:
+  - name: SaasBuilder Contributors
+    url: https://github.com/placeholder/modular-sdk-dotnet
+
+dependencies:
+  - name: postgresql
+    version: "15.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: rabbitmq
+    version: "14.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled
+  - name: redis
+    version: "19.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

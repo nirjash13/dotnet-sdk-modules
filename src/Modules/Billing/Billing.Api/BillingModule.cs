@@ -297,7 +297,7 @@ public sealed class BillingModule : IModuleStartup
         HttpRequest httpRequest,
         IServiceProvider services,
         IWebhookEventRepository webhookEvents,
-        IPublishEndpoint publishEndpoint,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPublishEndpoint publishEndpoint,
         ILogger<BillingModule> logger,
         CancellationToken ct)
     {

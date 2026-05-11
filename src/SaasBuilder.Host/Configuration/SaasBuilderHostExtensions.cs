@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SaasBuilder.Host.Configuration.Options;
 using SaasBuilder.Host.ErrorHandling;
+using SaasBuilder.Host.Health;
 using SaasBuilder.Host.Modules;
 using SaasBuilder.Host.Observability;
 using SaasBuilder.Host.RateLimiting;
@@ -179,7 +180,11 @@ public static class SaasBuilderHostExtensions
         services.AddOpenApi();
 
         // ── Health checks ──────────────────────────────────────────────────────────
-        services.AddHealthChecks();
+        // Readiness checks are tagged "ready"; startup checks are tagged "startup".
+        // Liveness (/health/live) runs no checks — it is always 200.
+        services.AddHealthChecks()
+            .AddCheck<StartupHealthCheck>("startup", tags: new[] { "startup" })
+            .AddCheck<ReadinessHealthCheck>("readiness", tags: new[] { "ready" });
 
         // ── OpenTelemetry — tracing + metrics exported via OTLP gRPC ─────────────
         if (options.Observability.IsEnabled)
@@ -240,8 +245,8 @@ public static class SaasBuilderHostExtensions
             app.MapScalarApiReference();
         }
 
-        // ── Health check endpoint (AllowAnonymous — no tenant required) ───────────
-        app.MapHealthChecks("/health").AllowAnonymous();
+        // ── Health probe endpoints (liveness / readiness / startup + legacy /health) ─
+        app.MapSaasBuilderHealthEndpoints();
 
         // ── Module endpoint discovery ──────────────────────────────────────────────
         IModuleLoader moduleLoader = app.Services.GetRequiredService<IModuleLoader>();

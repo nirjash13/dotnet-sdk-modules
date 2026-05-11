@@ -1,0 +1,75 @@
+@page
+@model SaasBuilder.HostedUi.Areas.Identity.Pages.LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign In";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Sign In</h1>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <form method="post">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-3"></div>
+
+            <div class="mb-4">
+                <label asp-for="Input.Email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input asp-for="Input.Email" type="email" autocomplete="email"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       placeholder="you@example.com" />
+                <span asp-validation-for="Input.Email" class="text-red-500 text-xs"></span>
+            </div>
+
+            <div class="mb-6">
+                <label asp-for="Input.Password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input asp-for="Input.Password" type="password" autocomplete="current-password"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <span asp-validation-for="Input.Password" class="text-red-500 text-xs"></span>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 space-y-3">
+            <p class="text-center text-sm text-gray-500">or continue with</p>
+
+            <a href="/connect/authorize?provider=Google&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+               class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Google
+            </a>
+
+            <a href="/connect/authorize?provider=Microsoft&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+               class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Microsoft
+            </a>
+
+            <a href="/connect/authorize?provider=GitHub&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+               class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                GitHub
+            </a>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-gray-500">
+            <a href="/Identity/Login?magicLink=true" class="text-indigo-600 hover:underline">Send me a magic link instead</a>
+        </p>
+    </div>
+</body>
+</html>

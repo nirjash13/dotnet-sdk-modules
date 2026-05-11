@@ -37,6 +37,21 @@
     <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Contracts\FeatureFlags.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Application\FeatureFlags.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\FeatureFlags.Infrastructure.csproj" />
+    <!-- Phase 6: Admin/Control-Plane module -->
+    <ProjectReference Include="..\..\src\Modules\Admin\Admin.Application\Admin.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Admin\Admin.Infrastructure\Admin.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Admin\Admin.Api\Admin.Api.csproj" />
+    <!-- Phase 8: GDPR module — needed for DataExportBuilder, ErasureWorker, Consent tests -->
+    <ProjectReference Include="..\..\src\Modules\Gdpr\Gdpr.Application\Gdpr.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Gdpr\Gdpr.Infrastructure\Gdpr.Infrastructure.csproj" />
+    <!-- Phase 10: AI module — RAG pipeline, budget tracker, PII redactor tests -->
+    <ProjectReference Include="..\..\src\Modules\Ai\Ai.Domain\Ai.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ai\Ai.Application\Ai.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Ai\Ai.Infrastructure\Ai.Infrastructure.csproj" />
+    <!-- Phase 10: Marketplace module — installation state machine tests -->
+    <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Domain\Marketplace.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Application\Marketplace.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Test framework">
@@ -56,6 +71,8 @@
     <PackageReference Include="Testcontainers.RabbitMq" />
     <!-- Direct Npgsql for raw SQL in RLS tests (not going through EF Core) -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- Phase 10: In-memory EF Core provider for AI budget tracker unit tests -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <!-- WebApplicationFactory for in-process host boot -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <!-- MassTransit test harness for claim propagation tests (Phase 2) and saga tests (Phase 5).
@@ -91,7 +108,7 @@
     <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed project-wide per xUnit1030 rule:
          test methods run in xUnit's synchronization context and must not bypass it.
          InitializeAsync/DisposeAsync are excluded from this rule and use ConfigureAwait(false). -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;IDE0032;xUnit1030</NoWarn>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;SA1000;IDE0032;xUnit1030</NoWarn>
   </PropertyGroup>
 
 </Project>

@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Ai.Infrastructure</PackageId>
+    <Description>Infrastructure layer for the AI module. LLM providers, vector stores, RAG pipeline, safety filters, caching, budget tracking.</Description>
+    <Title>SaasBuilder AI Infrastructure</Title>
+    <Authors>SaasBuilder</Authors>
+    <Company>SaasBuilder</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/saasbuilder/modular-sdk-dotnet</RepositoryUrl>
+    <PackageTags>saasbuilder;ai;infrastructure</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ai.Application\Ai.Application.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Entity Framework Core">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup Label="HTTP / Json">
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup Label="Caching">
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Versioning">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1118;SA1122;SA1000;SA1202;SA1206;SA1203;SA1204;SA1117;IDE0032;IDE0270</NoWarn>
+  </PropertyGroup>
+
+</Project>

@@ -48,9 +48,10 @@ public static class EntitlementsInfrastructureExtensions
         // AddMemoryCache is idempotent — safe to call multiple times.
         services.AddMemoryCache();
 
-        // Application service. Singleton so the IMemoryCache is shared within a process.
-        services.AddSingleton<EntitlementService>();
-        services.AddSingleton<IEntitlementService>(sp => sp.GetRequiredService<EntitlementService>());
+        // Application service. Scoped — one instance per request.
+        // IMemoryCache (injected) is a Singleton and is shared across all requests.
+        services.AddScoped<EntitlementService>();
+        services.AddScoped<IEntitlementService>(sp => sp.GetRequiredService<EntitlementService>());
 
         // 4. ASP.NET Core authorization handler.
         services.AddScoped<IAuthorizationHandler, RequiresEntitlementAuthorizationHandler>();

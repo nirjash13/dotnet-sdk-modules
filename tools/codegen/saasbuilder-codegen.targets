@@ -1,0 +1,51 @@
+<!--
+  saasbuilder-codegen.targets
+  Opt-in MSBuild target that generates the TypeScript client from the API OpenAPI document.
+
+  Usage: In your .csproj, set GenerateTsClient to true and import this targets file.
+
+  The generated file lands at clients/typescript/openapi.json
+  which NSwag picks up via the nswag.json config in that folder.
+
+  Prerequisites:
+    dotnet-swagger CLI tool installed via: dotnet tool restore
+    nswag npm package available via: npm install (in clients/typescript)
+-->
+<Project>
+
+  <Target
+    Name="GenerateTypeScriptClient"
+    AfterTargets="Build"
+    Condition="'$(GenerateTsClient)' == 'true'">
+
+    <PropertyGroup>
+      <_TsClientRoot>$([MSBuild]::NormalizePath($(MSBuildThisFileDirectory)..\..\clients\typescript))</_TsClientRoot>
+      <_OpenApiJson>$(_TsClientRoot)\openapi.json</_OpenApiJson>
+    </PropertyGroup>
+
+    <Message Text="[SaasBuilder] Exporting OpenAPI spec to $(_OpenApiJson)..." Importance="high" />
+
+    <!--
+      Step 1: Export the OpenAPI JSON from the built assembly via dotnet-swagger CLI.
+      TargetPath is the path to the compiled .dll of the importing project.
+    -->
+    <Exec
+      Command="dotnet swagger tofile --output &quot;$(_OpenApiJson)&quot; &quot;$(TargetPath)&quot; v1"
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      ConsoleToMSBuild="true" />
+
+    <Message Text="[SaasBuilder] Running NSwag to generate TypeScript client..." Importance="high" />
+
+    <!--
+      Step 2: Invoke NSwag CLI against nswag.json in the TypeScript client folder.
+    -->
+    <Exec
+      Command="npx nswag run nswag.json /runtime:Net80"
+      WorkingDirectory="$(_TsClientRoot)"
+      ConsoleToMSBuild="true" />
+
+    <Message Text="[SaasBuilder] TypeScript client generated at $(_TsClientRoot)\src\generated\api.ts" Importance="high" />
+
+  </Target>
+
+</Project>

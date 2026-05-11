@@ -18,6 +18,11 @@
     <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup Label="Redis backplane — optional; enabled via Realtime:Backplane:Provider = Redis">
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
+  </ItemGroup>
+
   <ItemGroup Label="ASP.NET Core — SignalR is in-framework for .NET 10">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

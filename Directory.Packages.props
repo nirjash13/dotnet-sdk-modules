@@ -28,6 +28,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.6" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <!-- Standalone Npgsql driver — used by SaasBuilder.Cli for tenant provisioning -->
+    <PackageVersion Include="Npgsql" Version="9.0.4" />
   </ItemGroup>
   <ItemGroup Label="Marten — event store (Ledger audit only)">
     <!--
@@ -125,6 +127,10 @@
     <PackageVersion Include="CloudNative.CloudEvents" Version="2.8.0" />
     <PackageVersion Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
   </ItemGroup>
+  <ItemGroup Label="CLI tooling">
+    <!-- System.CommandLine 2.0 beta — latest available; no GA release as of 2026-05-11 -->
+    <PackageVersion Include="System.CommandLine" Version="2.0.0-beta5.25306.1" />
+  </ItemGroup>
   <ItemGroup Label="Versioning">
     <!--
       Plan targets MinVer 5.x; actual latest stable is 7.0.0.
@@ -172,6 +178,53 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.6" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.6" />
     <PackageVersion Include="AspNet.Security.OAuth.GitHub" Version="9.4.0" />
+  </ItemGroup>
+  <ItemGroup Label="Notifications — email and SMS providers">
+    <!-- SendGrid 9.x — MIT license, maintained -->
+    <PackageVersion Include="SendGrid" Version="9.29.3" />
+    <!-- Postmark 5.x — MIT license, maintained -->
+    <PackageVersion Include="Postmark" Version="5.2.0" />
+    <!-- Twilio 7.x — MIT license, maintained -->
+    <PackageVersion Include="Twilio" Version="7.8.3" />
+    <!-- AWS SDK SESv2 v4 — Apache 2.0, maintained. Pin AWSSDK.Core to avoid old-version vulnerability. -->
+    <PackageVersion Include="AWSSDK.SimpleEmailV2" Version="4.0.12.13" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.6.1" />
+  </ItemGroup>
+  <ItemGroup Label="Files — cloud blob stores and image processing">
+    <!-- Azure.Storage.Blobs 12.x — MIT license, maintained -->
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.24.0" />
+    <!-- AWS S3 SDK v4 — Apache 2.0, maintained -->
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.23" />
+    <!-- Google Cloud Storage — Apache 2.0, maintained. Resolved to 4.13.0 by NuGet. -->
+    <PackageVersion Include="Google.Cloud.Storage.V1" Version="4.13.0" />
+    <!-- SixLabors.ImageSharp 3.1.12 — latest patched version -->
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+  <ItemGroup Label="Jobs — Hangfire scheduler">
+    <!-- Hangfire.AspNetCore — LGPL license, maintained -->
+    <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.18" />
+    <!-- Hangfire.PostgreSql — MIT license, maintained -->
+    <PackageVersion Include="Hangfire.PostgreSql" Version="1.20.10" />
+  </ItemGroup>
+  <ItemGroup Label="Search — OpenSearch and Meilisearch adapters">
+    <!-- OpenSearch.Client 1.8.0 — Apache 2.0, maintained by OpenSearch Foundation -->
+    <PackageVersion Include="OpenSearch.Client" Version="1.8.0" />
+    <!-- MeiliSearch 0.18.0 — MIT license, maintained -->
+    <PackageVersion Include="MeiliSearch" Version="0.18.0" />
+  </ItemGroup>
+  <ItemGroup Label="Realtime — Redis backplane for SignalR">
+    <!-- StackExchange.Redis 2.8.47 — MIT license, maintained by StackExchange/Redis -->
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.47" />
+    <!-- Microsoft.AspNetCore.SignalR.StackExchangeRedis — MIT license, in-framework -->
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.6" />
+  </ItemGroup>
+  <ItemGroup Label="Phase 10 — AI and Marketplace module dependencies">
+    <!-- HTTP client factory abstraction — in-box with .NET 10 Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.6" />
+    <!-- IMemoryCache — in-box with .NET 10 Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.6" />
+    <!-- EF Core in-memory provider — for unit tests that need a DB without infrastructure -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.6" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <!-- In-memory configuration and logging — used in unit tests for providers under test -->

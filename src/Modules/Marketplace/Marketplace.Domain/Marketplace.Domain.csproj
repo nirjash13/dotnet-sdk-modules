@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Marketplace.Domain</PackageId>
+    <Description>Domain model for the Marketplace module. Zero infrastructure dependencies.</Description>
+    <Title>SaasBuilder Marketplace Domain</Title>
+    <Authors>SaasBuilder</Authors>
+    <Company>SaasBuilder</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/saasbuilder/modular-sdk-dotnet</RepositoryUrl>
+    <PackageTags>saasbuilder;marketplace;domain</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Versioning">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1201;SA1502</NoWarn>
+  </PropertyGroup>
+
+</Project>

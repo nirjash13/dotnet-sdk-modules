@@ -28,6 +28,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup Label="Hangfire — LGPL license, optional; selected at runtime via config">
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+  </ItemGroup>
+
   <ItemGroup Label="ASP.NET Core — BackgroundService, ILogger, IHostedService">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SaasBuilder.Host.Health;
 using SaasBuilder.Persistence.Migrations;
 
 namespace SaasBuilder.Host.Configuration;
@@ -47,6 +48,10 @@ internal sealed class MigrationStartupService : IHostedService
             // (other instances or manual intervention can recover). Callers can override by
             // registering a custom exception filter in their hosted service.
         }
+
+        // Signal the startup health check regardless of migration outcome so Kubernetes
+        // startupProbe eventually succeeds and traffic is routed.
+        StartupHealthCheck.MarkStartupComplete();
     }
 
     /// <inheritdoc />

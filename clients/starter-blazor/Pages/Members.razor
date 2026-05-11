@@ -1,0 +1,117 @@
+@page "/members"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject SaasBuilderClientService Client
+@inject NavigationManager Nav
+
+<PageTitle>Team Members</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Team Members</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _showInvite = true" Class="mb-4">
+        Invite Member
+    </MudButton>
+
+    @if (_showInvite)
+    {
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudTextField @bind-Value="_inviteEmail" Label="Email address" InputType="InputType.Email"
+                              Variant="Variant.Outlined" />
+                @if (!string.IsNullOrEmpty(_inviteError))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mt-2">@_inviteError</MudAlert>
+                }
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton OnClick="SendInvite" Variant="Variant.Filled" Color="Color.Primary"
+                           Disabled="_inviting">
+                    @(_inviting ? "Sending..." : "Send Invite")
+                </MudButton>
+                <MudButton OnClick="() => _showInvite = false" Variant="Variant.Text">Cancel</MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+
+    <MudDataGrid Items="_members" Striped="true" Hover="true">
+        <Columns>
+            <PropertyColumn Property="x => x.Name" Title="Name" />
+            <PropertyColumn Property="x => x.Email" Title="Email" />
+            <PropertyColumn Property="x => x.Role" Title="Role" />
+            <PropertyColumn Property="x => x.Status" Title="Status" />
+        </Columns>
+    </MudDataGrid>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<MemberDto> _members = new();
+    private bool _showInvite;
+    private string _inviteEmail = string.Empty;
+    private bool _inviting;
+    private string? _inviteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadMembersAsync();
+    }
+
+    private async Task LoadMembersAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = await Client.GetAsync<MembersResponse>("/api/v1/identity/members");
+            _members = result?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SendInvite()
+    {
+        _inviting = true;
+        _inviteError = null;
+        try
+        {
+            await Client.PostAsync("/api/v1/identity/invitations", new { Email = _inviteEmail, Role = "Member" });
+            _showInvite = false;
+            _inviteEmail = string.Empty;
+            await LoadMembersAsync();
+        }
+        catch (Exception ex)
+        {
+            _inviteError = ex.Message;
+        }
+        finally
+        {
+            _inviting = false;
+        }
+    }
+
+    private sealed record MemberDto(string Name, string Email, string Role, string Status);
+    private sealed record MembersResponse(List<MemberDto> Items, int Total);
+}

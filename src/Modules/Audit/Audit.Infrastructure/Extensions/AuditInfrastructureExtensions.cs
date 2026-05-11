@@ -1,4 +1,5 @@
 using Audit.Application.Abstractions;
+using Audit.Infrastructure.Forwarders;
 using Audit.Infrastructure.Loggers;
 using Audit.Infrastructure.Options;
 using Audit.Infrastructure.Persistence;
@@ -54,6 +55,31 @@ public static class AuditInfrastructureExtensions
             // Silent degradation: no DB configured, use no-op logger.
             services.AddScoped<IAuditLogger, NoOpAuditLogger>();
         }
+
+        // Register SIEM forwarders if configured — they are IHostedService singletons with background queues.
+        SplunkHecOptions splunkOpts = new SplunkHecOptions();
+        configuration.GetSection(SplunkHecOptions.SectionName).Bind(splunkOpts);
+
+        if (!string.IsNullOrWhiteSpace(splunkOpts.Url) && !string.IsNullOrWhiteSpace(splunkOpts.Token))
+        {
+            services.Configure<SplunkHecOptions>(configuration.GetSection(SplunkHecOptions.SectionName));
+            services.AddSingleton<SplunkHecForwarder>();
+            services.AddHostedService(sp => sp.GetRequiredService<SplunkHecForwarder>());
+        }
+
+        DatadogForwarderOptions datadogOpts = new DatadogForwarderOptions();
+        configuration.GetSection(DatadogForwarderOptions.SectionName).Bind(datadogOpts);
+
+        if (!string.IsNullOrWhiteSpace(datadogOpts.ApiKey))
+        {
+            services.Configure<DatadogForwarderOptions>(configuration.GetSection(DatadogForwarderOptions.SectionName));
+            services.AddSingleton<DatadogForwarder>();
+            services.AddHostedService(sp => sp.GetRequiredService<DatadogForwarder>());
+        }
+
+        // HttpClient for SIEM forwarders.
+        services.AddHttpClient("splunk-hec");
+        services.AddHttpClient("datadog-logs");
 
         return services;
     }

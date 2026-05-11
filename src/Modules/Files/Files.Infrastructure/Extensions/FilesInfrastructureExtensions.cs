@@ -1,13 +1,19 @@
 using Files.Application.Abstractions;
 using Files.Infrastructure.BlobStores;
+using Files.Infrastructure.Imaging;
 using Files.Infrastructure.Options;
 using Files.Infrastructure.Quota;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Files.Infrastructure.Extensions;
 
-/// <summary>Extension methods for registering Files module infrastructure services.</summary>
+/// <summary>
+/// Extension methods for registering Files module infrastructure services.
+/// Provider is selected by <c>Files:Provider</c> config key:
+/// <c>FileSystem | S3 | AzureBlob | Gcs</c>. Default is FileSystem (dev).
+/// </summary>
 public static class FilesInfrastructureExtensions
 {
     /// <summary>Registers all infrastructure services for the Files module.</summary>
@@ -17,12 +23,52 @@ public static class FilesInfrastructureExtensions
     {
         services.Configure<FilesOptions>(configuration.GetSection(FilesOptions.SectionName));
 
-        // Default blob store — local filesystem. Override by calling AddScoped<IBlobStore, CloudStore>
-        // in the host or via a module option in a later phase.
-        services.AddScoped<IBlobStore, FileSystemBlobStore>();
+        string provider = configuration["Files:Provider"] ?? string.Empty;
+
+        switch (provider.Trim().ToUpperInvariant())
+        {
+            case "S3":
+                services.Configure<S3Options>(configuration.GetSection(S3Options.SectionName));
+                services.AddScoped<IBlobStore, S3BlobStore>();
+                break;
+
+            case "AZUREBLOB":
+                services.Configure<AzureBlobOptions>(configuration.GetSection(AzureBlobOptions.SectionName));
+                services.AddScoped<IBlobStore, AzureBlobStore>();
+                break;
+
+            case "GCS":
+                services.Configure<GcsOptions>(configuration.GetSection(GcsOptions.SectionName));
+                services.AddScoped<IBlobStore, GcsBlobStore>();
+                break;
+
+            case "FILESYSTEM":
+            default:
+                if (!string.IsNullOrWhiteSpace(provider) &&
+                    !provider.Equals("FileSystem", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    // Unknown provider — warn and fall back to FileSystem.
+                    services.AddScoped<IBlobStore>(sp =>
+                    {
+                        sp.GetRequiredService<ILogger<FileSystemBlobStore>>().LogWarning(
+                            "Files module: unknown provider '{Provider}'. Falling back to FileSystem.",
+                            provider);
+                        return sp.GetRequiredService<FileSystemBlobStore>();
+                    });
+                    services.AddScoped<FileSystemBlobStore>();
+                }
+                else
+                {
+                    services.AddScoped<IBlobStore, FileSystemBlobStore>();
+                }
+
+                break;
+        }
+
+        // Image processor — always registered (no external service required at DI time).
+        services.AddSingleton<IImageProcessor, ImageProcessor>();
 
         // Quota counter — in-memory for Phase 5 scaffold.
-        // TODO(Phase 5.2): swap for EfCoreTenantQuotaCounter when DB-backed persistence is required.
         services.AddSingleton<ITenantQuotaCounter, InMemoryTenantQuotaCounter>();
 
         return services;

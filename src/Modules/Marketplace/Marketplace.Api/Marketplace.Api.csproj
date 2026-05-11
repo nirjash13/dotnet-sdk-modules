@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Marketplace.Api</PackageId>
+    <Description>API layer for the Marketplace module. IModuleStartup implementation and Minimal API endpoints.</Description>
+    <Title>SaasBuilder Marketplace API</Title>
+    <Authors>SaasBuilder</Authors>
+    <Company>SaasBuilder</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/saasbuilder/modular-sdk-dotnet</RepositoryUrl>
+    <PackageTags>saasbuilder;marketplace;api</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="ASP.NET Core">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="Versioning">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313;SA1201</NoWarn>
+  </PropertyGroup>
+
+</Project>

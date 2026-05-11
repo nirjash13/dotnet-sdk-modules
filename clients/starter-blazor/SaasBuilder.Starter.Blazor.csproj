@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- This is a starter template — not part of the core SDK build.
+         It is intentionally excluded from SaasBuilder.sln. -->
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+    <RootNamespace>SaasBuilder.Starter.Blazor</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MudBlazor provides Material Design components for clean default styling. -->
+    <PackageReference Include="MudBlazor" Version="7.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+</Project>

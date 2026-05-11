@@ -38,7 +38,7 @@ public sealed class RegistrationModule : IModuleStartup
 
     private static async Task<IResult> HandleStartRegistrationAsync(
         StartRegistrationRequest request,
-        IPublishEndpoint publishEndpoint,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPublishEndpoint publishEndpoint,
         CancellationToken ct)
     {
         var correlationId = Guid.NewGuid();

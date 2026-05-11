@@ -5,6 +5,120 @@ Each entry documents what was built, decisions made, and version adjustments rel
 
 ---
 
+## 2026-05-11 — Phases 2–10 finishing sweep (parallel agents, 3 waves)
+
+**Goal:** Complete the remaining work across all phases. Dispatched 9 builder agents in 3 waves of 3 parallel agents (per user constraint: ≤3 agents at a time).
+
+**Build state:** `dotnet build SaasBuilder.sln -warnaserror` — 0 errors, 0 warnings across the entire solution.
+
+### Wave 1 — Phase 2 / 3 / 4 (auth + tenancy + billing)
+
+**Phase 2 (Identity hardening):**
+- Argon2id `IPasswordHasher` (Konscious.Security.Cryptography).
+- Email verification flow + endpoints.
+- Password reset (magic-link, 1h single-use).
+- Account lockout (5 failures / 15 min → 30 min lock; admin unlock).
+- TOTP MFA (enroll, verify, sign-in challenge; QR code data URL) + 10 single-use recovery codes (Otp.NET).
+- Social-login OIDC scaffolds: Google, Microsoft, GitHub, Apple + account-linking endpoint.
+- API keys (user + org scoped, hashed at rest, rotation, `sk_<key>` bearer auth handler).
+- Impersonation endpoints (mandatory reason, 1h cap, `act` claim, audit trail).
+- EF migrations + raw SQL with RLS policies under `migrations/identity/`.
+- 10 load-bearing tests.
+
+**Phase 3 (Tenancy):**
+- `TenantIsolation` enum + `ITenantResources` / `ITenantResourcesProvider` (Pool/Silo modes).
+- Tenant lifecycle state machine (`TenantStatus`, `ITenantLifecycleHandler`).
+- Tenant resolver pipeline: JwtClaim / Header / Subdomain / Path / ApiKey resolvers with priority ordering.
+- Per-tenant envelope encryption: `ITenantKeyProvider` + `AesGcmEncryptedStringConverter` + `[Encrypted]` attribute + Azure-Key-Vault / AWS-KMS adapter scaffolds.
+- Per-tenant sliding-window throttling middleware (per-edition rate limits, 80% soft-warning header, 429 hard).
+- `MigrationRunner` with Postgres advisory-lock leader election; wired through `MigrateOnStartup` option.
+- New `SaasBuilder.Tenancy` project + `tests/SaasBuilder.Tenancy.Tests/` (10 tests).
+
+**Phase 4 (Billing):**
+- Full Stripe adapter (`Stripe.net 51.1.0`): checkout, subscriptions, customer-portal, webhooks with HMAC + 5-min replay window + idempotency dedup.
+- Paddle / LemonSqueezy / Chargebee adapter stubs with `Result.Failure` returns + documented gap matrix.
+- Daily reconciliation `IHostedService` comparing DB vs provider state.
+- `InvoicePaymentFailedIntegrationEvent` + dunning contract; seat-sync service.
+- `IEntitlementService` switched to `IMemoryCache` (5-min TTL); `AsLimit=true` enforces soft/hard limits with `X-Seat-Limit-Warning` header + 402.
+- `SubscriptionUpdatedIntegrationEvent` cache invalidation hook.
+- 1 new load-bearing test (cache hit avoids DB round-trip); 10 total Phase 4 tests pass.
+
+### Wave 2 — Phase 5 / 6 / 8 (adapters + admin + compliance)
+
+**Phase 5 (Cross-cutting adapters):**
+- Notifications: SendGrid, AWS SES, Postmark email dispatchers; Twilio SMS; bounce/complaint webhook ingest; provider selection via config.
+- Files: S3, Azure Blob, GCS blob stores with presigned URLs + per-tenant prefixes; ImageSharp processor (resize/thumbnail/WebP); EF-backed quota tracker.
+- Jobs: Hangfire scheduler with tenant-aware `JobActivator`; MassTransit scheduled redelivery; DLQ replay endpoint.
+- Audit: hash-chain mode (SHA-256 chained `PreviousHash` for tamper-evidence); Splunk HEC + Datadog forwarders; GDPR NDJSON export endpoint.
+- Webhooks: Standard-Webhooks spec delivery worker with Svix retry schedule (5s→1d) + DLQ; signer/verifier with rotatable secrets; subscription manager + replay endpoints.
+- Search: OpenSearch + Meilisearch adapters; **mandatory tenant-scope filter rewriting** as defense in depth.
+- Realtime: Redis backplane wiring; `TenantHub` with auto-group join `tenant:{id}`; Redis presence tracker.
+- 7 load-bearing tests pass; build clean.
+
+**Phase 6 (Admin / Control plane):**
+- New `src/Modules/Admin/` (Contracts/Application/Infrastructure/Api).
+- Tenant directory + inspector; support actions (resend invite, force-reset, refund, credit grant, impersonate launcher).
+- Per-tenant entitlement + feature-flag overrides; job/webhook dashboards.
+- Ops health endpoint (DB+queue+providers).
+- `SystemAdmin` authorization policy (role + MFA-used claim required); approval workflow for high-sensitivity actions; all admin actions audit-logged to `admin_action_audit`.
+- Fixed pre-existing `IPublishEndpoint` parameter-inference bug in Registration module (`[FromServices]`).
+- Fixed captive-dependency bug in `EntitlementService` (Singleton → Scoped).
+- 9 load-bearing tests.
+
+**Phase 8 (Compliance + deployment):**
+- New `src/Modules/Gdpr/` (Contracts/Application/Infrastructure/Api): personal-data export zip, right-to-be-forgotten with 30-day grace, append-only consent, DPA template, sub-processor list.
+- Health probes split: `/health/live`, `/health/ready`, `/health/startup` (existing `/health` kept as alias).
+- Helm chart under `deploy/helm/saasbuilder/` (9 templates including HPA, PDB, migration job, ingress).
+- IaC samples: `deploy/iac/azure-bicep/`, `azure-terraform/`, `aws-terraform/`, `gcp-terraform/`.
+- `docs/DEPLOYMENT_RECIPES.md` (blue/green, canary, expand-migrate-contract).
+- `docs/SOC2_COMPLIANCE.md` (hash-chain audit, retention, lock-storage policy).
+- 9 load-bearing tests.
+
+### Wave 3 — Phase 7 / 9 / 10 (frontend + CLI + AI/Marketplace)
+
+**Phase 7 (Frontend SDK):**
+- `clients/typescript/` package skeleton (`@saasbuilder/client`): `SaasBuilderClient` wrapper with Bearer + 401-refresh + `MfaRequiredError` handling + AbortSignal cancellation; NSwag codegen wired via `nswag.json` + `scripts/generate.ts`.
+- `WebhookManager.tsx` reusable React component.
+- `src/SaasBuilder.HostedUi/` Razor Class Library (packable) with drop-in Login / MFA Setup / Accept-Invitation / Billing portal-redirect pages.
+- `clients/starter-blazor/` Blazor WASM skeleton; `clients/starter-next/` README + example pages (login/dashboard/billing).
+- `tools/codegen/saasbuilder-codegen.targets` opt-in MSBuild target.
+- 3 load-bearing tests.
+
+**Phase 9 (Developer Experience):**
+- `src/SaasBuilder.Cli/` global `dotnet tool` with `saas new / add module / add feature / migrate / tenant create / pack / doctor` commands (System.CommandLine).
+- `templates/SaasBuilder.Templates/saas-module/` and `saas-feature/` new `dotnet new` templates.
+- `samples/B2BSample/B2BSample.Host/` (SiloedSchema isolation), `samples/B2CSample/B2CSample.Host/` (PoolShared).
+- `samples/SaasBuilder.AspireHost/` Aspire orchestration (Postgres + RabbitMQ + Redis + Mailhog + PgAdmin).
+- `docs/site/` Docusaurus 3 scaffold with 5 tutorial pages.
+- 3 load-bearing tests.
+
+**Phase 10 (AI + Marketplace + GA prep):**
+- New `src/Modules/Ai/` (5 layers): `ILlmClient` with OpenAI / Anthropic / Ollama providers; `IEmbeddingClient`; `IVectorStore` with PgVector default + Qdrant scaffold; `IRagPipeline` with **mandatory tenant filter** (security invariant — tested); `IPromptSafetyFilter` (PII regex redaction + jailbreak detector); `PromptOutputCache` (IMemoryCache, 1h); `EfCoreLlmBudgetTracker` (soft 80% + hard 100% per entitlement); MCP server endpoint stub; AI chat / stream / embed / RAG / vector CRUD / eval endpoints.
+- New `src/Modules/Marketplace/` (5 layers): app manifest registry, OAuth-app install flow (pending → approved → active state machine), per-tenant scope grants, webhook extension points.
+- `docs/GA_LAUNCH.md`: versioning policy, migration guides (ABP / plain-ASP.NET → SaasBuilder), benchmark target, security-audit scope, launch checklist.
+- 10 load-bearing tests (incl. RAG tenant-scope guard, budget hard cap, PII redactor round-trip).
+
+### Cross-cutting fixes during the sweep
+
+- Pre-existing `IPublishEndpoint` Minimal API parameter-inference issue in Registration module — resolved with `[FromServices]`.
+- Pre-existing captive-dependency bug in `EntitlementService` registration — Singleton → Scoped.
+- SecurityTests fixture env-var setup applied (same pattern used in Phase 3 fixture): env vars set in `InitializeAsync` before `WebApplicationFactory` boots; `UseEnvironment("Development")` so OpenIddict dev certs apply.
+
+### Items NOT delivered (carried into v1.1)
+
+- `RecordUsageAsync` for Stripe Meters API (Stripe v51 requires a separate Meters implementation).
+- `IBillingProvider.ListInvoicesAsync` / `GetCurrentPeriodUsageAsync` — endpoints return 501.
+- `MassTransit` consumer for `SubscriptionUpdatedIntegrationEvent` invalidation (method ready, consumer not registered).
+- `Anthropic.SDK` and `Qdrant.Client` gRPC NuGets — replaced with thin HttpClient adapters (no stable net10 package at time of authoring).
+- Full SSE token-level streaming for AI chat — stubbed per provider.
+- EF migrations for Ai and Marketplace DbContexts — models complete; `dotnet ef migrations add` deferred to operator.
+
+### New NuGet packages added during sweep
+
+`Konscious.Security.Cryptography.Argon2`, `Otp.NET`, `Stripe.net 51.1.0`, `SendGrid`, `AWSSDK.SimpleEmailV2`, `Postmark`, `Twilio`, `AWSSDK.S3`, `Azure.Storage.Blobs`, `Google.Cloud.Storage.V1`, `Hangfire.AspNetCore`, `Hangfire.PostgreSql`, `OpenSearch.Client`, `meilisearch-dotnet`, `SixLabors.ImageSharp`, `Azure.AI.OpenAI`, `System.CommandLine`, `Aspire.Hosting.AppHost`, `Microsoft.Extensions.Http 10.0.6`, `Microsoft.Extensions.Caching.Memory 10.0.6`, `Microsoft.EntityFrameworkCore.InMemory 10.0.6`.
+
+---
+
 ## 2026-05-11 — Phase 2: Identity, Organizations & RBAC (scaffold)
 
 **Phase goal:** Promote Identity to 5 NuGet-packable assemblies; add Organizations + Members domain with last-owner-protection invariant; add RBAC primitives (Role, Permission, RolePermission); add EF Core mappings, application handlers (scaffold with TODO markers), API endpoints, and deferred stub interfaces.

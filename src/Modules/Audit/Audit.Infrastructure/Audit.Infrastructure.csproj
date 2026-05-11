@@ -28,6 +28,10 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup Label="ASP.NET Core — IHostedService, IHttpClientFactory, ILogger">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup Label="MinVer">
     <PackageReference Include="MinVer" PrivateAssets="All" />
   </ItemGroup>

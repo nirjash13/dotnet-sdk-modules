@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "SaasBuilder Contributors",
+  "classifications": ["SaaS", "Feature", "CQRS"],
+  "identity": "SaasBuilder.Templates.SaasFeature",
+  "name": "SaaS Builder Feature",
+  "shortName": "saas-feature",
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "sourceName": "MyFeature",
+  "preferNameDirectory": false,
+  "symbols": {
+    "module": {
+      "type": "parameter",
+      "description": "Target module namespace (e.g. Inventory)",
+      "datatype": "string",
+      "defaultValue": "MyModule",
+      "replaces": "MyModule"
+    },
+    "Framework": {
+      "type": "parameter",
+      "description": "The target framework for the projects.",
+      "datatype": "choice",
+      "defaultValue": "net10.0",
+      "choices": [
+        {
+          "choice": "net10.0",
+          "description": ".NET 10.0"
+        }
+      ],
+      "replaces": "net10.0"
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./"
+    }
+  ]
+}

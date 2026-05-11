@@ -63,6 +63,18 @@ public sealed class SaasBuilderSecurityFixture : IAsyncLifetime
     {
         await _postgres.StartAsync().ConfigureAwait(false);
         _connectionString = _postgres.GetConnectionString();
+
+        // Module ConfigureServices reads config before ConfigureAppConfiguration fires —
+        // env vars must be in place before WebApplicationFactory boots Program.cs.
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _connectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__SaasBuilder", _connectionString);
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+        Environment.SetEnvironmentVariable("Identity__SeedDevClient", "true");
+        Environment.SetEnvironmentVariable("Identity__AllowInsecureMetadata", "true");
+        Environment.SetEnvironmentVariable("Identity__Authority", TestIssuer);
+        Environment.SetEnvironmentVariable("Identity__Audience", TestAudience);
+        Environment.SetEnvironmentVariable("Identity__DevClient__Secret", "chassis-security-test-secret");
+
         _factory = new SecurityWebApplicationFactory(_connectionString, _signingKey);
     }
 
@@ -205,7 +217,7 @@ public sealed class SaasBuilderSecurityFixture : IAsyncLifetime
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Testing");
+            builder.UseEnvironment("Development");
 
             builder.ConfigureAppConfiguration((_, config) =>
             {

@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>saas</AssemblyName>
+    <RootNamespace>SaasBuilder.Cli</RootNamespace>
+
+    <!-- dotnet global tool packaging -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>saas</ToolCommandName>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Cli</PackageId>
+    <Title>SaaS Builder CLI</Title>
+    <Description>dotnet global tool for the SaaS Builder SDK — scaffold apps, modules, features, migrations, and tenants.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-tool;saas;saasbuilder;cli;scaffold</PackageTags>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+
+    <!-- CLI tool: suppress all StyleCop rules — this is a tool, not a library.
+         StyleCop is designed for library code with public API surface; CLI tools with
+         lambda-heavy System.CommandLine handlers don't conform to these conventions. -->
+    <NoWarn>$(NoWarn);SA0001;SA1000;SA1009;SA1101;SA1116;SA1117;SA1200;SA1201;SA1204;SA1309;SA1313;SA1515;SA1516;SA1600;SA1601;SA1602;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="Database — Npgsql for tenant provisioning">
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup Label="System.CommandLine — argument parsing">
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer — tag-driven SemVer versioning (build-time only)">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Expose internals to the CLI test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="SaasBuilder.Cli.Tests" />
+  </ItemGroup>
+
+  <ItemGroup Label="Embedded resource templates for scaffolding">
+    <!-- Exclude template .cs files from compilation — they are text templates only -->
+    <Compile Remove="Templates\**\*" />
+    <EmbeddedResource Include="Templates\**\*" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SaasBuilder.Cli.Tests</RootNamespace>
+
+    <!-- Suppress StyleCop in test projects — test code conventions differ -->
+    <NoWarn>$(NoWarn);SA0001;SA1009;SA1101;SA1200;SA1309;SA1515;SA1600;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="Project references">
+    <ProjectReference Include="..\..\src\SaasBuilder.Cli\SaasBuilder.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test framework">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop — build-time only">
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+</Project>

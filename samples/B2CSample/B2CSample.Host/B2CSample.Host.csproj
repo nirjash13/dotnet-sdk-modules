@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>B2CSample.Host</RootNamespace>
+
+    <NoWarn>$(NoWarn);SA0001;SA1101;SA1200;SA1309;SA1516;SA1600;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    B2C Sample — minimal module set: Identity, Billing, FeatureFlags, Notifications.
+    Tenant-per-user: a tenant is auto-created for each new user on signup.
+  -->
+  <ItemGroup Label="SaaS Builder SDK — core">
+    <ProjectReference Include="..\..\..\src\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Host\SaasBuilder.Host.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Tenancy\SaasBuilder.Tenancy.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="SaaS Builder SDK — minimal module set">
+    <ProjectReference Include="..\..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Billing\Billing.Api\Billing.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Notifications.Api\Notifications.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\stylecop.json" />
+  </ItemGroup>
+
+</Project>

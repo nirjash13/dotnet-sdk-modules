@@ -1,0 +1,88 @@
+@page "/"
+@page "/dashboard"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject SaasBuilderClientService Client
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h4" Class="mb-6">Welcome, @_userName</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Team</MudText>
+                    <MudText>@_memberCount members</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Href="/members" Variant="Variant.Text" Color="Color.Primary">Manage</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Subscription</MudText>
+                    <MudText>@(_planName ?? "No active plan")</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Href="/billing" Variant="Variant.Text" Color="Color.Primary">Billing</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private string _userName = string.Empty;
+    private int _memberCount;
+    private string? _planName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client.AccessToken is null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            var me = await Client.GetAsync<MeDto>("/api/v1/identity/me");
+            _userName = me?.Name ?? string.Empty;
+
+            var members = await Client.GetAsync<MembersDto>("/api/v1/identity/members");
+            _memberCount = members?.Total ?? 0;
+
+            var sub = await Client.GetAsync<SubscriptionDto>("/api/v1/billing/subscription");
+            _planName = sub?.PlanName;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private sealed record MeDto(string Name, string Email, string Role);
+    private sealed record MembersDto(int Total);
+    private sealed record SubscriptionDto(string PlanName, string Status);
+}

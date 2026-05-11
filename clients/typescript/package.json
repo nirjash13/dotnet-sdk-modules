@@ -1,0 +1,35 @@
+{
+  "name": "@saasbuilder/client",
+  "version": "0.1.0",
+  "description": "TypeScript client for SaasBuilder SDK REST APIs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saasbuilder/modular-sdk-dotnet"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "generate": "npx tsx scripts/generate.ts",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "nswag": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

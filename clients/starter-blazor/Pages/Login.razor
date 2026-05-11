@@ -1,0 +1,66 @@
+@page "/login"
+@using MudBlazor
+@using SaasBuilder.Starter.Blazor.Services
+@inject SaasBuilderClientService Client
+@inject NavigationManager Nav
+
+<PageTitle>Sign In</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">Sign In</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+            }
+            <MudTextField @bind-Value="_email" Label="Email" InputType="InputType.Email"
+                          Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
+                          Variant="Variant.Outlined" Class="mb-3" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="HandleLogin" Disabled="_loading" FullWidth="true">
+                @(_loading ? "Signing in..." : "Sign In")
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string? _error;
+    private bool _loading;
+
+    private async Task HandleLogin()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var success = await Client.LoginAsync(_email, _password);
+            if (success)
+            {
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                _error = "Invalid email or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

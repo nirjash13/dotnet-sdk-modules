@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Marketplace.Application</PackageId>
+    <Description>Application layer for the Marketplace module. Abstractions, handlers, validators.</Description>
+    <Title>SaasBuilder Marketplace Application</Title>
+    <Authors>SaasBuilder</Authors>
+    <Company>SaasBuilder</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/saasbuilder/modular-sdk-dotnet</RepositoryUrl>
+    <PackageTags>saasbuilder;marketplace;application</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Marketplace.Domain\Marketplace.Domain.csproj" />
+    <ProjectReference Include="..\Marketplace.Contracts\Marketplace.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Versioning">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1206;SA1313</NoWarn>
+  </PropertyGroup>
+
+</Project>

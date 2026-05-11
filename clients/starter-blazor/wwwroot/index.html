@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SaasBuilder Starter</title>
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="app">
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+            Loading SaasBuilder...
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">&#10006;</a>
+    </div>
+
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        // Expose token storage helpers to Blazor via JS interop
+        window.saasBuilderStorage = {
+            setToken: (key, value) => sessionStorage.setItem(key, value),
+            getToken: (key) => sessionStorage.getItem(key),
+            removeToken: (key) => sessionStorage.removeItem(key),
+        };
+    </script>
+</body>
+</html>

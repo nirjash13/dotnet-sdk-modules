@@ -28,6 +28,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup Label="Cloud blob stores and image processing — optional; selected at runtime via config">
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Google.Cloud.Storage.V1" />
+    <PackageReference Include="SixLabors.ImageSharp" />
+  </ItemGroup>
+
   <ItemGroup Label="ASP.NET Core">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

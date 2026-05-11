@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>SaasBuilder.Modules.Gdpr.Api</PackageId>
+    <Title>SaasBuilder GDPR API</Title>
+    <Description>API layer for the GDPR module — IModuleStartup and Minimal API endpoints.</Description>
+    <Authors>SaasBuilder Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/placeholder/modular-sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>saasbuilder;gdpr;api</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gdpr.Infrastructure\Gdpr.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Embedded resources">
+    <EmbeddedResource Include="Resources\dpa-template.md" />
+  </ItemGroup>
+
+  <ItemGroup Label="ASP.NET Core">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Label="MinVer">
+    <PackageReference Include="MinVer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\..\stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1200;SA1009;SA1313</NoWarn>
+  </PropertyGroup>
+
+</Project>

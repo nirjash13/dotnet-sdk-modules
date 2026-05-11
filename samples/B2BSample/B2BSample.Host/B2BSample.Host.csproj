@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>B2BSample.Host</RootNamespace>
+
+    <!-- Suppress StyleCop on sample host — it's a runnable demo, not a library -->
+    <NoWarn>$(NoWarn);SA0001;SA1101;SA1200;SA1309;SA1516;SA1600;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    B2B Sample — references all SaaS Builder SDK projects.
+    In a real consumer project these would be NuGet package references.
+    Using project references here so the sample builds from the monorepo.
+  -->
+  <ItemGroup Label="SaaS Builder SDK — core">
+    <ProjectReference Include="..\..\..\src\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Host\SaasBuilder.Host.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\src\SaasBuilder.Tenancy\SaasBuilder.Tenancy.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="SaaS Builder SDK — modules (Contracts + Api layers only)">
+    <!-- Identity -->
+    <ProjectReference Include="..\..\..\src\Modules\Identity\Identity.Api\Identity.Api.csproj" />
+
+    <!-- Billing -->
+    <ProjectReference Include="..\..\..\src\Modules\Billing\Billing.Api\Billing.Api.csproj" />
+
+    <!-- Notifications -->
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Notifications.Api\Notifications.Api.csproj" />
+
+    <!-- Files -->
+    <ProjectReference Include="..\..\..\src\Modules\Files\Files.Api\Files.Api.csproj" />
+
+    <!-- Audit -->
+    <ProjectReference Include="..\..\..\src\Modules\Audit\Audit.Api\Audit.Api.csproj" />
+
+    <!-- Webhooks -->
+    <ProjectReference Include="..\..\..\src\Modules\Webhooks\Webhooks.Api\Webhooks.Api.csproj" />
+
+    <!-- Admin -->
+    <ProjectReference Include="..\..\..\src\Modules\Admin\Admin.Api\Admin.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\..\stylecop.json" />
+  </ItemGroup>
+
+</Project>

@@ -13,13 +13,12 @@ namespace Notifications.Infrastructure.Extensions;
 
 /// <summary>
 /// Extension methods for registering Notifications module infrastructure services.
-/// Implements the silent-degradation pattern: missing SMTP config registers the no-op dispatcher.
+/// Provider is selected by <c>Notifications:Email:Provider</c> config key:
+/// <c>SendGrid | AwsSes | Postmark | Smtp | NoOp</c>. Default is NoOp + warning log.
 /// </summary>
 public static class NotificationsInfrastructureExtensions
 {
-    /// <summary>
-    /// Registers all infrastructure services for the Notifications module.
-    /// </summary>
+    /// <summary>Registers all infrastructure services for the Notifications module.</summary>
     public static IServiceCollection AddNotificationsInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -51,31 +50,87 @@ public static class NotificationsInfrastructureExtensions
         // 3. Template renderer.
         services.AddSingleton<INotificationTemplate, FallbackNotificationTemplate>();
 
-        // 4. Dispatcher — SMTP if configured, no-op otherwise.
-        SmtpOptions smtpOptions = new SmtpOptions();
-        configuration.GetSection(SmtpOptions.SectionName).Bind(smtpOptions);
+        // 4. Email dispatcher — selected by Notifications:Email:Provider.
+        string provider = configuration["Notifications:Email:Provider"] ?? string.Empty;
 
-        if (!string.IsNullOrWhiteSpace(smtpOptions.Host))
+        switch (provider.Trim().ToUpperInvariant())
         {
-            services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
-            services.AddScoped<INotificationDispatcher, SmtpEmailNotificationDispatcher>();
+            case "SENDGRID":
+                services.Configure<SendGridOptions>(configuration.GetSection(SendGridOptions.SectionName));
+                services.AddScoped<INotificationDispatcher, SendGridEmailDispatcher>();
+                break;
+
+            case "AWSSES":
+                services.Configure<AwsSesOptions>(configuration.GetSection(AwsSesOptions.SectionName));
+                services.AddScoped<INotificationDispatcher, AwsSesEmailDispatcher>();
+                break;
+
+            case "POSTMARK":
+                services.Configure<PostmarkOptions>(configuration.GetSection(PostmarkOptions.SectionName));
+                services.AddScoped<INotificationDispatcher, PostmarkEmailDispatcher>();
+                break;
+
+            case "SMTP":
+                SmtpOptions smtpOptions = new SmtpOptions();
+                configuration.GetSection(SmtpOptions.SectionName).Bind(smtpOptions);
+
+                if (!string.IsNullOrWhiteSpace(smtpOptions.Host))
+                {
+                    services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+                    services.AddScoped<INotificationDispatcher, SmtpEmailNotificationDispatcher>();
+                }
+                else
+                {
+                    RegisterNoOp(services, "SMTP requested but Notifications:Smtp:Host is not configured.");
+                }
+
+                break;
+
+            default:
+                // Legacy fallback: check for bare SMTP config (pre-provider-selection behaviour).
+                SmtpOptions legacySmtp = new SmtpOptions();
+                configuration.GetSection(SmtpOptions.SectionName).Bind(legacySmtp);
+
+                if (!string.IsNullOrWhiteSpace(legacySmtp.Host))
+                {
+                    services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+                    services.AddScoped<INotificationDispatcher, SmtpEmailNotificationDispatcher>();
+                }
+                else
+                {
+                    string reason = string.IsNullOrWhiteSpace(provider)
+                        ? "Notifications:Email:Provider is not set."
+                        : $"Unknown provider '{provider}'.";
+                    RegisterNoOp(services, reason);
+                }
+
+                break;
         }
-        else
+
+        // 5. SMS dispatcher — Twilio if configured, otherwise no-op SMS.
+        TwilioOptions twilioOptions = new TwilioOptions();
+        configuration.GetSection(TwilioOptions.SectionName).Bind(twilioOptions);
+
+        if (!string.IsNullOrWhiteSpace(twilioOptions.AccountSid) &&
+            !string.IsNullOrWhiteSpace(twilioOptions.AuthToken))
         {
-            // Silent degradation: log at service registration time using the service provider build callback.
-            services.AddScoped<INotificationDispatcher>(sp =>
-            {
-                ILogger<NoOpNotificationDispatcher> logger =
-                    sp.GetRequiredService<ILogger<NoOpNotificationDispatcher>>();
-                logger.LogWarning(
-                    "Notifications module: '{SectionName}:Host' is not configured. " +
-                    "Registering NoOpNotificationDispatcher — notifications will not be delivered. " +
-                    "Set the SMTP host via environment variable or appsettings.",
-                    SmtpOptions.SectionName);
-                return new NoOpNotificationDispatcher(logger);
-            });
+            services.Configure<TwilioOptions>(configuration.GetSection(TwilioOptions.SectionName));
+            services.AddScoped<TwilioSmsDispatcher>();
         }
 
         return services;
+    }
+
+    private static void RegisterNoOp(IServiceCollection services, string reason)
+    {
+        services.AddScoped<INotificationDispatcher>(sp =>
+        {
+            ILogger<NoOpNotificationDispatcher> logger =
+                sp.GetRequiredService<ILogger<NoOpNotificationDispatcher>>();
+            logger.LogWarning(
+                "Notifications module: registering NoOpNotificationDispatcher — notifications will not be delivered. Reason: {Reason}",
+                reason);
+            return new NoOpNotificationDispatcher(logger);
+        });
     }
 }

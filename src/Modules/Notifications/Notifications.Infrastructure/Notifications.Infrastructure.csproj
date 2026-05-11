@@ -28,6 +28,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup Label="Email and SMS providers — optional; resolved at runtime via config">
+    <PackageReference Include="SendGrid" />
+    <PackageReference Include="Postmark" />
+    <PackageReference Include="AWSSDK.SimpleEmailV2" />
+    <PackageReference Include="Twilio" />
+  </ItemGroup>
+
   <ItemGroup Label="Validation">
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

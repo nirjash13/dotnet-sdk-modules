@@ -1,0 +1,138 @@
+# Default values for saasbuilder.
+# Override with --set or a custom values file.
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/placeholder/saasbuilder
+  pullPolicy: IfNotPresent
+  tag: ""  # Defaults to .Chart.AppVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: saasbuilder.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: saasbuilder-tls
+      hosts:
+        - saasbuilder.example.com
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /health/startup
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 30  # 150s max startup
+
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_HTTP_PORTS: "8080"
+  Otel__Endpoint: http://otel-collector:4317
+
+envSecrets:
+  # Reference a Kubernetes secret by name
+  secretName: saasbuilder-secrets
+  # Keys to inject from the secret as env vars
+  keys:
+    - ConnectionStrings__DefaultConnection
+    - Jwt__Secret
+    - Stripe__SecretKey
+
+migration:
+  enabled: true
+  image: {}  # Defaults to main image
+  backoffLimit: 3
+
+postgresql:
+  enabled: true
+  auth:
+    database: saasbuilder
+    username: saasbuilder
+    existingSecret: saasbuilder-secrets
+    secretKeys:
+      adminPasswordKey: postgresql-admin-password
+      userPasswordKey: postgresql-password
+
+rabbitmq:
+  enabled: false
+  auth:
+    existingPasswordSecret: saasbuilder-secrets
+    existingSecretPasswordKey: rabbitmq-password
+
+redis:
+  enabled: false
+  auth:
+    existingSecret: saasbuilder-secrets
+    existingSecretPasswordKey: redis-password

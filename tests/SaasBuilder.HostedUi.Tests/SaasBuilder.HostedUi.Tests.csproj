@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- SA1101/SA1309: project style conventions -->
+    <!-- SA0001/SA1600: docs not required on test types -->
+    <!-- SA1116/SA1118/SA1202/SA1204/SA1515/SA1009/SA1011/SA1516/SA1512: relaxed test formatting -->
+    <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed per xUnit1030 rule -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;IDE0032;xUnit1030;SA1633</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SaasBuilder.HostedUi\SaasBuilder.HostedUi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test framework">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers — build-time only">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="StyleCop configuration">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\..\stylecop.json" />
+  </ItemGroup>
+
+</Project>
