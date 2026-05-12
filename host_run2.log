@@ -1,0 +1,10 @@
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Identity.Api.IdentityModule from Identity.Api in 0.11ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Ledger.Api.LedgerModule from Ledger.Api in 0.10ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Registration.Api.RegistrationModule from Registration.Api in 0.13ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Reporting.Api.ReportingModule from Reporting.Api in 0.07ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: SaasBuilder.Host.Modules.HelloModule.HelloModule from SaasBuilder.Host in 0.05ms

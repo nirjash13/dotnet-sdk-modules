@@ -125,6 +125,79 @@ The full developer journey (signup → orgs → SSO → billing → deploy) is i
 
 ---
 
+## Local user journey (verified 2026-05-12)
+
+<!-- written-by: writer-haiku | model: haiku -->
+
+This SDK lets you compose a multi-tenant SaaS host from modules without building the chassis: auth, tenancy isolation, observability, billing, and entitlements are wired in. Below is what a new developer observes end-to-end on a workstation.
+
+### Prerequisites
+- **Docker Desktop** (for Postgres)
+- **.NET SDK 10.0.103+**
+- **Ports 5080 and 5433 free**
+
+### Run the sample host
+
+**Start Postgres:**
+```bash
+docker run -d --name sb-postgres \
+  -e POSTGRES_DB=saasbuilder \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5433:5432 \
+  postgres:16-alpine
+```
+
+**Build the sample:**
+```bash
+dotnet build samples/SaasBuilder.Sample.Host/SaasBuilder.Sample.Host.csproj
+```
+
+**Run it (bash):**
+```bash
+cd samples/SaasBuilder.Sample.Host/bin/Debug/net10.0
+ASPNETCORE_URLS=http://localhost:5080 \
+ASPNETCORE_ENVIRONMENT=Development \
+INSECURE_DNS_ACK=true \
+ConnectionStrings__SaasBuilder="Host=localhost;Port=5433;Database=saasbuilder;Username=postgres;Password=postgres" \
+  dotnet SaasBuilder.Sample.Host.dll
+```
+
+*(PowerShell: set each `$env:NAME = "value"` before `dotnet SaasBuilder.Sample.Host.dll`)*
+
+**Note:** `INSECURE_DNS_ACK=true` is a development guard. The DNS-TXT verifier is not DNSSEC-validating in this preview build. Production deployments must supply a DNSSEC-validating verifier.
+
+### What you observe
+
+| Probe | Expected response | Significance |
+|---|---|---|
+| `GET /health` | 200 `{"status":"alive"}` | Liveness probe wired |
+| `GET /health/live` | 200 `{"status":"alive"}` | Kubernetes-style live probe |
+| `GET /health/ready` | 200 `{"status":"Healthy",...}` | Readiness gates work |
+| `GET /openapi/v1.json` | 200 JSON | OpenAPI document published |
+| `GET /scalar/v1` | 200 HTML | Scalar API docs UI live |
+| `GET /api/v1/hello` | 401 ProblemDetails, `code: missing_tenant_claim` | Tenant middleware enforced |
+| `GET /api/v1/organizations` with `X-Tenant-Id: <guid>` | 401 ProblemDetails, `code: unauthorized` | Auth-after-tenancy correct |
+
+**Modules loaded at startup (reflection loader output):**
+- `Billing.Api.BillingModule`
+- `Identity.Api.IdentityModule`
+- `Ledger.Api.LedgerModule`
+- `Registration.Api.RegistrationModule`
+- `Reporting.Api.ReportingModule`
+- `SaasBuilder.Host.Modules.HelloModule`
+
+**OpenAPI discovery:** ~40 endpoints discoverable via `GET /openapi/v1.json` or the Scalar UI at `/scalar/v1`, spanning identity, organizations, billing, registrations, invitations, domain claims, MFA, API keys, and impersonation.
+
+**Known limitation:** The full e2e journey (signup → JWT → tenant-scoped writes) is not yet runnable end-to-end because JWT issuance (Phase 2) and several module DI registrations are still preview builds. Endpoints return correct 401 ProblemDetails, which proves the security envelope is wired even if the business path is not fully exercisable yet. See [`docs/SAAS_SDK_IMPLEMENTATION_REVIEW.md`](docs/SAAS_SDK_IMPLEMENTATION_REVIEW.md) for the gap analysis.
+
+**Cleanup:**
+```bash
+docker rm -f sb-postgres
+```
+
+---
+
 ## Repository layout
 
 ```

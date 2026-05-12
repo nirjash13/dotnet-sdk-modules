@@ -158,13 +158,20 @@ public static class PerTenantSlidingWindow
 
         // Register middleware to add soft-limit warning header.
         // The middleware reads the rate limit metadata after the limiter runs.
-        services.AddTransient<PerTenantRateLimitMiddleware>(sp =>
-            new PerTenantRateLimitMiddleware(softLimitThreshold, permitLimit));
+        // PerTenantRateLimitMiddleware is constructed by ASP.NET via ActivatorUtilities when
+        // app.UseMiddleware<T>() runs — it does not need to be registered as a DI service, and
+        // registering it would fail container validation (RequestDelegate is supplied by the
+        // pipeline at runtime, not by DI).
 
         // Register marker options so UseSaasBuilderPipeline can check whether per-tenant
         // middleware was registered without resolving a transient instance as a presence probe
         // (resolving a transient as a probe always succeeds because DI creates a new instance).
-        services.AddSingleton(new PerTenantRateLimitOptions { Enabled = true });
+        services.AddSingleton(new PerTenantRateLimitOptions
+        {
+            Enabled = true,
+            SoftLimitThreshold = softLimitThreshold,
+            PermitLimit = permitLimit,
+        });
 
         return services;
     }

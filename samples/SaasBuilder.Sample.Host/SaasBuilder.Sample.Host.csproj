@@ -25,6 +25,8 @@
     <ProjectReference Include="..\..\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj" />
     <!-- Registration.Infrastructure needed for AddSagaStateMachine<RegistrationSaga, RegistrationSagaState> + ExistingDbContext<RegistrationDbContext> -->
     <ProjectReference Include="..\..\src\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj" />
+    <!-- Billing.Api: module discovered via reflection; registers AddBillingInfrastructure() (incl. SeatSyncService) -->
+    <ProjectReference Include="..\..\src\Modules\Billing\Billing.Api\Billing.Api.csproj" />
     <!-- Billing.Infrastructure needed for AddBillingSeatSyncConsumers() in MassTransit consumer wiring (M-B1) -->
     <ProjectReference Include="..\..\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj" />
   </ItemGroup>

@@ -15,4 +15,10 @@ public sealed class PerTenantRateLimitOptions
     /// Defaults to <c>false</c>; set to <c>true</c> by <c>AddPerTenantSlidingWindowRateLimiting</c>.
     /// </summary>
     public bool Enabled { get; init; }
+
+    /// <summary>Soft-limit threshold (count of permits consumed at which the warning header is emitted).</summary>
+    public int SoftLimitThreshold { get; init; }
+
+    /// <summary>Configured permit limit per window.</summary>
+    public int PermitLimit { get; init; }
 }

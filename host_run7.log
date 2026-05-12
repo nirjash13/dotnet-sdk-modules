@@ -1,0 +1,17 @@
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Billing.Api.BillingModule from Billing.Api in 0.05ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Identity.Api.IdentityModule from Identity.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Ledger.Api.LedgerModule from Ledger.Api in 0.07ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Registration.Api.RegistrationModule from Registration.Api in 0.11ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Reporting.Api.ReportingModule from Reporting.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: SaasBuilder.Host.Modules.HelloModule.HelloModule from SaasBuilder.Host in 0.08ms
+Unhandled exception. System.InvalidOperationException: No public 'Invoke' or 'InvokeAsync' method found for middleware of type 'SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware'.
+   at Microsoft.AspNetCore.Builder.UseMiddlewareExtensions.UseMiddleware(IApplicationBuilder app, Type middleware, Object[] args)
+   at SaasBuilder.Host.Configuration.SaasBuilderHostExtensions.UseSaasBuilderPipeline(WebApplication app) in D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\Configuration\SaasBuilderHostExtensions.cs:line 248
+   at Program.<Main>$(String[] args) in D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\Program.cs:line 95
+   at Program.<Main>(String[] args)

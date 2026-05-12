@@ -1,0 +1,30 @@
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Billing.Api.BillingModule from Billing.Api in 0.06ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Identity.Api.IdentityModule from Identity.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Ledger.Api.LedgerModule from Ledger.Api in 0.09ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Registration.Api.RegistrationModule from Registration.Api in 0.20ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Reporting.Api.ReportingModule from Reporting.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: SaasBuilder.Host.Modules.HelloModule.HelloModule from SaasBuilder.Host in 0.08ms
+Unhandled exception. System.AggregateException: Some services are not able to be constructed (Error while validating the service descriptor 'ServiceType: SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware Lifetime: Transient ImplementationType: SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware': Unable to resolve service for type 'Microsoft.AspNetCore.Http.RequestDelegate' while attempting to activate 'SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware'.)
+ ---> System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware Lifetime: Transient ImplementationType: SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware': Unable to resolve service for type 'Microsoft.AspNetCore.Http.RequestDelegate' while attempting to activate 'SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware'.
+ ---> System.InvalidOperationException: Unable to resolve service for type 'Microsoft.AspNetCore.Http.RequestDelegate' while attempting to activate 'SaasBuilder.Host.RateLimiting.PerTenantRateLimitMiddleware'.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(IServiceCollection services, ServiceProviderOptions options)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\Program.cs:line 94
+   at Program.<Main>(String[] args)

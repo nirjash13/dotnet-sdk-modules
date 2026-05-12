@@ -1,0 +1,52 @@
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Billing.Api.BillingModule from Billing.Api in 0.06ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Identity.Api.IdentityModule from Identity.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Ledger.Api.LedgerModule from Ledger.Api in 0.08ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Registration.Api.RegistrationModule from Registration.Api in 0.09ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: Reporting.Api.ReportingModule from Reporting.Api in 0.05ms
+info: SaasBuilder.Host.Modules.ReflectionModuleLoader[0]
+      Loaded module: SaasBuilder.Host.Modules.HelloModule.HelloModule from SaasBuilder.Host in 0.05ms
+[10:23:26 INF] User profile is available. Using 'C:\Users\USER\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+[10:23:26 INF] DunningGraceHostedService started. GraceDays=7, ScanInterval=01:00:00.
+[10:23:26 INF] OutboxLagReporter started; polling every 10s.
+[10:23:26 INF] DailyReconciliationJob started. Interval: 24h.
+[10:23:26 INF] HardDeleteJobScheduler: next run in 22:36:33.
+[10:23:26 INF] Starting daily billing reconciliation.
+[10:23:27 WRN] The WebRootPath was not found: D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\bin\Debug\net10.0\wwwroot. Static files may be unavailable.
+[10:23:27 INF] Now listening on: http://localhost:5080
+[10:23:27 INF] Application started. Press Ctrl+C to shut down.
+[10:23:27 INF] Hosting environment: Development
+[10:23:27 INF] Content root path: D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\bin\Debug\net10.0
+[10:23:27 ERR] Unexpected error in DailyReconciliationJob reconciliation cycle.
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at SaasBuilder.Persistence.SaasBuilderDbContext.GetCurrentTenantId() in D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Persistence\SaasBuilderDbContext.cs:line 115
+   at lambda_method53(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.GetAsyncEnumerator()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Billing.Infrastructure.Jobs.DailyReconciliationJob.ReconcileAsync(CancellationToken ct) in D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Jobs\DailyReconciliationJob.cs:line 98
+   at Billing.Infrastructure.Jobs.DailyReconciliationJob.ExecuteAsync(CancellationToken stoppingToken) in D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Jobs\DailyReconciliationJob.cs:line 72
+[10:23:27 INF] Request starting HTTP/1.1 GET http://localhost:5080/health - null null
+[10:23:27 WRN] Failed to determine the https port for redirect.
+[10:23:27 INF] Executing endpoint 'Health checks'
+[10:23:27 INF] Executed endpoint 'Health checks'
+[10:23:27 INF] Request finished HTTP/1.1 GET http://localhost:5080/health - 200 null application/json 108.2987ms
+[10:23:27 INF] Request starting HTTP/1.1 GET http://localhost:5080/health - null null
+[10:23:27 INF] Executing endpoint 'Health checks'
+[10:23:27 INF] Executed endpoint 'Health checks'
+[10:23:27 INF] Request finished HTTP/1.1 GET http://localhost:5080/health - 200 null application/json 3.9114ms
+[10:23:28 INF] Request starting HTTP/1.1 GET http://localhost:5080/health - null null
+[10:23:28 INF] Executing endpoint 'Health checks'
+[10:23:28 INF] Executed endpoint 'Health checks'
+[10:23:28 INF] Request finished HTTP/1.1 GET http://localhost:5080/health - 200 null application/json 12.1721ms
+[10:23:28 INF] Request starting HTTP/1.1 GET http://localhost:5080/health - null null
+[10:23:28 INF] Executing endpoint 'Health checks'
+[10:23:28 INF] Executed endpoint 'Health checks'
+[10:23:28 INF] Request finished HTTP/1.1 GET http://localhost:5080/health - 200 null application/json 1.0138ms

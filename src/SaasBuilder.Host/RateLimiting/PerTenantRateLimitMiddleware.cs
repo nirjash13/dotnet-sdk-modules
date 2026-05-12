@@ -13,26 +13,28 @@ namespace SaasBuilder.Host.RateLimiting;
 /// Must be registered after <c>UseRateLimiter()</c> in the middleware pipeline so that
 /// the rate-limiter metadata is already attached to the response.
 /// </remarks>
-internal sealed class PerTenantRateLimitMiddleware
+public sealed class PerTenantRateLimitMiddleware
 {
     private const string SoftExceededHeader = "X-RateLimit-Soft-Exceeded";
 
+    private readonly RequestDelegate _next;
     private readonly int _softLimitThreshold;
     private readonly int _permitLimit;
 
-    internal PerTenantRateLimitMiddleware(int softLimitThreshold, int permitLimit)
+    public PerTenantRateLimitMiddleware(RequestDelegate next, PerTenantRateLimitOptions options)
     {
-        _softLimitThreshold = softLimitThreshold;
-        _permitLimit = permitLimit;
+        _next = next;
+        _softLimitThreshold = options.SoftLimitThreshold;
+        _permitLimit = options.PermitLimit;
     }
 
     /// <summary>
     /// Invokes the next middleware and, if the rate limit has been used beyond the soft threshold,
     /// appends the warning header to the response.
     /// </summary>
-    internal async Task InvokeAsync(HttpContext context, RequestDelegate next)
+    public async Task InvokeAsync(HttpContext context)
     {
-        await next(context).ConfigureAwait(false);
+        await _next(context).ConfigureAwait(false);
 
         // The RateLimitingMiddleware attaches lease metadata; we inspect it post-execution.
         // If the remaining permits fall below the soft threshold emit the header.
