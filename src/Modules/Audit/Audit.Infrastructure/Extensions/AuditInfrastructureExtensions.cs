@@ -65,6 +65,7 @@ public static class AuditInfrastructureExtensions
             services.Configure<SplunkHecOptions>(configuration.GetSection(SplunkHecOptions.SectionName));
             services.AddSingleton<SplunkHecForwarder>();
             services.AddHostedService(sp => sp.GetRequiredService<SplunkHecForwarder>());
+
             // M-O2 fix: also expose as IAuditLogger so the audit pipeline can deliver events.
             services.AddSingleton<IAuditLogger>(sp => sp.GetRequiredService<SplunkHecForwarder>());
         }
@@ -77,6 +78,7 @@ public static class AuditInfrastructureExtensions
             services.Configure<DatadogForwarderOptions>(configuration.GetSection(DatadogForwarderOptions.SectionName));
             services.AddSingleton<DatadogForwarder>();
             services.AddHostedService(sp => sp.GetRequiredService<DatadogForwarder>());
+
             // M-O2 fix: also expose as IAuditLogger so the audit pipeline can deliver events.
             services.AddSingleton<IAuditLogger>(sp => sp.GetRequiredService<DatadogForwarder>());
         }

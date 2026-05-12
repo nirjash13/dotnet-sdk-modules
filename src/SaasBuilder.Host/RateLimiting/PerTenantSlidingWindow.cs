@@ -161,6 +161,11 @@ public static class PerTenantSlidingWindow
         services.AddTransient<PerTenantRateLimitMiddleware>(sp =>
             new PerTenantRateLimitMiddleware(softLimitThreshold, permitLimit));
 
+        // Register marker options so UseSaasBuilderPipeline can check whether per-tenant
+        // middleware was registered without resolving a transient instance as a presence probe
+        // (resolving a transient as a probe always succeeds because DI creates a new instance).
+        services.AddSingleton(new PerTenantRateLimitOptions { Enabled = true });
+
         return services;
     }
 

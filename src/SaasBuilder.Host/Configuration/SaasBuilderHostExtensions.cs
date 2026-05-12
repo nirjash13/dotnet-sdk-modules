@@ -240,8 +240,10 @@ public static class SaasBuilderHostExtensions
         app.UseMiddleware<TenantMiddleware>();
 
         // ── Per-tenant soft-limit middleware — must run AFTER TenantMiddleware so tenant context is available ──
-        // Only active when AddPerTenantSlidingWindowRateLimiting() registered the middleware.
-        if (app.Services.GetService<PerTenantRateLimitMiddleware>() is not null)
+        // Check the marker options (singleton) rather than resolving the transient middleware itself:
+        // resolving a transient via GetService always returns a non-null instance and is therefore
+        // useless as a presence probe.
+        if (app.Services.GetService<PerTenantRateLimitOptions>()?.Enabled == true)
         {
             app.UseMiddleware<PerTenantRateLimitMiddleware>();
         }

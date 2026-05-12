@@ -4,6 +4,7 @@ using Billing.Application.Services;
 using Billing.Contracts;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Billing.Infrastructure.Consumers;
 
@@ -28,8 +29,6 @@ public sealed class MemberAddedConsumer(
 
         Result<SeatSyncOutcome> result = await seatSyncService.OnMemberAddedAsync(
             @event,
-            softLimitSeats: null,
-            hardLimitSeats: null,
             context.CancellationToken).ConfigureAwait(false);
 
         if (!result.IsSuccess)

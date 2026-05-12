@@ -4,6 +4,7 @@ using Billing.Application.Services;
 using Billing.Contracts;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using SaasBuilder.SharedKernel.Abstractions;
 
 namespace Billing.Infrastructure.Consumers;
 

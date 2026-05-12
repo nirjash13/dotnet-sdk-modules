@@ -115,6 +115,7 @@ public static class NotificationsInfrastructureExtensions
             !string.IsNullOrWhiteSpace(twilioOptions.AuthToken))
         {
             services.Configure<TwilioOptions>(configuration.GetSection(TwilioOptions.SectionName));
+
             // M-O1 fix: register as INotificationDispatcher so the SMS channel is reachable.
             services.AddScoped<TwilioSmsDispatcher>();
             services.AddScoped<INotificationDispatcher, TwilioSmsDispatcher>();

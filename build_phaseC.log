@@ -1,0 +1,138 @@
+  Determining projects to restore...
+  Restored D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj (in 2.03 sec).
+  Restored D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\SaasBuilder.Sample.Host.csproj (in 2.08 sec).
+  Restored D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.SecurityTests\SaasBuilder.SecurityTests.csproj (in 2.04 sec).
+  Restored D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\SaasBuilder.IntegrationTests.csproj (in 1.96 sec).
+  92 of 96 projects are up-to-date for restore.
+  SaasBuilder.SharedKernel -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.SharedKernel\bin\Debug\net10.0\SaasBuilder.SharedKernel.dll
+  Reporting.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\bin\Debug\netstandard2.0\Reporting.Contracts.dll
+  SaasBuilder.SharedKernel -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.SharedKernel\bin\Debug\netstandard2.0\SaasBuilder.SharedKernel.dll
+  Reporting.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\bin\Debug\net10.0\Reporting.Contracts.dll
+  SaasBuilder.Templates -> D:\Personal\modular-sdk-dotnet\templates\SaasBuilder.Templates\bin\Debug\net10.0\SaasBuilder.Templates.dll
+  Webhooks.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\bin\Debug\netstandard2.0\Webhooks.Contracts.dll
+  Files.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Contracts\bin\Debug\netstandard2.0\Files.Contracts.dll
+  Audit.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\bin\Debug\netstandard2.0\Audit.Contracts.dll
+  Admin.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\bin\Debug\netstandard2.0\Admin.Contracts.dll
+  FeatureFlags.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Contracts\bin\Debug\net10.0\FeatureFlags.Contracts.dll
+  Files.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Contracts\bin\Debug\net10.0\Files.Contracts.dll
+  Gdpr.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\bin\Debug\netstandard2.0\Gdpr.Contracts.dll
+  SaasBuilder.Cli -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Cli\bin\Debug\net10.0\saas.dll
+  Webhooks.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\bin\Debug\net10.0\Webhooks.Contracts.dll
+  Audit.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\bin\Debug\net10.0\Audit.Contracts.dll
+  Admin.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\bin\Debug\net10.0\Admin.Contracts.dll
+  Integration.AsyncApiRegistry -> D:\Personal\modular-sdk-dotnet\integration\Integration.AsyncApiRegistry\bin\Debug\net10.0\Integration.AsyncApiRegistry.dll
+  SaasBuilder.SharedKernel.SmokeTest.Net48 -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.SharedKernel.PackageTests\Net48\bin\Debug\net48\SaasBuilder.SharedKernel.SmokeTest.Net48.exe
+  Gdpr.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\bin\Debug\net10.0\Gdpr.Contracts.dll
+  Integration.CloudEventsAdapter -> D:\Personal\modular-sdk-dotnet\integration\Integration.CloudEventsAdapter\bin\Debug\netstandard2.0\Integration.CloudEventsAdapter.dll
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(76,52): error RZ2005: The 'code' directive must appear at the start of the line. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(76,56): error RZ1017: Unexpected literal following the 'code' directive. Expected '{'. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(81,51): error RZ1030: TagHelper attributes must be well-formed. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(17,5): error RZ10012: Found markup element with unexpected name 'MudStepper'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(17,36): error RZ9991: The attribute names could not be inferred from bind attribute 'bind-ActiveIndex'. Bind attributes should be of the form 'bind' or 'bind-value' along with their corresponding optional parameters like 'bind-value:event', 'bind:format' etc. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(18,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(36,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(52,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Program.cs(2,39): error CS0234: The type or namespace name 'WebAssembly' does not exist in the namespace 'Microsoft.AspNetCore.Components' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Services\NotificationsHubClient.cs(1,39): error CS0234: The type or namespace name 'WebAssembly' does not exist in the namespace 'Microsoft.AspNetCore.Components' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\obj\Debug\net10.0\SaasBuilder.Starter.Blazor.GlobalUsings.g.cs(2,35): error CS0234: The type or namespace name 'Configuration' does not exist in the namespace 'Microsoft.Extensions' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Dialogs\InviteDialog.razor(25,13): error CS0246: The type or namespace name 'IMudDialogInstance' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Dialogs\RoleChangeDialog.razor(20,13): error CS0246: The type or namespace name 'IMudDialogInstance' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Services\NotificationsHubClient.cs(19,56): error CS0246: The type or namespace name 'IWebAssemblyHostEnvironment' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+  SaasBuilder.HostedUi -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.HostedUi\bin\Debug\net10.0\SaasBuilder.HostedUi.dll
+  Registration.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\bin\Debug\net10.0\Registration.Contracts.dll
+  Integration.CloudEventsAdapter -> D:\Personal\modular-sdk-dotnet\integration\Integration.CloudEventsAdapter\bin\Debug\net10.0\Integration.CloudEventsAdapter.dll
+  Search.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Search\Search.Application\bin\Debug\net10.0\Search.Application.dll
+  FeatureFlags.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Application\bin\Debug\net10.0\FeatureFlags.Application.dll
+  Realtime.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Realtime\Realtime.Application\bin\Debug\net10.0\Realtime.Application.dll
+  Jobs.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Application\bin\Debug\net10.0\Jobs.Application.dll
+  Identity.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Domain\bin\Debug\net10.0\Identity.Domain.dll
+  SaasBuilder.Gateway -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Gateway\bin\Debug\net10.0\SaasBuilder.Gateway.dll
+  Ledger.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\bin\Debug\net10.0\Ledger.Contracts.dll
+  Billing.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Contracts\bin\Debug\netstandard2.0\Billing.Contracts.dll
+  Entitlements.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Domain\bin\Debug\net10.0\Entitlements.Domain.dll
+  Ledger.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\bin\Debug\netstandard2.0\Ledger.Contracts.dll
+  Registration.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\bin\Debug\netstandard2.0\Registration.Contracts.dll
+  Notifications.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\bin\Debug\netstandard2.0\Notifications.Contracts.dll
+  Audit.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Application\bin\Debug\net10.0\Audit.Application.dll
+  Identity.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\bin\Debug\net10.0\Identity.Contracts.dll
+  Notifications.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\bin\Debug\net10.0\Notifications.Contracts.dll
+  Identity.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\bin\Debug\netstandard2.0\Identity.Contracts.dll
+  Registration.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Application\bin\Debug\net10.0\Registration.Application.dll
+  Webhooks.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Domain\bin\Debug\net10.0\Webhooks.Domain.dll
+  Ledger.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Domain\bin\Debug\net10.0\Ledger.Domain.dll
+  Billing.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Domain\bin\Debug\net10.0\Billing.Domain.dll
+  SaasBuilder.Cli.Tests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.Cli.Tests\bin\Debug\net10.0\SaasBuilder.Cli.Tests.dll
+  SaasBuilder.SharedKernel.SmokeTest.Net10 -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.SharedKernel.PackageTests\Net10\bin\Debug\net10.0\SaasBuilder.SharedKernel.SmokeTest.Net10.dll
+  Billing.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Contracts\bin\Debug\net10.0\Billing.Contracts.dll
+  Reporting.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Application\bin\Debug\net10.0\Reporting.Application.dll
+  Ledger.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\bin\Debug\net10.0\Ledger.Application.dll
+  Realtime.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Realtime\Realtime.Infrastructure\bin\Debug\net10.0\Realtime.Infrastructure.dll
+  Marketplace.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\bin\Debug\net10.0\Marketplace.Contracts.dll
+  SaasBuilder.Persistence -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Persistence\bin\Debug\net10.0\SaasBuilder.Persistence.dll
+  Integration.AsyncApiRegistry.Tests -> D:\Personal\modular-sdk-dotnet\integration\tests\Integration.AsyncApiRegistry.Tests\bin\Debug\net10.0\Integration.AsyncApiRegistry.Tests.dll
+  Entitlements.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Application\bin\Debug\net10.0\Entitlements.Application.dll
+  Gdpr.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Application\bin\Debug\net10.0\Gdpr.Application.dll
+  Billing.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Application\bin\Debug\net10.0\Billing.Application.dll
+  SaasBuilder.Tenancy -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Tenancy\bin\Debug\net10.0\SaasBuilder.Tenancy.dll
+D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Extensions\AuditInfrastructureExtensions.cs(68,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Extensions\AuditInfrastructureExtensions.cs(80,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj]
+  Realtime.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Realtime\Realtime.Api\bin\Debug\net10.0\Realtime.Api.dll
+  Jobs.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Infrastructure\bin\Debug\net10.0\Jobs.Infrastructure.dll
+  Notifications.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Domain\bin\Debug\net10.0\Notifications.Domain.dll
+  Entitlements.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\bin\Debug\net10.0\Entitlements.Infrastructure.dll
+  Ai.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Contracts\bin\Debug\net10.0\Ai.Contracts.dll
+D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Consumers\MemberRemovedConsumer.cs(29,9): error CS0246: The type or namespace name 'Result<>' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Consumers\MemberAddedConsumer.cs(29,9): error CS0246: The type or namespace name 'Result<>' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj]
+  Registration.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Infrastructure\bin\Debug\net10.0\Registration.Infrastructure.dll
+  Reporting.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\bin\Debug\net10.0\Reporting.Infrastructure.dll
+  SaasBuilder.Tenancy.Tests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.Tenancy.Tests\bin\Debug\net10.0\SaasBuilder.Tenancy.Tests.dll
+  SaasBuilder.Host -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\bin\Debug\net10.0\SaasBuilder.Host.dll
+  Files.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Application\bin\Debug\net10.0\Files.Application.dll
+  Registration.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\bin\Debug\net10.0\Registration.Api.dll
+  FeatureFlags.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\bin\Debug\net10.0\FeatureFlags.Infrastructure.dll
+  Identity.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Application\bin\Debug\net10.0\Identity.Application.dll
+  Gdpr.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\bin\Debug\net10.0\Gdpr.Infrastructure.dll
+  Integration.CloudEventsAdapter.Tests -> D:\Personal\modular-sdk-dotnet\integration\tests\Integration.CloudEventsAdapter.Tests\bin\Debug\net10.0\Integration.CloudEventsAdapter.Tests.dll
+  FeatureFlags.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Api\bin\Debug\net10.0\FeatureFlags.Api.dll
+  Search.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Search\Search.Infrastructure\bin\Debug\net10.0\Search.Infrastructure.dll
+  Notifications.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Application\bin\Debug\net10.0\Notifications.Application.dll
+  Reporting.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\bin\Debug\net10.0\Reporting.Api.dll
+  Webhooks.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\bin\Debug\net10.0\Webhooks.Application.dll
+  Gdpr.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Api\bin\Debug\net10.0\Gdpr.Api.dll
+  Webhooks.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\bin\Debug\net10.0\Webhooks.Infrastructure.dll
+  Files.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Infrastructure\bin\Debug\net10.0\Files.Infrastructure.dll
+D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Extensions\IdentityInfrastructureExtensions.cs(153,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj]
+  Ledger.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\bin\Debug\net10.0\Ledger.Infrastructure.dll
+  SaasBuilder.HostedUi.Tests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.HostedUi.Tests\bin\Debug\net10.0\SaasBuilder.HostedUi.Tests.dll
+  Webhooks.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Api\bin\Debug\net10.0\Webhooks.Api.dll
+  Files.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Api\bin\Debug\net10.0\Files.Api.dll
+D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Infrastructure\Extensions\NotificationsInfrastructureExtensions.cs(118,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj]
+  Admin.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\bin\Debug\net10.0\Admin.Application.dll
+  Ledger.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\bin\Debug\net10.0\Ledger.Api.dll
+
+Build FAILED.
+
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(76,52): error RZ2005: The 'code' directive must appear at the start of the line. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(76,56): error RZ1017: Unexpected literal following the 'code' directive. Expected '{'. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\MfaSetup.razor(81,51): error RZ1030: TagHelper attributes must be well-formed. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(17,5): error RZ10012: Found markup element with unexpected name 'MudStepper'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(17,36): error RZ9991: The attribute names could not be inferred from bind attribute 'bind-ActiveIndex'. Bind attributes should be of the form 'bind' or 'bind-value' along with their corresponding optional parameters like 'bind-value:event', 'bind:format' etc. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(18,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(36,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Pages\TenantOnboarding.razor(52,9): error RZ10012: Found markup element with unexpected name 'MudStep'. If this is intended to be a component, add a @using directive for its namespace. [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Program.cs(2,39): error CS0234: The type or namespace name 'WebAssembly' does not exist in the namespace 'Microsoft.AspNetCore.Components' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Services\NotificationsHubClient.cs(1,39): error CS0234: The type or namespace name 'WebAssembly' does not exist in the namespace 'Microsoft.AspNetCore.Components' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\obj\Debug\net10.0\SaasBuilder.Starter.Blazor.GlobalUsings.g.cs(2,35): error CS0234: The type or namespace name 'Configuration' does not exist in the namespace 'Microsoft.Extensions' (are you missing an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Dialogs\InviteDialog.razor(25,13): error CS0246: The type or namespace name 'IMudDialogInstance' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Dialogs\RoleChangeDialog.razor(20,13): error CS0246: The type or namespace name 'IMudDialogInstance' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\clients\starter-blazor\Services\NotificationsHubClient.cs(19,56): error CS0246: The type or namespace name 'IWebAssemblyHostEnvironment' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\clients\starter-blazor\SaasBuilder.Starter.Blazor.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Extensions\AuditInfrastructureExtensions.cs(68,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Extensions\AuditInfrastructureExtensions.cs(80,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Consumers\MemberRemovedConsumer.cs(29,9): error CS0246: The type or namespace name 'Result<>' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Consumers\MemberAddedConsumer.cs(29,9): error CS0246: The type or namespace name 'Result<>' could not be found (are you missing a using directive or an assembly reference?) [D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Extensions\IdentityInfrastructureExtensions.cs(153,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj]
+D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Infrastructure\Extensions\NotificationsInfrastructureExtensions.cs(118,13): error SA1515: Single-line comment should be preceded by blank line (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1515.md) [D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj]
+    0 Warning(s)
+    20 Error(s)
+
+Time Elapsed 00:00:47.73

@@ -78,9 +78,10 @@ public sealed class FilesModule : IModuleStartup
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        // M-O11: TTL clamp — cap at configured max (hard ceiling: 15 minutes).
-        int maxTtlMinutes = Math.Min(opts.PresignedUploadMaxTtlMinutes, 15);
-        TimeSpan ttl = TimeSpan.FromMinutes(maxTtlMinutes);
+        // M-O11: TTL ceiling — the effective TTL is the configured max capped at the absolute
+        // hard ceiling of 15 minutes. This is the server-side ceiling; it is not a per-request
+        // value (callers cannot request a custom TTL on this endpoint).
+        TimeSpan ttl = TimeSpan.FromMinutes(Math.Min(opts.PresignedUploadMaxTtlMinutes, 15));
 
         // Quota enforcement: check hard limit before allowing upload.
         long? hardLimit = await quotaCounter.GetHardLimitAsync(ctx.TenantId, ct).ConfigureAwait(false);

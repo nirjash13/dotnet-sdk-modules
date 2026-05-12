@@ -83,4 +83,45 @@ public sealed class WebhookSignatureTests
         // Assert — correctly signed, fresh webhook is accepted.
         result.IsValid.Should().BeTrue(because: "a correctly signed, fresh webhook must be accepted");
     }
+
+    /// <summary>
+    /// M-B5: Stripe key rotation sends two v1= signatures in one header — the old key's
+    /// signature comes first, the new key's signature comes second (or vice-versa).
+    /// The verifier must accept the webhook as long as ANY v1= value matches the configured
+    /// secret. The current implementation overwrites <c>signature</c> on every v1= token,
+    /// so it only ever checks the LAST v1= value. This test catches the regression.
+    ///
+    /// Failure signal: if the verifier is fixed to check all v1= values, this test passes.
+    /// If the last-wins bug is re-introduced, the header below will be rejected.
+    ///
+    /// Construction: the header contains two v1= values; the FIRST is computed with the
+    /// configured secret (valid), the SECOND is a fixed invalid signature. The verifier
+    /// must match on the first and return success.
+    /// </summary>
+    [Fact]
+    public async Task MultipleV1Signatures_WhenFirstMatchesSecret_Returns_Success()
+    {
+        // Arrange
+        string body = "{\"type\":\"invoice.paid\",\"id\":\"evt_rotation_test\"}";
+        long ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        byte[] validSigBytes = HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(WebhookSecret),
+            Encoding.UTF8.GetBytes($"{ts}.{body}"));
+        string validSig = Convert.ToHexString(validSigBytes).ToLowerInvariant();
+
+        // The header lists the valid signature FIRST, then a stale/invalid one SECOND.
+        // A correct implementation must accept because the first v1= matches.
+        string header = $"t={ts},v1={validSig},v1=0000000000000000000000000000000000000000000000000000000000000000";
+
+        StripeWebhookSignatureVerifier verifier = new StripeWebhookSignatureVerifier(BuildConfig());
+
+        // Act
+        WebhookVerificationResult result = await verifier.VerifyAsync(
+            Encoding.UTF8.GetBytes(body), header, CancellationToken.None);
+
+        // Assert — at least one v1= matches; the webhook must be accepted.
+        result.IsValid.Should().BeTrue(
+            because: "the verifier must accept if ANY v1= signature matches during key rotation");
+    }
 }

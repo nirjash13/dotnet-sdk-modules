@@ -7,6 +7,7 @@ using Billing.Application.Abstractions;
 using Billing.Application.Commands;
 using Billing.Contracts;
 using Billing.Infrastructure.Extensions;
+using Billing.Infrastructure.Persistence;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -297,6 +298,7 @@ public sealed class BillingModule : IModuleStartup
         HttpRequest httpRequest,
         IServiceProvider services,
         IWebhookEventRepository webhookEvents,
+        BillingDbContext db,
         [Microsoft.AspNetCore.Mvc.FromServices] IPublishEndpoint publishEndpoint,
         ILogger<BillingModule> logger,
         CancellationToken ct)
@@ -351,15 +353,26 @@ public sealed class BillingModule : IModuleStartup
                 title: "Webhook signature invalid");
         }
 
-        // 4 + 5. Atomic idempotency guard: INSERT … ON CONFLICT DO NOTHING.
-        // TryRecordAsync returns true only when this is the first delivery (row was inserted).
-        // This inverts the previous record-before-publish race: we claim the key atomically
-        // and only proceed to publish when we win the insert. Duplicate deliveries get 200
-        // without reprocessing.
+        // 4 + 5. Atomic idempotency guard inside a DB transaction.
+        // The INSERT and the dispatch are wrapped in a single transaction so that if dispatch
+        // throws, the idempotency row is rolled back and Stripe's retry will re-process.
+        // Without the transaction, a failed dispatch would leave the row committed and the
+        // retry would be silently dropped (durability regression M-B3).
+        //
+        // TODO(outbox): if DispatchStripeEventAsync ever publishes to an out-of-process broker
+        // (RabbitMQ / Azure Service Bus), the DB transaction does NOT roll back the broker
+        // publish — a partial failure can still result in a missed message. A transactional
+        // outbox pattern is required for full at-least-once delivery across the DB + broker
+        // boundary. This is a known residual risk tracked as tech-debt.
         string idempotencyKey = verification.IdempotencyKey!;
-        bool firstDelivery = await webhookEvents.TryRecordAsync(idempotencyKey, verification.EventType!, ct).ConfigureAwait(false);
+
+        await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction tx =
+            await db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+
+        bool firstDelivery = await webhookEvents.TryRecordAsync(idempotencyKey, verification.EventType!, provider, ct).ConfigureAwait(false);
         if (!firstDelivery)
         {
+            await tx.RollbackAsync(ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Duplicate webhook received (idempotencyKey={Key}); returning 200 without reprocessing.",
                 idempotencyKey);
@@ -367,6 +380,8 @@ public sealed class BillingModule : IModuleStartup
         }
 
         // 6. Dispatch integration events based on Stripe event type.
+        // Runs inside the transaction: if this throws, the tx rolls back and the idempotency
+        // row is removed so the next Stripe retry is treated as a first delivery.
         await DispatchStripeEventAsync(
             verification.EventType!,
             rawBody,
@@ -374,6 +389,8 @@ public sealed class BillingModule : IModuleStartup
             publishEndpoint,
             logger,
             ct).ConfigureAwait(false);
+
+        await tx.CommitAsync(ct).ConfigureAwait(false);
 
         logger.LogInformation(
             "Webhook received from {Provider}: eventType={EventType}, key={Key}.",

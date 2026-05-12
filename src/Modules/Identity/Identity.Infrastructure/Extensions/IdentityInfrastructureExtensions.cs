@@ -150,6 +150,7 @@ public static class IdentityInfrastructureExtensions
         {
             // DNS verifier active but AD-bit validation is NOT enforced — log a startup warning.
             services.AddScoped<IDomainOwnershipVerifier, DnsTxtDomainOwnershipVerifier>();
+
             // Warning is emitted from DnsTxtDomainOwnershipVerifier constructor (see C-14 comment).
         }
         else

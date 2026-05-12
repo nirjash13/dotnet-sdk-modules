@@ -35,7 +35,7 @@ public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration)
         }
 
         long timestampUnix = 0;
-        string? signature = null;
+        var v1Signatures = new System.Collections.Generic.List<string>();
 
         foreach (string part in signatureHeader.Split(','))
         {
@@ -51,11 +51,11 @@ public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration)
             }
             else if (kv[0] == "v1")
             {
-                signature = kv[1];
+                v1Signatures.Add(kv[1]);
             }
         }
 
-        if (timestampUnix == 0 || signature is null)
+        if (timestampUnix == 0 || v1Signatures.Count == 0)
         {
             return Task.FromResult(WebhookVerificationResult.Failure("Malformed Stripe-Signature header."));
         }
@@ -77,14 +77,22 @@ public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration)
 
         // Compute expected signature: HMAC-SHA256(webhook_secret, "{timestamp}.{body}")
         string signedPayload = $"{timestampUnix}.{Encoding.UTF8.GetString(rawBody)}";
-        byte[] expectedSignatureBytes = HMACSHA256.HashData(
+        string expectedSignature = Convert.ToHexString(HMACSHA256.HashData(
             Encoding.UTF8.GetBytes(webhookSecret),
-            Encoding.UTF8.GetBytes(signedPayload));
-        string expectedSignature = Convert.ToHexString(expectedSignatureBytes).ToLowerInvariant();
+            Encoding.UTF8.GetBytes(signedPayload))).ToLowerInvariant();
 
-        if (!CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(expectedSignature),
-            Encoding.UTF8.GetBytes(signature)))
+        byte[] expectedSignatureBytes2 = Encoding.UTF8.GetBytes(expectedSignature);
+        bool anyMatch = false;
+        foreach (string v1 in v1Signatures)
+        {
+            if (CryptographicOperations.FixedTimeEquals(expectedSignatureBytes2, Encoding.UTF8.GetBytes(v1)))
+            {
+                anyMatch = true;
+                break;
+            }
+        }
+
+        if (!anyMatch)
         {
             return Task.FromResult(WebhookVerificationResult.Failure("HMAC signature mismatch."));
         }
@@ -115,7 +123,9 @@ public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration)
         // Fallback: SHA-256 of the raw payload bytes (hex). This is collision-free regardless
         // of whether JSON parsing succeeded, replacing the prior timestamp-only fallback which
         // would collide for two distinct payloads delivered within the same second.
-        string idempotencyKey = eventId ?? Convert.ToHexString(SHA256.HashData(rawBody)).ToLowerInvariant();
+        // The "stripe_sha256_" prefix ensures this key never collides with idempotency keys
+        // from other providers (e.g. Paddle, Lemon Squeezy) that share the same webhook_events table.
+        string idempotencyKey = eventId ?? $"stripe_sha256_{Convert.ToHexString(SHA256.HashData(rawBody)).ToLowerInvariant()}";
         string resolvedEventType = eventType ?? "webhook.unknown";
 
         return Task.FromResult(WebhookVerificationResult.Success(resolvedEventType, idempotencyKey));

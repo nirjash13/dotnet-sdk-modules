@@ -52,6 +52,9 @@
     <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Domain\Marketplace.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Application\Marketplace.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Marketplace\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj" />
+    <!-- Phase C: Notifications module — SMS dispatcher DI registration tests (M-O1) -->
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Application\Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Test framework">

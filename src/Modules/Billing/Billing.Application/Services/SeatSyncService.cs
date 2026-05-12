@@ -30,10 +30,13 @@ public sealed class SeatSyncService(
     /// Called when a member is added to the organization.
     /// Updates the provider subscription quantity to reflect the new seat count.
     /// </summary>
+    /// <remarks>
+    /// Seat-limit enforcement (soft/hard caps) is not yet wired — seat limits must be read
+    /// from the tenant's billing plan before this service can enforce them.
+    /// Tracked as tech-debt: M-B1 overage enforcement not implemented.
+    /// </remarks>
     public async Task<Result<SeatSyncOutcome>> OnMemberAddedAsync(
         MemberAddedIntegrationEvent @event,
-        long? softLimitSeats,
-        long? hardLimitSeats,
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -41,8 +44,8 @@ public sealed class SeatSyncService(
         return await SyncSeatCountAsync(
             @event.TenantId,
             @event.NewSeatCount,
-            softLimitSeats,
-            hardLimitSeats,
+            softLimitSeats: null,
+            hardLimitSeats: null,
             ct).ConfigureAwait(false);
     }
 
