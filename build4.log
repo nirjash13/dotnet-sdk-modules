@@ -1,0 +1,30 @@
+  Files.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Api\bin\Debug\net10.0\Files.Api.dll
+  Registration.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\bin\Debug\net10.0\Registration.Api.dll
+  Gdpr.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\bin\Debug\net10.0\Gdpr.Infrastructure.dll
+  Notifications.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Api\bin\Debug\net10.0\Notifications.Api.dll
+  Marketplace.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\bin\Debug\net10.0\Marketplace.Contracts.dll
+  Reporting.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\bin\Debug\net10.0\Reporting.Infrastructure.dll
+  Ledger.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\bin\Debug\net10.0\Ledger.Application.dll
+  Webhooks.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\bin\Debug\net10.0\Webhooks.Application.dll
+  Entitlements.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\bin\Debug\net10.0\Entitlements.Infrastructure.dll
+  Ledger.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\bin\Debug\net10.0\Ledger.Infrastructure.dll
+  Audit.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\bin\Debug\net10.0\Audit.Infrastructure.dll
+D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\DomainClaims\DnsTxtDomainOwnershipVerifier.cs(77,50): error CS1503: Argument 3: cannot convert from 'System.Threading.CancellationToken' to 'System.Net.IPEndPoint?' [D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj]
+  Webhooks.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\bin\Debug\net10.0\Webhooks.Infrastructure.dll
+  Ledger.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\bin\Debug\net10.0\Ledger.Api.dll
+  Reporting.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\bin\Debug\net10.0\Reporting.Api.dll
+  Audit.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Api\bin\Debug\net10.0\Audit.Api.dll
+  Admin.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\bin\Debug\net10.0\Admin.Application.dll
+  Gdpr.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Api\bin\Debug\net10.0\Gdpr.Api.dll
+  Webhooks.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Api\bin\Debug\net10.0\Webhooks.Api.dll
+  Billing.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\bin\Debug\net10.0\Billing.Infrastructure.dll
+  SaasBuilder.Modules.Phase5Tests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.Modules.Phase5Tests\bin\Debug\net10.0\SaasBuilder.Modules.Phase5Tests.dll
+  Billing.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Api\bin\Debug\net10.0\Billing.Api.dll
+
+Build FAILED.
+
+D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\DomainClaims\DnsTxtDomainOwnershipVerifier.cs(77,50): error CS1503: Argument 3: cannot convert from 'System.Threading.CancellationToken' to 'System.Net.IPEndPoint?' [D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:07.25

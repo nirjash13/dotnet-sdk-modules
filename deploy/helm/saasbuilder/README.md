@@ -10,6 +10,10 @@ Deploys the SaasBuilder modular monolith on Kubernetes with optional Bitnami Pos
 
 ## Quickstart
 
+> **Security note:** Never pass secrets via `--set` on the command line. Doing so leaks them into
+> shell history and into the Helm release manifest stored in-cluster as a Kubernetes Secret.
+> Use `--values secrets.yaml` with a gitignored file instead (see below).
+
 ```bash
 # Add Bitnami repo (for postgresql / rabbitmq / redis dependencies)
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -18,21 +22,51 @@ helm repo update
 # Update chart dependencies
 helm dependency update deploy/helm/saasbuilder
 
-# Install with in-cluster PostgreSQL (dev/staging)
+# 1. Copy the example secrets file and fill in real values
+cp deploy/helm/saasbuilder/secrets.example.yaml secrets.yaml
+# Edit secrets.yaml — never commit it to source control (it is in .gitignore)
+
+# 2. Install with in-cluster PostgreSQL (dev/staging)
 helm install saasbuilder deploy/helm/saasbuilder \
   --namespace saasbuilder \
   --create-namespace \
-  --set postgresql.enabled=true \
-  --set postgresql.auth.password=changeme \
-  --set envSecrets.secretName="" \
-  --set env.Jwt__Secret=dev-secret-32-chars-minimum
+  --values secrets.yaml
 
-# Install pointing to an external DB (production)
+# 3. Install pointing to an external DB (production)
 helm install saasbuilder deploy/helm/saasbuilder \
   --namespace saasbuilder \
   --create-namespace \
   --set postgresql.enabled=false \
-  --set envSecrets.secretName=saasbuilder-secrets
+  --values secrets.yaml
+```
+
+### Recommended: External Secrets Operator
+
+For production clusters, use the [External Secrets Operator](https://external-secrets.io/) to
+sync secrets from AWS Secrets Manager, Azure Key Vault, or GCP Secret Manager instead of
+maintaining a local `secrets.yaml`:
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: saasbuilder-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: saasbuilder-secrets
+  data:
+    - secretKey: Jwt__Secret
+      remoteRef:
+        key: saasbuilder/prod
+        property: jwt_secret
+    - secretKey: ConnectionStrings__Default
+      remoteRef:
+        key: saasbuilder/prod
+        property: db_connection_string
 ```
 
 ## Configuration

@@ -1,0 +1,30 @@
+  Files.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Files\Files.Api\bin\Debug\net10.0\Files.Api.dll
+  Ledger.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\bin\Debug\net10.0\Ledger.Infrastructure.dll
+  Webhooks.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\bin\Debug\net10.0\Webhooks.Infrastructure.dll
+  Reporting.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\bin\Debug\net10.0\Reporting.Api.dll
+  Realtime.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Realtime\Realtime.Api\bin\Debug\net10.0\Realtime.Api.dll
+  Ledger.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\bin\Debug\net10.0\Ledger.Api.dll
+  Admin.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\bin\Debug\net10.0\Admin.Application.dll
+  Identity.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Api\bin\Debug\net10.0\Identity.Api.dll
+  Webhooks.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Api\bin\Debug\net10.0\Webhooks.Api.dll
+  Admin.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Infrastructure\bin\Debug\net10.0\Admin.Infrastructure.dll
+  Admin.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Api\bin\Debug\net10.0\Admin.Api.dll
+  SaasBuilder.Sample.Host -> D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\bin\Debug\net10.0\SaasBuilder.Sample.Host.dll
+  SaasBuilder.Modules.Phase5Tests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.Modules.Phase5Tests\bin\Debug\net10.0\SaasBuilder.Modules.Phase5Tests.dll
+  B2CSample.Host -> D:\Personal\modular-sdk-dotnet\samples\B2CSample\B2CSample.Host\bin\Debug\net10.0\B2CSample.Host.dll
+  Ai.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Domain\bin\Debug\net10.0\Ai.Domain.dll
+  SaasBuilder.ArchitectureTests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.ArchitectureTests\bin\Debug\net10.0\SaasBuilder.ArchitectureTests.dll
+  Ai.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Application\bin\Debug\net10.0\Ai.Application.dll
+  Marketplace.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Domain\bin\Debug\net10.0\Marketplace.Domain.dll
+  SaasBuilder.SecurityTests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.SecurityTests\bin\Debug\net10.0\SaasBuilder.SecurityTests.dll
+  B2BSample.Host -> D:\Personal\modular-sdk-dotnet\samples\B2BSample\B2BSample.Host\bin\Debug\net10.0\B2BSample.Host.dll
+  Ai.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Infrastructure\bin\Debug\net10.0\Ai.Infrastructure.dll
+  Marketplace.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Application\bin\Debug\net10.0\Marketplace.Application.dll
+  Marketplace.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Infrastructure\bin\Debug\net10.0\Marketplace.Infrastructure.dll
+  SaasBuilder.IntegrationTests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\bin\Debug\net10.0\SaasBuilder.IntegrationTests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:11.89

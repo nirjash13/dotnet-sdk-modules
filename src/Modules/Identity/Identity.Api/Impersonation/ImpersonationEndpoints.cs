@@ -1,5 +1,3 @@
-using System;
-using System.Security.Claims;
 using Identity.Application.Impersonation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -31,60 +29,24 @@ public static class ImpersonationEndpoints
             .WithSummary("Ends the current impersonation session.");
     }
 
-    private static async Task<IResult> StartImpersonation(
+    private static Task<IResult> StartImpersonation(
         StartImpersonationRequest request,
-        ClaimsPrincipal user,
         IImpersonationService impersonationService,
         CancellationToken ct)
     {
-        if (!TryGetUserId(user, out Guid adminUserId))
-        {
-            return Results.Unauthorized();
-        }
-
-        if (request.TargetUserId == Guid.Empty)
-        {
-            return Results.BadRequest(new { code = "INVALID_REQUEST", detail = "TargetUserId is required." });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Reason))
-        {
-            return Results.BadRequest(new { code = "INVALID_REQUEST", detail = "Reason is required for impersonation." });
-        }
-
-        ImpersonationSession session = await impersonationService.StartAsync(
-            adminUserId,
-            request.TargetUserId,
-            request.Reason,
-            ct);
-
-        return Results.Ok(new
-        {
-            sessionId = session.SessionId,
-            impersonationToken = session.ImpersonationToken,
-            expiresAt = session.ExpiresAt,
-            warning = "This session is audited. Use responsibly.",
-        });
+        // TODO(C-12): wire AddJwtBearer impersonation scheme before re-enabling.
+        // The minted impersonation token has no registered JwtBearer validation scheme —
+        // callers cannot use it. Endpoint is disabled until the scheme is wired.
+        return Task.FromResult(Results.StatusCode(StatusCodes.Status501NotImplemented));
     }
 
-    private static async Task<IResult> EndImpersonation(
+    private static Task<IResult> EndImpersonation(
         EndImpersonationRequest request,
         IImpersonationService impersonationService,
         CancellationToken ct)
     {
-        if (request.SessionId == Guid.Empty)
-        {
-            return Results.BadRequest(new { code = "INVALID_REQUEST", detail = "SessionId is required." });
-        }
-
-        await impersonationService.EndAsync(request.SessionId, ct);
-        return Results.NoContent();
-    }
-
-    private static bool TryGetUserId(ClaimsPrincipal user, out Guid userId)
-    {
-        string? sub = user.FindFirstValue("sub") ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Guid.TryParse(sub, out userId);
+        // TODO(C-12): wire AddJwtBearer impersonation scheme before re-enabling.
+        return Task.FromResult(Results.StatusCode(StatusCodes.Status501NotImplemented));
     }
 
     /// <summary>Request body for starting impersonation.</summary>

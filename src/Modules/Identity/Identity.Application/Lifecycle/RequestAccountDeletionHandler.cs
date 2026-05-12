@@ -35,7 +35,8 @@ public sealed class RequestAccountDeletionHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        User? user = await _users.FindByIdAsync(command.UserId, cancellationToken).ConfigureAwait(false);
+        // FindByIdForUpdateAsync: tracked entity required so EF Core persists RequestDeletion mutation.
+        User? user = await _users.FindByIdForUpdateAsync(command.UserId, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             return Result.Failure("User not found.");

@@ -23,6 +23,13 @@ internal sealed class UserRepository(IdentityDbContext db) : IUserRepository
             .ConfigureAwait(false);
 
     /// <inheritdoc />
+    public async Task<User?> FindByIdForUpdateAsync(Guid userId, CancellationToken cancellationToken = default)
+        => await db.Users
+            .Include(u => u.Memberships)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+            .ConfigureAwait(false);
+
+    /// <inheritdoc />
     public async Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
         => await db.Users
             .Include(u => u.Memberships)

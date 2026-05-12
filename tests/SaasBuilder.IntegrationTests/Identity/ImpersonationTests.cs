@@ -25,6 +25,18 @@ public sealed class ImpersonationTests
     private static readonly Guid AdminId = new Guid("aaaaaaaa-0000-0000-0000-000000000001");
     private static readonly Guid TargetId = new Guid("bbbbbbbb-0000-0000-0000-000000000002");
 
+    // 32-byte test-only signing key (base64-encoded). Never used in production.
+    private const string TestSigningKey = "dGVzdC1pbXBlcnNvbmF0aW9uLXNpZ25pbmcta2V5LTMyYg==";
+
+    private static IConfiguration BuildTestConfig() =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new System.Collections.Generic.Dictionary<string, string?>
+            {
+                ["Identity:ImpersonationSigningKey"] = TestSigningKey,
+                ["Identity:Issuer"] = "https://test-issuer",
+            })
+            .Build();
+
     // ── Test 1: Start creates auditable session ────────────────────────────────
 
     [Fact]
@@ -37,7 +49,7 @@ public sealed class ImpersonationTests
             .Callback<ImpersonationSessionEntity>(s => stored = s);
         storeMock.Setup(s => s.SaveChangesAsync(default)).ReturnsAsync(1);
 
-        var config = new ConfigurationBuilder().Build();
+        var config = BuildTestConfig();
         var service = new ImpersonationService(
             storeMock.Object, config, NullLogger<ImpersonationService>.Instance);
 
@@ -75,7 +87,7 @@ public sealed class ImpersonationTests
         storeMock.Setup(s => s.FindByIdAsync(session.Id, default)).ReturnsAsync(session);
         storeMock.Setup(s => s.SaveChangesAsync(default)).ReturnsAsync(1);
 
-        var config = new ConfigurationBuilder().Build();
+        var config = BuildTestConfig();
         var service = new ImpersonationService(
             storeMock.Object, config, NullLogger<ImpersonationService>.Instance);
 

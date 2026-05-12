@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Billing.Application.Abstractions;
 using Billing.Domain.Entities;
+using Billing.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Billing.Infrastructure.Persistence;
@@ -39,4 +41,17 @@ internal sealed class SubscriptionRepository(BillingDbContext db) : ISubscriptio
 
     public async Task SaveChangesAsync(CancellationToken ct)
         => await db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Subscription>> FindTerminalFailedBeforeAsync(
+        DateTimeOffset cutoff,
+        CancellationToken ct)
+        => await db.Subscriptions
+            .AsNoTracking()
+            .Where(s =>
+                s.Status == SubscriptionStatus.PastDue
+                && s.PaymentFailedAt != null
+                && s.TerminalFailedInvoiceId != null
+                && s.PaymentFailedAt <= cutoff)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 }

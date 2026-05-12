@@ -6,6 +6,16 @@ using Xunit;
 namespace SaasBuilder.IntegrationTests;
 
 /// <summary>
+/// Collection definition that shares <see cref="RlsFixture"/> across all tests in the
+/// "RlsFixture" collection, ensuring a single Testcontainers Postgres instance is booted
+/// and that tests run sequentially to avoid <c>NpgsqlOperationInProgressException</c> races.
+/// </summary>
+[CollectionDefinition("RlsFixture")]
+public sealed class RlsFixtureCollection : ICollectionFixture<RlsFixture>
+{
+}
+
+/// <summary>
 /// Shared Testcontainers fixture that boots an ephemeral Postgres instance, creates a
 /// tenant-scoped table with RLS applied, and seeds rows for two tenants.
 /// </summary>
@@ -46,9 +56,23 @@ public sealed class RlsFixture : IAsyncLifetime
         ALTER TABLE test_scoped_items ENABLE ROW LEVEL SECURITY;
         ALTER TABLE test_scoped_items FORCE ROW LEVEL SECURITY;
 
+        -- nullif converts empty string to NULL so that uuid cast does not raise 22P02.
+        -- When no tenant is set, current_setting returns '' (not NULL) with missing_ok=true.
         CREATE POLICY tenant_isolation ON test_scoped_items
-            USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
-            WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
+            USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid)
+            WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid);
+
+        -- A restricted non-superuser role so FORCE ROW LEVEL SECURITY is respected.
+        -- Postgres superusers bypass RLS; tests must use this role when asserting RLS.
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_user') THEN
+                CREATE ROLE rls_test_user LOGIN PASSWORD 'rls_test_pass';
+            END IF;
+        END;
+        $$;
+
+        GRANT SELECT, INSERT ON test_scoped_items TO rls_test_user;
 
         INSERT INTO test_scoped_items (id, tenant_id, value) VALUES
             (gen_random_uuid(), '{TenantA}', 'tenant-a-row-1'),

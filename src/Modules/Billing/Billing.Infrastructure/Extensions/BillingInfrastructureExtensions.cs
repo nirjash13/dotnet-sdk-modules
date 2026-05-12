@@ -1,6 +1,8 @@
 using System;
 using Billing.Application.Abstractions;
 using Billing.Application.Commands;
+using Billing.Application.Jobs;
+using Billing.Application.Options;
 using Billing.Application.Services;
 using Billing.Infrastructure.Jobs;
 using Billing.Infrastructure.Persistence;
@@ -64,6 +66,11 @@ public static class BillingInfrastructureExtensions
 
         // 6. Daily reconciliation background service.
         services.AddHostedService<DailyReconciliationJob>();
+
+        // 7. Dunning options + grace-period scanner.
+        services.Configure<BillingOptions>(configuration.GetSection(BillingOptions.SectionName));
+        services.AddScoped<SuspendTenantForUnpaidInvoiceJob>();
+        services.AddHostedService<DunningGraceHostedService>();
 
         return services;
     }

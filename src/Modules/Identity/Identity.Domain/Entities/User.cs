@@ -57,6 +57,11 @@ public sealed class User
     /// <summary>Gets a value indicating whether the account is currently locked out.</summary>
     public bool IsLockedOut => LockoutUntil is not null && DateTimeOffset.UtcNow < LockoutUntil.Value;
 
+    // ── Password credential ───────────────────────────────────────────────────
+
+    /// <summary>Gets the Argon2id password hash, or <see langword="null"/> for SSO-only accounts.</summary>
+    public string? PasswordHash { get; private set; }
+
     // ── TOTP MFA ─────────────────────────────────────────────────────────────
 
     /// <summary>Gets a value indicating whether TOTP MFA is enabled for this user.</summary>
@@ -133,6 +138,21 @@ public sealed class User
         _memberships.Add(membership);
         UpdatedAt = DateTimeOffset.UtcNow;
         return membership;
+    }
+
+    /// <summary>
+    /// Sets the Argon2id password hash. Must only be called from the password-reset flow.
+    /// </summary>
+    /// <param name="passwordHash">The new Argon2id hash. Must not be null or empty.</param>
+    public void SetPasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+        {
+            throw new IdentityDomainException("Password hash must not be empty.");
+        }
+
+        PasswordHash = passwordHash;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>Marks the user's email as verified.</summary>

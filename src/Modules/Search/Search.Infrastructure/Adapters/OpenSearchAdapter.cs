@@ -132,8 +132,34 @@ internal sealed class OpenSearchAdapter(
     /// <inheritdoc />
     public async Task DeleteAsync(string index, string documentId, CancellationToken ct = default)
     {
+        // C-6: fetch the document first and verify it belongs to the caller's tenant before
+        // deleting. This prevents tenant A from deleting tenant B's documents by knowing their id.
+        Guid tenantId = RequireTenantId();
         OpenSearchClient client = BuildClient();
         string indexName = IndexName(index);
+
+        IGetResponse<Dictionary<string, object?>> getResponse =
+            await client.GetAsync<Dictionary<string, object?>>(
+                new GetRequest(indexName, documentId),
+                ct).ConfigureAwait(false);
+
+        if (!getResponse.IsValid || getResponse.Source is null)
+        {
+            // Document does not exist or get failed — no-op; caller learns nothing.
+            return;
+        }
+
+        bool tenantMatch = getResponse.Source.TryGetValue("tenantId", out object? storedTenantRaw)
+            && storedTenantRaw?.ToString() == tenantId.ToString();
+
+        if (!tenantMatch)
+        {
+            logger.LogWarning(
+                "Search.OpenSearch: DeleteAsync blocked — document '{Id}' in index '{Index}' " +
+                "does not belong to tenant {TenantId}.",
+                documentId, indexName, tenantId);
+            return;
+        }
 
         DeleteResponse response = await client.DeleteAsync(
             new DeleteRequest(indexName, documentId),

@@ -45,12 +45,13 @@ public sealed class EmailVerificationService(
         store.Add(token);
         await store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        // Stub: log the token (Phase 5 will dispatch a real email via Notifications module).
+        // SECURITY: Never log the raw token — it grants account-ownership. Log only the token id.
+        // Phase 5 will dispatch a real email via Notifications module.
         logger.LogInformation(
-            "Email verification token generated for user {UserId}. " +
-            "Token (dev-only): {RawToken}. Wire Notifications module for production.",
+            "Email verification token generated for user {UserId}. TokenId={TokenId}. " +
+            "Wire Notifications module to deliver the email in production.",
             userId,
-            rawToken);
+            token.Id);
     }
 
     /// <inheritdoc />
@@ -68,8 +69,9 @@ public sealed class EmailVerificationService(
             return false;
         }
 
+        // FindByIdForUpdateAsync: tracked entity required so EF Core persists MarkEmailVerified.
         User? user = await userRepository
-            .FindByIdAsync(token.UserId, cancellationToken)
+            .FindByIdForUpdateAsync(token.UserId, cancellationToken)
             .ConfigureAwait(false);
 
         if (user is null)

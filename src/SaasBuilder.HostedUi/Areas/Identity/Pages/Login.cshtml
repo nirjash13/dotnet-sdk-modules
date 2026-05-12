@@ -48,20 +48,28 @@
             </button>
         </form>
 
+        @{
+            // C-30 FIX: Validate ReturnUrl before embedding it in the social-login redirect_uri.
+            // The POST handler already runs Url.IsLocalUrl(), but the GET-rendered <a href> links
+            // did not — an attacker could craft /Identity/Login?ReturnUrl=https://evil.example/grab
+            // and clicking "Sign in with Google" would redirect the auth code to evil.example.
+            // We apply the same Url.IsLocalUrl() check here so the same protection covers both paths.
+            var safeReturnUrl = Url.IsLocalUrl(Model.ReturnUrl) ? Model.ReturnUrl : "/";
+        }
         <div class="mt-6 space-y-3">
             <p class="text-center text-sm text-gray-500">or continue with</p>
 
-            <a href="/connect/authorize?provider=Google&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+            <a href="/connect/authorize?provider=Google&redirect_uri=@Uri.EscapeDataString(safeReturnUrl)"
                class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                 Google
             </a>
 
-            <a href="/connect/authorize?provider=Microsoft&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+            <a href="/connect/authorize?provider=Microsoft&redirect_uri=@Uri.EscapeDataString(safeReturnUrl)"
                class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                 Microsoft
             </a>
 
-            <a href="/connect/authorize?provider=GitHub&redirect_uri=@Uri.EscapeDataString(Model.ReturnUrl ?? "/")"
+            <a href="/connect/authorize?provider=GitHub&redirect_uri=@Uri.EscapeDataString(safeReturnUrl)"
                class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                 GitHub
             </a>

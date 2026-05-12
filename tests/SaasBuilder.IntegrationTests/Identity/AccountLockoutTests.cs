@@ -43,7 +43,8 @@ public sealed class AccountLockoutTests
         });
 
         var repoMock = new Mock<IUserRepository>();
-        repoMock.Setup(r => r.FindByIdAsync(UserId, default)).ReturnsAsync(user);
+        // RecordFailedAttemptAsync uses FindByIdForUpdateAsync (tracked entity required for EF mutation).
+        repoMock.Setup(r => r.FindByIdForUpdateAsync(UserId, default)).ReturnsAsync(user);
         repoMock.Setup(r => r.SaveChangesAsync(default)).ReturnsAsync(1);
 
         var loggerMock = new Mock<ILogger<AccountLockoutService>>();
@@ -77,7 +78,8 @@ public sealed class AccountLockoutTests
 
         var lockoutOptions = Options.Create(new LockoutOptions());
         var repoMock = new Mock<IUserRepository>();
-        repoMock.Setup(r => r.FindByIdAsync(UserId, default)).ReturnsAsync(user);
+        // AdminUnlockAsync uses FindByIdForUpdateAsync (tracked entity required for EF mutation).
+        repoMock.Setup(r => r.FindByIdForUpdateAsync(UserId, default)).ReturnsAsync(user);
         repoMock.Setup(r => r.SaveChangesAsync(default)).ReturnsAsync(1);
 
         var loggerMock = new Mock<ILogger<AccountLockoutService>>();

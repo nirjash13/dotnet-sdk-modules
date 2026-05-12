@@ -85,9 +85,9 @@ A developer in a fresh repo runs `dotnet new saas-api -n Acme.Saas`, `dotnet run
 ### 2.1 Local auth flow hardening
 - [x] Email/password with **Argon2id** (not PBKDF2) — confirm or upgrade existing OpenIddict storage
 - [x] Email verification flow with token expiry + reuse protection
-- [x] Password reset via email magic link
+- [x] Password reset via email magic link (fixed 2026-05-12 — C-13)
 - [x] Account lockout after N failed attempts; admin unlock endpoint
-- [x] Magic-link sign-in (separate flow from password reset)
+- [~] Magic-link sign-in (interface only, no impl — see review C-16)
 
 ### 2.2 MFA
 - [x] TOTP enrollment + verification flow
@@ -96,11 +96,11 @@ A developer in a fresh repo runs `dotnet new saas-api -n Acme.Saas`, `dotnet run
 - [ ] Admin "force MFA" policy per organization
 
 ### 2.3 Social login
-- [x] OIDC adapter for Google
-- [x] OIDC adapter for Microsoft
-- [x] OIDC adapter for GitHub
-- [x] OIDC adapter for Apple
-- [x] Account-linking flow (existing user adds social provider)
+- [~] OIDC adapter for Google (stubs throw NotImplementedException — see review M-I4)
+- [~] OIDC adapter for Microsoft (stubs throw NotImplementedException — see review M-I4)
+- [~] OIDC adapter for GitHub (stubs throw NotImplementedException — see review M-I4)
+- [~] OIDC adapter for Apple (stubs throw NotImplementedException — see review M-I4)
+- [~] Account-linking flow (returns 501 — see review M-I4)
 
 ### 2.4 Organizations / Teams
 - [x] `Organization` entity (slug, name, branding, settings) — distinct from `Tenant`
@@ -149,8 +149,8 @@ A developer in a fresh repo runs `dotnet new saas-api -n Acme.Saas`, `dotnet run
 ### 2.10 Impersonation (per Pigment "safe impersonation" pattern)
 - [x] System-admin-only endpoint to start impersonation
 - [x] Mandatory reason field; optional approval gate
-- [x] Time-boxed session (max 1h, configurable)
-- [x] Banner UI affordance (frontend) — header `X-Impersonation: true`
+- [~] Time-boxed session (hardcoded 1h; configurable field missing — see review M-I10)
+- [ ] Banner UI affordance (frontend) — header `X-Impersonation: true` missing (see review M-I10)
 - [x] Full audit trail: actor (admin), target (user), reason, start/end, every action
 - [x] End-impersonation endpoint
 
@@ -247,9 +247,9 @@ Default deployment is `PoolWithRls`. One tenant promoted to `SiloedDatabase` for
 - [x] Referral credits
 
 ### 4.4 Per-seat & multi-line billing
-- [x] Auto-sync seat count when org members added/removed
+- [ ] Auto-sync seat count when org members added/removed (consumer never wired — see review M-B1)
 - [x] Multi-line cart: base plan + add-ons + one-time charges
-- [x] Soft limit: warn user (header + email)
+- [~] Soft limit: warn user (header + email) — middleware registered but never invoked (see review M-B2)
 - [x] Hard limit: 402 Payment Required at endpoint
 
 ### 4.5 Metered/usage billing
@@ -264,10 +264,10 @@ Default deployment is `PoolWithRls`. One tenant promoted to `SiloedDatabase` for
 - [x] Past-due banner for `payment_failed` state
 
 ### 4.7 Dunning
-- [x] Subscribe to `invoice.payment_failed` webhook
+- [x] Subscribe to `invoice.payment_failed` webhook (fixed 2026-05-12 — C-18)
 - [~] Branded dunning emails (3-step sequence) — integration event published; templates deferred to consumer
-- [x] Configurable grace period before suspension
-- [x] Tenant suspension on terminal failure (calls Phase 3 lifecycle)
+- [x] Configurable grace period before suspension (fixed 2026-05-12 — C-18)
+- [x] Tenant suspension on terminal failure (fixed 2026-05-12 — C-18)
 
 ### 4.8 Entitlements (`SaasBuilder.Entitlements`)
 - [x] `IEntitlementService.HasAsync(string key)` returns boolean
@@ -327,12 +327,12 @@ Each sub-module is a separately versioned NuGet package. Each silently degrades 
 ### 5.3 Background jobs (`SaasBuilder.Modules.Jobs`)
 - [x] `IJobScheduler` abstraction
 - [x] Hangfire adapter (default — has dashboard)
-- [x] Quartz.NET adapter
-- [x] MassTransit scheduled-redelivery adapter (for bus mode)
+- [~] Quartz.NET adapter (NotImplementedException — see review M-O4)
+- [~] MassTransit scheduled-redelivery adapter (NotImplementedException — see review M-O4)
 - [x] Recurring (cron) + delayed + retry-with-backoff + DLQ
-- [x] **Tenant-aware enqueue** — context auto-restored on dequeue
+- [x] **Tenant-aware enqueue** — context auto-restored on dequeue (fixed 2026-05-12 — C-3)
 - [x] Idempotency key on every job payload
-- [x] Replay-from-DLQ tooling
+- [ ] Replay-from-DLQ tooling (AddAsync only — see review M-O3)
 
 ### 5.4 Audit (`SaasBuilder.Modules.Audit`)
 - [x] Centralized append-only audit table (tenant_id, actor_id, action, resource, before_json, after_json, ip, ua, correlation_id, ts)
@@ -340,7 +340,7 @@ Each sub-module is a separately versioned NuGet package. Each silently degrades 
 - [x] Auto-instrumentation for entity CRUD, login, permission changes, billing events
 - [x] **Hash-chain mode** for tamper-evidence (SOC 2)
 - [x] GDPR export per tenant (CSV/JSON, time-bounded)
-- [x] SIEM forwarding adapters: Splunk HEC, Datadog, syslog
+- [~] SIEM forwarding adapters: Splunk HEC, Datadog, syslog (registered as HostedService only, never receive events — see review M-O2)
 - [x] Retention policy per edition
 - [x] Search & filter API
 - [x] Distinct from Ledger's domain audit (which is fintech-specific)
@@ -359,7 +359,7 @@ Each sub-module is a separately versioned NuGet package. Each silently degrades 
 
 ### 5.6 Search (`SaasBuilder.Modules.Search`)
 - [x] `ISearchClient` abstraction
-- [x] Adapters: Postgres FTS (default), OpenSearch, Meilisearch, Typesense, Algolia
+- [~] Adapters: Postgres FTS (default), OpenSearch ✓, Meilisearch (NotImplementedException), Typesense (NotImplementedException), Algolia (NotImplementedException — see review M-O4)
 - [x] Per-tenant index or routing key
 - [x] Indexer pipeline subscribes to domain events
 - [x] Faceting / filters / highlighting
@@ -367,7 +367,7 @@ Each sub-module is a separately versioned NuGet package. Each silently degrades 
 
 ### 5.7 Realtime (`SaasBuilder.Modules.Realtime`)
 - [x] SignalR with Redis backplane (default)
-- [x] SQL backplane option
+- [ ] SQL backplane option ("not yet fully implemented" — see review M-O21)
 - [x] Tenant-scoped groups auto-join on connect (`tenant:{id}`)
 - [x] Presence (online/offline per org)
 - [x] Broadcast helpers scoped to tenant group
@@ -391,7 +391,7 @@ Each cross-cutting module has 3 representative integration tests, a docs page, a
 - [x] Job dashboard endpoints (list, retry, replay-from-DLQ)
 - [x] Webhook delivery dashboard (list deliveries, replay)
 - [x] Ops health endpoints (DB, queues, providers, SLO status)
-- [x] Support actions: resend invite, force-reset password, refund, credit grant
+- [ ] Support actions: resend invite, force-reset password, refund, credit grant (return 501 — see review M-O3)
 - [x] Approval workflow for sensitive actions (configurable per action)
 
 ### 6.2 Admin authorization model
@@ -425,8 +425,8 @@ A SaaS operator resolves three representative tickets end-to-end via admin APIs 
 - [x] shadcn/ui + Tailwind
 
 ### 7.3 Blazor WASM starter (parity for .NET shops)
-- [x] Same surface as Next.js starter
-- [x] MudBlazor or FluentUI design system
+- [x] Same surface as Next.js starter (fixed 2026-05-12 — C-24)
+- [x] MudBlazor or FluentUI design system (added to CPM, resolved NU1008)
 
 ### 7.4 Hosted UI (drop-in MVC pages for backend-only consumers)
 - [x] Login
@@ -511,7 +511,7 @@ A consumer can deploy to AKS or EKS via Helm, satisfy SOC 2 audit-log requiremen
 - [x] `saas-api` template (Phase 1 skeleton → Phase 9 full)
 - [x] `saas-module` template
 - [x] `saas-feature` template
-- [x] `saas-microservice` template (out-of-process module deployment)
+- [ ] `saas-microservice` template (directory does not exist — see review M-C15)
 
 ### 9.3 Sample apps under `samples/`
 - [x] `samples/B2BSample` — multi-tenant, billing, RBAC, admin (SAML SSO deferred — see 2.7)
@@ -531,8 +531,8 @@ A consumer can deploy to AKS or EKS via Helm, satisfy SOC 2 audit-log requiremen
 - [x] Searchable
 
 ### 9.5 Aspire AppHost integration
-- [x] `samples/SaasBuilder.AspireHost/` orchestrates: Postgres, Redis, RabbitMQ, Mailhog, Azurite, OTel collector
-- [x] One-command local dev experience
+- [~] `samples/SaasBuilder.AspireHost/` orchestrates: Postgres ✓, Redis ✓, RabbitMQ ✓, Mailhog (missing), Azurite (missing), OTel collector (missing — see review M-C16)
+- [x] One-command local dev experience (first three present)
 
 ### Phase 9 Exit Gate
 A new developer follows the docs and builds a "to-do list SaaS" with tenants, billing, SSO, and an admin page in under one workday.
@@ -543,19 +543,19 @@ A new developer follows the docs and builds a "to-do list SaaS" with tenants, bi
 
 ### 10.1 AI primitives (`SaasBuilder.Modules.Ai`)
 - [x] `ILlmClient` over `Microsoft.Extensions.AI` (provider-neutral)
-- [x] Provider adapters: OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google, Ollama (local)
-- [x] `IEmbeddingClient` abstraction
-- [x] Vector-store abstraction with pgvector default + Qdrant + Pinecone + Azure AI Search adapters
+- [~] Provider adapters: OpenAI, Anthropic ✓, Azure OpenAI (missing), AWS Bedrock (missing), Google (missing), Ollama (missing — see review M-O5)
+- [~] `IEmbeddingClient` abstraction (all NoOp implementations — see review M-O5)
+- [~] Vector-store abstraction with pgvector (uses random ordering not similarity), Qdrant, Pinecone, Azure AI Search (missing — see review C-9)
 - [x] **RAG pipeline** with **mandatory tenant scope** on retrieval (security invariant — tested)
-- [x] Prompt safety: input sanitization, output validation, jailbreak detection
-- [x] PII redaction before LLM call
+- [ ] Prompt safety: input sanitization, output validation, jailbreak detection (filter unused — see review M-O5)
+- [ ] PII redaction before LLM call (filter unused — see review M-O5)
 - [x] **Per-call usage capture** (model, prompt-tokens, completion-tokens, cost) → audit + metering
 - [x] Per-tenant LLM budget with soft + hard caps (integrates with Phase 4 entitlements)
-- [~] Streaming via SSE with cancellation — stub only, per-provider token streaming deferred
+- [ ] Streaming via SSE with cancellation (fake — single chunk, non-streaming endpoint — see review M-O6)
 - [ ] Tool-use / function-calling abstraction
 - [~] Evaluation harness: golden-set tests, regression detection, prompt versioning — basic in-code only; YAML/JSON loader deferred
 - [~] Semantic + exact prompt-output cache to cut spend — exact cache shipped (PromptOutputCache); semantic cache deferred
-- [~] **MCP server adapter** — endpoint stub registered; full JSON-RPC 2.0 wire protocol deferred
+- [ ] **MCP server adapter** — endpoint stub registered; full JSON-RPC 2.0 wire protocol deferred (see review M-O5)
 
 ### 10.2 Marketplace (`SaasBuilder.Modules.Marketplace`)
 - [x] Module manifest registry (capabilities, deps, signed packages)

@@ -20,6 +20,15 @@ public interface ISubscriptionRepository
     /// <summary>Gets a subscription by its provider-side identifier.</summary>
     Task<Subscription?> FindByProviderIdAsync(string providerSubscriptionId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns all subscriptions in a terminal-failure state whose <c>PaymentFailedAt</c>
+    /// is on or before <paramref name="cutoff"/> and whose status is still PastDue
+    /// (i.e., not yet suspended or paid). Used by the dunning grace-period scanner.
+    /// </summary>
+    Task<System.Collections.Generic.IReadOnlyList<Subscription>> FindTerminalFailedBeforeAsync(
+        DateTimeOffset cutoff,
+        CancellationToken ct = default);
+
     /// <summary>Persists a new subscription.</summary>
     Task AddAsync(Subscription subscription, CancellationToken ct = default);
 

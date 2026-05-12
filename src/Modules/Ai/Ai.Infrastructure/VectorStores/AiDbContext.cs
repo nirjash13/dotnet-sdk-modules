@@ -1,6 +1,8 @@
 using System;
 using Ai.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Ai.Infrastructure.VectorStores;
 
@@ -8,11 +10,18 @@ namespace Ai.Infrastructure.VectorStores;
 /// EF Core DbContext for the AI module's persistence concerns:
 /// vector documents and LLM usage records.
 /// </summary>
-public sealed class AiDbContext : DbContext
+/// <remarks>
+/// Extends <see cref="SaasBuilderDbContext"/> so that <see cref="VectorDocument"/> (which
+/// implements <see cref="ITenantScoped"/>) receives an automatic global query filter scoped to
+/// the current tenant context. Without this, RAG embedding rows are unscoped (C-9).
+/// </remarks>
+public sealed class AiDbContext : SaasBuilderDbContext
 {
     /// <summary>Initializes a new instance of <see cref="AiDbContext"/>.</summary>
-    public AiDbContext(DbContextOptions<AiDbContext> options)
-        : base(options)
+    public AiDbContext(
+        DbContextOptions<AiDbContext> options,
+        ITenantContextAccessor tenantContextAccessor)
+        : base(options, tenantContextAccessor)
     {
     }
 
@@ -25,6 +34,7 @@ public sealed class AiDbContext : DbContext
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // base.OnModelCreating applies tenant global query filters for ITenantScoped entities.
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.HasPostgresExtension("vector");

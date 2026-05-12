@@ -53,12 +53,13 @@ public sealed class PasswordResetService(
         store.Add(token);
         await store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        // Stub: log reset link — Phase 5 dispatches a real email.
+        // SECURITY: Never log the raw reset token — it grants credential reset. Log only the token id.
+        // Phase 5 will dispatch a real email via Notifications module.
         logger.LogInformation(
-            "Password reset token generated for user {UserId}. " +
-            "Token (dev-only): {RawToken}.",
+            "Password reset token generated for user {UserId}. TokenId={TokenId}. " +
+            "Wire Notifications module to deliver the email in production.",
             user.Id,
-            rawToken);
+            token.Id);
     }
 
     /// <inheritdoc />
@@ -80,18 +81,26 @@ public sealed class PasswordResetService(
             return false;
         }
 
-        token.MarkUsed();
-        await store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // FindByIdForUpdateAsync: tracked entity required so EF Core persists SetPasswordHash.
+        User? user = await userRepository
+            .FindByIdForUpdateAsync(token.UserId, cancellationToken)
+            .ConfigureAwait(false);
 
-        // The new password hash would normally be stored on the OpenIddict user record
-        // or a dedicated credential table. For Phase 2 we log it (full password-change
-        // flow requires deeper OpenIddict integration — deferred to Phase 3).
+        if (user is null)
+        {
+            return false;
+        }
+
         string newHash = hasher.Hash(newPassword);
-        logger.LogInformation(
-            "Password reset completed for user {UserId}. New Argon2id hash starts with: {Prefix}...",
-            token.UserId,
-            newHash[..8]);
+        user.SetPasswordHash(newHash);
 
+        token.MarkUsed();
+
+        // Persist both the consumed token and the new password hash in one flush.
+        await store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await userRepository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation("Password reset completed for user {UserId}.", token.UserId);
         return true;
     }
 

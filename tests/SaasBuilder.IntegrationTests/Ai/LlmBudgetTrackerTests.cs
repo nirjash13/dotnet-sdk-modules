@@ -8,6 +8,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using SaasBuilder.SharedKernel.Tenancy;
 using Xunit;
 
 namespace SaasBuilder.IntegrationTests.Ai;
@@ -23,7 +24,9 @@ public sealed class LlmBudgetTrackerTests
         var options = new DbContextOptionsBuilder<AiDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-        return new AiDbContext(options);
+        Mock<ITenantContextAccessor> accessorMock = new Mock<ITenantContextAccessor>();
+        accessorMock.Setup(a => a.Current).Returns((ITenantContext?)null);
+        return new AiDbContext(options, accessorMock.Object);
     }
 
     [Fact]

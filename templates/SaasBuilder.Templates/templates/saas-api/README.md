@@ -47,7 +47,22 @@ Expected response: `{"status":"Healthy"}`
 | `Otel:Endpoint` | `http://localhost:4317` | OTLP gRPC endpoint |
 | `RabbitMq:Host` | `localhost` | RabbitMQ host (bus transport only) |
 
-For production, override these via environment variables or a secrets manager. Never commit secrets to source control.
+The `appsettings.Development.json` ships with an **empty** `Password=` placeholder — never put a real password in that file.
+
+Supply credentials via **dotnet user-secrets** (local dev):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Host=localhost;Port=5432;Database=SaasBuilder.Sample;Username=saas;Password=<your-password>"
+```
+
+Or via **environment variables** (CI/staging/production):
+
+```bash
+export ConnectionStrings__DefaultConnection="Host=...;Password=<your-password>"
+```
+
+For production, override all secrets via environment variables or a secrets manager. Never commit secrets to source control.
 
 ## Adding modules
 

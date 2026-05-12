@@ -1,5 +1,15 @@
 "use client";
 
+// C-22 + C-23 FIX:
+// - Credentials are sent to /api/admin/auth/login (BFF server route) instead of
+//   directly to /connect/token from the browser.
+// - The BFF validates role=admin server-side via /userinfo (signed response) before
+//   setting the HttpOnly + Secure + SameSite=Strict cookie.
+// - Client-side JWT decoding has been removed — the unsigned JWT body cannot be
+//   trusted for authorization decisions.
+// - setToken() / sessionStorage writes have been removed — the token lives only in
+//   the HttpOnly cookie managed by the server.
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -10,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { setToken } from "@/lib/api";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -18,11 +27,6 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-
-interface TokenResponse {
-  access_token: string;
-  token_type: string;
-}
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -39,42 +43,25 @@ export default function AdminLoginPage() {
   async function onSubmit(data: LoginForm) {
     setServerError(null);
 
-    const apiBase =
-      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
-
-    const body = new URLSearchParams({
-      grant_type: "password",
-      username: data.email,
-      password: data.password,
-      scope: "openid offline_access",
-      client_id: process.env.NEXT_PUBLIC_ADMIN_CLIENT_ID ?? "admin-ui",
-    });
-
-    const response = await fetch(`${apiBase}/connect/token`, {
+    // Credentials go to the BFF server route — never directly to the backend from the browser.
+    // The BFF validates role=admin via /userinfo (server-to-server) before setting an
+    // HttpOnly cookie. No token ever appears in the browser JS heap.
+    const response = await fetch("/api/admin/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: data.email, password: data.password }),
     });
 
-    if (!response.ok) {
-      setServerError("Invalid credentials or insufficient permissions.");
-      return;
-    }
-
-    const json: TokenResponse = await response.json();
-
-    // Decode JWT to verify role=admin claim before storing
-    const payload = JSON.parse(atob(json.access_token.split(".")[1]!)) as Record<string, unknown>;
-    const role = payload["role"] ?? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-
-    if (role !== "admin" && !Array.isArray(role)) {
+    if (response.status === 403) {
       setServerError("Your account does not have admin access.");
       return;
     }
 
-    setToken(json.access_token);
-    // Also store in a cookie so server-side middleware can read the token.
-    document.cookie = `admin_access_token=${json.access_token}; path=/; SameSite=Strict`;
+    if (!response.ok) {
+      setServerError("Invalid credentials or server error. Please try again.");
+      return;
+    }
+
     router.push("/admin/tenants");
   }
 

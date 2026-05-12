@@ -1,0 +1,172 @@
+  Determining projects to restore...
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj (in 584 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Contracts\FeatureFlags.Contracts.csproj (in 579 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Application\Audit.Application.csproj (in 582 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\Gdpr.Infrastructure.csproj (in 581 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\Audit.Contracts.csproj (in 578 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Application\Gdpr.Application.csproj (in 584 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Application\Marketplace.Application.csproj (in 579 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Persistence\SaasBuilder.Persistence.csproj (in 583 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Contracts\Ai.Contracts.csproj (in 575 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\SaasBuilder.SharedKernel\SaasBuilder.SharedKernel.csproj (in 584 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\Gdpr.Contracts.csproj (in 586 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Application\Billing.Application.csproj (in 588 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Application\Jobs.Application.csproj (in 580 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\Ledger.Application.csproj (in 581 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Contracts\Billing.Contracts.csproj (in 586 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Application\Notifications.Application.csproj (in 579 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\SaasBuilder.Host.csproj (in 592 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Domain\Billing.Domain.csproj (in 583 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\Entitlements.Infrastructure.csproj (in 687 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\Billing.Infrastructure.csproj (in 695 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Infrastructure\Ai.Infrastructure.csproj (in 692 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Domain\Marketplace.Domain.csproj (in 22 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\Notifications.Contracts.csproj (in 23 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\Webhooks.Contracts.csproj (in 22 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Domain\Identity.Domain.csproj (in 5 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\Reporting.Contracts.csproj (in 5 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\FeatureFlags.Infrastructure.csproj (in 691 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Domain\Webhooks.Domain.csproj (in 27 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj (in 690 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj (in 29 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\Ledger.Contracts.csproj (in 8 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj (in 9 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\Registration.Api.csproj (in 38 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\Marketplace.Contracts.csproj (in 6 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\Registration.Contracts.csproj (in 37 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Application\Registration.Application.csproj (in 43 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj (in 37 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Application\FeatureFlags.Application.csproj (in 34 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\Admin.Contracts.csproj (in 7 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Application\Identity.Application.csproj (in 39 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Domain\Entitlements.Domain.csproj (in 80 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\Webhooks.Application.csproj (in 33 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Application\Ai.Application.csproj (in 7 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj (in 82 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\Webhooks.Infrastructure.csproj (in 30 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Domain\Ai.Domain.csproj (in 83 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj (in 38 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Application\Entitlements.Application.csproj (in 80 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\Ledger.Api.csproj (in 94 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Api\Identity.Api.csproj (in 103 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj (in 44 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\Reporting.Api.csproj (in 43 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj (in 153 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\Admin.Application.csproj (in 68 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj (in 143 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Api\Admin.Api.csproj (in 146 ms).
+  Restored D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\SaasBuilder.Sample.Host.csproj (in 146 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Infrastructure\Admin.Infrastructure.csproj (in 166 ms).
+  Restored D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\SaasBuilder.IntegrationTests.csproj (in 889 ms).
+  Ai.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Contracts\bin\Debug\net10.0\Ai.Contracts.dll
+  Gdpr.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\bin\Debug\net10.0\Gdpr.Contracts.dll
+  Notifications.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\bin\Debug\net10.0\Notifications.Contracts.dll
+  Reporting.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\bin\Debug\net10.0\Reporting.Contracts.dll
+  Admin.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\bin\Debug\net10.0\Admin.Contracts.dll
+  Webhooks.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\bin\Debug\net10.0\Webhooks.Contracts.dll
+  Marketplace.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\bin\Debug\net10.0\Marketplace.Contracts.dll
+  Audit.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\bin\Debug\net10.0\Audit.Contracts.dll
+  SaasBuilder.SharedKernel -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.SharedKernel\bin\Debug\net10.0\SaasBuilder.SharedKernel.dll
+  Identity.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\bin\Debug\net10.0\Identity.Contracts.dll
+  Registration.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\bin\Debug\net10.0\Registration.Contracts.dll
+  Ledger.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\bin\Debug\net10.0\Ledger.Contracts.dll
+  Billing.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Contracts\bin\Debug\net10.0\Billing.Contracts.dll
+  Marketplace.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Domain\bin\Debug\net10.0\Marketplace.Domain.dll
+  Ledger.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Domain\bin\Debug\net10.0\Ledger.Domain.dll
+  Entitlements.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Domain\bin\Debug\net10.0\Entitlements.Domain.dll
+  Billing.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Domain\bin\Debug\net10.0\Billing.Domain.dll
+  FeatureFlags.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Contracts\bin\Debug\net10.0\FeatureFlags.Contracts.dll
+  SaasBuilder.Persistence -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Persistence\bin\Debug\net10.0\SaasBuilder.Persistence.dll
+  Identity.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Domain\bin\Debug\net10.0\Identity.Domain.dll
+  Jobs.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Application\bin\Debug\net10.0\Jobs.Application.dll
+  Reporting.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Application\bin\Debug\net10.0\Reporting.Application.dll
+  Registration.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Application\bin\Debug\net10.0\Registration.Application.dll
+  Ledger.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\bin\Debug\net10.0\Ledger.Application.dll
+  Entitlements.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Application\bin\Debug\net10.0\Entitlements.Application.dll
+  Ai.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Domain\bin\Debug\net10.0\Ai.Domain.dll
+  Webhooks.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Domain\bin\Debug\net10.0\Webhooks.Domain.dll
+  Notifications.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Domain\bin\Debug\net10.0\Notifications.Domain.dll
+  Gdpr.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Application\bin\Debug\net10.0\Gdpr.Application.dll
+  Identity.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Application\bin\Debug\net10.0\Identity.Application.dll
+  Registration.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Infrastructure\bin\Debug\net10.0\Registration.Infrastructure.dll
+  Billing.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Application\bin\Debug\net10.0\Billing.Application.dll
+  FeatureFlags.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Application\bin\Debug\net10.0\FeatureFlags.Application.dll
+  Reporting.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\bin\Debug\net10.0\Reporting.Infrastructure.dll
+  Ledger.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\bin\Debug\net10.0\Ledger.Infrastructure.dll
+  Webhooks.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\bin\Debug\net10.0\Webhooks.Application.dll
+  Ai.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Application\bin\Debug\net10.0\Ai.Application.dll
+  Gdpr.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\bin\Debug\net10.0\Gdpr.Infrastructure.dll
+  Identity.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\bin\Debug\net10.0\Identity.Infrastructure.dll
+  Notifications.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Application\bin\Debug\net10.0\Notifications.Application.dll
+  Entitlements.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\bin\Debug\net10.0\Entitlements.Infrastructure.dll
+  Ledger.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\bin\Debug\net10.0\Ledger.Api.dll
+  Billing.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\bin\Debug\net10.0\Billing.Infrastructure.dll
+  Webhooks.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\bin\Debug\net10.0\Webhooks.Infrastructure.dll
+  Reporting.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\bin\Debug\net10.0\Reporting.Api.dll
+  Registration.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\bin\Debug\net10.0\Registration.Api.dll
+  FeatureFlags.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\bin\Debug\net10.0\FeatureFlags.Infrastructure.dll
+  Ai.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Infrastructure\bin\Debug\net10.0\Ai.Infrastructure.dll
+  Identity.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Api\bin\Debug\net10.0\Identity.Api.dll
+  SaasBuilder.Host -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\bin\Debug\net10.0\SaasBuilder.Host.dll
+  Marketplace.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Application\bin\Debug\net10.0\Marketplace.Application.dll
+  Audit.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Application\bin\Debug\net10.0\Audit.Application.dll
+  Marketplace.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Infrastructure\bin\Debug\net10.0\Marketplace.Infrastructure.dll
+  Admin.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\bin\Debug\net10.0\Admin.Application.dll
+  Audit.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\bin\Debug\net10.0\Audit.Infrastructure.dll
+  Admin.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Infrastructure\bin\Debug\net10.0\Admin.Infrastructure.dll
+  SaasBuilder.Sample.Host -> D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\bin\Debug\net10.0\SaasBuilder.Sample.Host.dll
+  Admin.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Api\bin\Debug\net10.0\Admin.Api.dll
+  SaasBuilder.IntegrationTests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\bin\Debug\net10.0\SaasBuilder.IntegrationTests.dll
+Test run for D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\bin\Debug\net10.0\SaasBuilder.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.0+00ab0a9ec4 (64-bit .NET 10.0.3)
+[xUnit.net 00:00:09.06]   Discovering: SaasBuilder.IntegrationTests
+[xUnit.net 00:00:09.18]   Discovered:  SaasBuilder.IntegrationTests
+[xUnit.net 00:00:09.20]   Starting:    SaasBuilder.IntegrationTests
+[testcontainers.org 00:00:00.07] Connected to Docker:
+  Host: npipe://./pipe/docker_engine
+  Server Version: 28.5.1
+  Kernel Version: 6.6.87.2-microsoft-standard-WSL2
+  API Version: 1.51
+  Operating System: Docker Desktop
+  Total Memory: 19.38 GB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+[testcontainers.org 00:00:00.30] Docker container af982b2892b2 created
+[testcontainers.org 00:00:00.34] Start Docker container af982b2892b2
+[testcontainers.org 00:00:00.61] Wait for Docker container af982b2892b2 to complete readiness checks
+[testcontainers.org 00:00:01.65] Docker container af982b2892b2 ready
+[testcontainers.org 00:00:01.84] Docker container dd10eca5db8b created
+[testcontainers.org 00:00:01.85] Start Docker container dd10eca5db8b
+[testcontainers.org 00:00:02.12] Wait for Docker container dd10eca5db8b to complete readiness checks
+[testcontainers.org 00:00:02.13] Execute "pg_isready --host localhost --dbname postgres --username postgres" at Docker container dd10eca5db8b
+[testcontainers.org 00:00:03.27] Execute "pg_isready --host localhost --dbname postgres --username postgres" at Docker container dd10eca5db8b
+[testcontainers.org 00:00:04.36] Execute "pg_isready --host localhost --dbname postgres --username postgres" at Docker container dd10eca5db8b
+[testcontainers.org 00:00:04.45] Docker container dd10eca5db8b ready
+[testcontainers.org 00:00:04.48] Add file to tar archive: Content length: 1464 byte(s), Target file: "/tmp/a92b32f7-2e7c-4941-b1db-4484985ebcda/0l4mlxuj.q0s", UID: 0, GID: 0, Mode: 0644
+[testcontainers.org 00:00:04.49] Copy tar archive to container: Content length: 1464 byte(s), Docker container: dd10eca5db8b
+[testcontainers.org 00:00:04.50] Execute "psql --username postgres --dbname postgres --file /tmp/a92b32f7-2e7c-4941-b1db-4484985ebcda/0l4mlxuj.q0s" at Docker container dd10eca5db8b
+     Warning:
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.
+     A paid commercial license supports the development and continued increasing support of
+     Fluent Assertions users under both commercial and community licenses. Help us
+     keep Fluent Assertions at the forefront of unit testing.
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/
+[testcontainers.org 00:00:04.83] Delete Docker container dd10eca5db8b
+[xUnit.net 00:00:14.57]   Finished:    SaasBuilder.IntegrationTests
+  Passed SaasBuilder.IntegrationTests.RlsTenantBoundaryTests.Insert_AcrossTenant_Rejected [163 ms]
+  Passed SaasBuilder.IntegrationTests.RlsTenantBoundaryTests.ForceRowLevel_EvenAsOwner_TenantBRowsNotVisible [27 ms]
+  Passed SaasBuilder.IntegrationTests.RlsTenantBoundaryTests.ReadOnly_WhenTenantAContextActive_CanReadOnlyTenantARows [9 ms]
+  Passed SaasBuilder.IntegrationTests.RlsTenantBoundaryTests.ReadOnly_WhenNoTenantContext_ReturnsEmpty [4 ms]
+  Passed SaasBuilder.IntegrationTests.RlsTenantBoundaryTests.ReadOnly_CrossTenantWithWhere1Equals1_StillBlocked [5 ms]
+
+Test Run Successful.
+Total tests: 5
+     Passed: 5
+ Total time: 16.7095 Seconds

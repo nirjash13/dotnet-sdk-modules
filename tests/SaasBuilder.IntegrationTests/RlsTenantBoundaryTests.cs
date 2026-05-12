@@ -13,7 +13,7 @@ namespace SaasBuilder.IntegrationTests;
 /// so they remain valid even if the EF global query filter is accidentally bypassed.
 /// </summary>
 [Collection("RlsFixture")]
-public sealed class RlsTenantBoundaryTests : IClassFixture<RlsFixture>
+public sealed class RlsTenantBoundaryTests
 {
     private readonly RlsFixture _fixture;
 
@@ -62,6 +62,14 @@ public sealed class RlsTenantBoundaryTests : IClassFixture<RlsFixture>
 
             await using NpgsqlTransaction tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
 
+            // Switch to the restricted role so FORCE ROW LEVEL SECURITY WITH CHECK is enforced.
+            await using (NpgsqlCommand setRole = conn.CreateCommand())
+            {
+                setRole.Transaction = tx;
+                setRole.CommandText = "SET LOCAL ROLE rls_test_user";
+                await setRole.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+
             await using (NpgsqlCommand setCmd = conn.CreateCommand())
             {
                 setCmd.Transaction = tx;
@@ -107,6 +115,15 @@ public sealed class RlsTenantBoundaryTests : IClassFixture<RlsFixture>
 
         await using NpgsqlTransaction tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
 
+        // Switch to a non-superuser role so FORCE ROW LEVEL SECURITY is respected.
+        // Postgres superusers bypass RLS; rls_test_user is a plain login role that obeys policies.
+        await using (NpgsqlCommand setRole = conn.CreateCommand())
+        {
+            setRole.Transaction = tx;
+            setRole.CommandText = "SET LOCAL ROLE rls_test_user";
+            await setRole.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
+
         await using (NpgsqlCommand setCmd = conn.CreateCommand())
         {
             setCmd.Transaction = tx;
@@ -114,14 +131,18 @@ public sealed class RlsTenantBoundaryTests : IClassFixture<RlsFixture>
             await setCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
-        await using NpgsqlCommand queryCmd = conn.CreateCommand();
-        queryCmd.Transaction = tx;
-        queryCmd.CommandText = sql;
-        await using NpgsqlDataReader reader = await queryCmd.ExecuteReaderAsync().ConfigureAwait(false);
-        while (await reader.ReadAsync().ConfigureAwait(false))
+        // Reader must be disposed before CommitAsync — Npgsql does not allow a command
+        // in progress while the transaction is being committed (NpgsqlOperationInProgressException).
+        await using (NpgsqlCommand queryCmd = conn.CreateCommand())
         {
-            results.Add(reader.GetString(0));
-        }
+            queryCmd.Transaction = tx;
+            queryCmd.CommandText = sql;
+            await using NpgsqlDataReader reader = await queryCmd.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                results.Add(reader.GetString(0));
+            }
+        } // reader and queryCmd disposed here, before CommitAsync.
 
         await tx.CommitAsync().ConfigureAwait(false);
         return results;
@@ -133,6 +154,13 @@ public sealed class RlsTenantBoundaryTests : IClassFixture<RlsFixture>
 
         await using NpgsqlConnection conn = new NpgsqlConnection(_fixture.ConnectionString);
         await conn.OpenAsync().ConfigureAwait(false);
+
+        // Switch to a non-superuser role so FORCE ROW LEVEL SECURITY is respected.
+        await using (NpgsqlCommand setRole = conn.CreateCommand())
+        {
+            setRole.CommandText = "SET ROLE rls_test_user";
+            await setRole.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
 
         await using NpgsqlCommand queryCmd = conn.CreateCommand();
         queryCmd.CommandText = sql;

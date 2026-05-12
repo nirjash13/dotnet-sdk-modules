@@ -108,7 +108,7 @@
     <!-- xUnit1030: ConfigureAwait(false) in test methods — suppressed project-wide per xUnit1030 rule:
          test methods run in xUnit's synchronization context and must not bypass it.
          InitializeAsync/DisposeAsync are excluded from this rule and use ConfigureAwait(false). -->
-    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;SA1000;IDE0032;xUnit1030</NoWarn>
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA0001;SA1600;SA1649;SA1116;SA1118;SA1202;SA1203;SA1204;SA1515;SA1009;SA1011;SA1516;SA1512;SA1313;SA1000;IDE0032;xUnit1030</NoWarn>
   </PropertyGroup>
 
 </Project>

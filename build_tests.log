@@ -1,0 +1,120 @@
+  Determining projects to restore...
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Domain\Webhooks.Domain.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Domain\Ledger.Domain.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Application\Gdpr.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\Notifications.Contracts.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\Gdpr.Contracts.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Contracts\Ai.Contracts.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Domain\Entitlements.Domain.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Domain\Ai.Domain.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\Webhooks.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Application\Entitlements.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\Registration.Contracts.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\Webhooks.Contracts.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Application\Registration.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Application\Identity.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Application\Notifications.Application.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\Ledger.Contracts.csproj (in 261 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\Ledger.Application.csproj (in 261 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\Audit.Contracts.csproj (in 4 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\Registration.Api.csproj (in 304 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Domain\Identity.Domain.csproj (in 4 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Contracts\FeatureFlags.Contracts.csproj (in 12 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Domain\Marketplace.Domain.csproj (in 13 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj (in 14 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\Admin.Contracts.csproj (in 8 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Application\FeatureFlags.Application.csproj (in 17 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\Ledger.Infrastructure.csproj (in 372 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\Reporting.Contracts.csproj (in 17 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Api\Admin.Api.csproj (in 313 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\Reporting.Api.csproj (in 24 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\Entitlements.Infrastructure.csproj (in 33 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Infrastructure\Registration.Infrastructure.csproj (in 24 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\Marketplace.Contracts.csproj (in 8 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\FeatureFlags.Infrastructure.csproj (in 23 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj (in 37 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Application\Marketplace.Application.csproj (in 24 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Application\Audit.Application.csproj (in 22 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Application\Jobs.Application.csproj (in 21 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj (in 20 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\Gdpr.Infrastructure.csproj (in 25 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Application\Ai.Application.csproj (in 7 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\SaasBuilder.Host.csproj (in 52 ms).
+  Restored D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\SaasBuilder.Sample.Host.csproj (in 365 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Infrastructure\Ai.Infrastructure.csproj (in 49 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\Audit.Infrastructure.csproj (in 76 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\Webhooks.Infrastructure.csproj (in 52 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Api\Identity.Api.csproj (in 60 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj (in 75 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\Ledger.Api.csproj (in 34 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\Admin.Application.csproj (in 57 ms).
+  Restored D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\SaasBuilder.IntegrationTests.csproj (in 408 ms).
+  Restored D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Infrastructure\Admin.Infrastructure.csproj (in 49 ms).
+  6 of 59 projects are up-to-date for restore.
+  Gdpr.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Contracts\bin\Release\net10.0\Gdpr.Contracts.dll
+  SaasBuilder.SharedKernel -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.SharedKernel\bin\Release\net10.0\SaasBuilder.SharedKernel.dll
+  Reporting.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Contracts\bin\Release\net10.0\Reporting.Contracts.dll
+  Marketplace.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Contracts\bin\Release\net10.0\Marketplace.Contracts.dll
+  Audit.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Contracts\bin\Release\net10.0\Audit.Contracts.dll
+  Ai.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Contracts\bin\Release\net10.0\Ai.Contracts.dll
+  Admin.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Contracts\bin\Release\net10.0\Admin.Contracts.dll
+  Notifications.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Contracts\bin\Release\net10.0\Notifications.Contracts.dll
+  Webhooks.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Contracts\bin\Release\net10.0\Webhooks.Contracts.dll
+  Registration.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Contracts\bin\Release\net10.0\Registration.Contracts.dll
+  Identity.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Contracts\bin\Release\net10.0\Identity.Contracts.dll
+  Ledger.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Contracts\bin\Release\net10.0\Ledger.Contracts.dll
+  Billing.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Contracts\bin\Release\net10.0\Billing.Contracts.dll
+  FeatureFlags.Contracts -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Contracts\bin\Release\net10.0\FeatureFlags.Contracts.dll
+  SaasBuilder.Persistence -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Persistence\bin\Release\net10.0\SaasBuilder.Persistence.dll
+  Marketplace.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Domain\bin\Release\net10.0\Marketplace.Domain.dll
+  Identity.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Domain\bin\Release\net10.0\Identity.Domain.dll
+  Ledger.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Domain\bin\Release\net10.0\Ledger.Domain.dll
+  Billing.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Domain\bin\Release\net10.0\Billing.Domain.dll
+  Registration.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Application\bin\Release\net10.0\Registration.Application.dll
+  Entitlements.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Domain\bin\Release\net10.0\Entitlements.Domain.dll
+  Audit.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Application\bin\Release\net10.0\Audit.Application.dll
+  Marketplace.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Application\bin\Release\net10.0\Marketplace.Application.dll
+  Ledger.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Application\bin\Release\net10.0\Ledger.Application.dll
+  Jobs.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Jobs\Jobs.Application\bin\Release\net10.0\Jobs.Application.dll
+  Reporting.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Application\bin\Release\net10.0\Reporting.Application.dll
+  Identity.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Application\bin\Release\net10.0\Identity.Application.dll
+  Gdpr.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Application\bin\Release\net10.0\Gdpr.Application.dll
+  SaasBuilder.Host -> D:\Personal\modular-sdk-dotnet\src\SaasBuilder.Host\bin\Release\net10.0\SaasBuilder.Host.dll
+  Ledger.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Infrastructure.dll
+  Entitlements.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Application\bin\Release\net10.0\Entitlements.Application.dll
+  Billing.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Application\bin\Release\net10.0\Billing.Application.dll
+  Marketplace.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Marketplace\Marketplace.Infrastructure\bin\Release\net10.0\Marketplace.Infrastructure.dll
+  Registration.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Infrastructure\bin\Release\net10.0\Registration.Infrastructure.dll
+  FeatureFlags.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Application\bin\Release\net10.0\FeatureFlags.Application.dll
+  Ledger.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Ledger\Ledger.Api\bin\Release\net10.0\Ledger.Api.dll
+  Audit.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Audit\Audit.Infrastructure\bin\Release\net10.0\Audit.Infrastructure.dll
+  Notifications.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Domain\bin\Release\net10.0\Notifications.Domain.dll
+  Identity.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Infrastructure\bin\Release\net10.0\Identity.Infrastructure.dll
+  Gdpr.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Gdpr\Gdpr.Infrastructure\bin\Release\net10.0\Gdpr.Infrastructure.dll
+  Reporting.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Infrastructure\bin\Release\net10.0\Reporting.Infrastructure.dll
+  Ai.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Domain\bin\Release\net10.0\Ai.Domain.dll
+  Webhooks.Domain -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Domain\bin\Release\net10.0\Webhooks.Domain.dll
+  Entitlements.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Entitlements\Entitlements.Infrastructure\bin\Release\net10.0\Entitlements.Infrastructure.dll
+  Billing.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Billing\Billing.Infrastructure\bin\Release\net10.0\Billing.Infrastructure.dll
+  Registration.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Registration\Registration.Api\bin\Release\net10.0\Registration.Api.dll
+  Identity.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Identity\Identity.Api\bin\Release\net10.0\Identity.Api.dll
+  Webhooks.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Application\bin\Release\net10.0\Webhooks.Application.dll
+  FeatureFlags.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\FeatureFlags\FeatureFlags.Infrastructure\bin\Release\net10.0\FeatureFlags.Infrastructure.dll
+  Notifications.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Notifications\Notifications.Application\bin\Release\net10.0\Notifications.Application.dll
+  Ai.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Application\bin\Release\net10.0\Ai.Application.dll
+  Webhooks.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Webhooks\Webhooks.Infrastructure\bin\Release\net10.0\Webhooks.Infrastructure.dll
+  Reporting.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Reporting\Reporting.Api\bin\Release\net10.0\Reporting.Api.dll
+  Admin.Application -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Application\bin\Release\net10.0\Admin.Application.dll
+  Ai.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Ai\Ai.Infrastructure\bin\Release\net10.0\Ai.Infrastructure.dll
+  SaasBuilder.Sample.Host -> D:\Personal\modular-sdk-dotnet\samples\SaasBuilder.Sample.Host\bin\Release\net10.0\SaasBuilder.Sample.Host.dll
+  Admin.Infrastructure -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Infrastructure\bin\Release\net10.0\Admin.Infrastructure.dll
+  Admin.Api -> D:\Personal\modular-sdk-dotnet\src\Modules\Admin\Admin.Api\bin\Release\net10.0\Admin.Api.dll
+  SaasBuilder.IntegrationTests -> D:\Personal\modular-sdk-dotnet\tests\SaasBuilder.IntegrationTests\bin\Release\net10.0\SaasBuilder.IntegrationTests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:08.53

@@ -10,6 +10,7 @@ using Marketplace.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SaasBuilder.SharedKernel.Abstractions;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Marketplace.Infrastructure.Persistence;
 
@@ -17,11 +18,16 @@ namespace Marketplace.Infrastructure.Persistence;
 internal sealed class EfAppInstallationService : IAppInstallationService
 {
     private readonly MarketplaceDbContext _db;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly ILogger<EfAppInstallationService> _logger;
 
-    public EfAppInstallationService(MarketplaceDbContext db, ILogger<EfAppInstallationService> logger)
+    public EfAppInstallationService(
+        MarketplaceDbContext db,
+        ITenantContextAccessor tenantContextAccessor,
+        ILogger<EfAppInstallationService> logger)
     {
         _db = db;
+        _tenantContextAccessor = tenantContextAccessor;
         _logger = logger;
     }
 
@@ -111,8 +117,16 @@ internal sealed class EfAppInstallationService : IAppInstallationService
         Guid installationId,
         CancellationToken ct = default)
     {
+        // C-5: include tenant predicate so an admin from tenant A cannot approve
+        // an installation belonging to tenant B by guessing the Guid.
+        Guid? callerTenantId = _tenantContextAccessor.Current?.TenantId;
+        if (callerTenantId is null)
+        {
+            return Result<AppInstallationDto>.Failure("No tenant context for approve operation.");
+        }
+
         AppInstallation? installation = await _db.Installations
-            .FirstOrDefaultAsync(i => i.Id == installationId, ct)
+            .FirstOrDefaultAsync(i => i.Id == installationId && i.TenantId == callerTenantId.Value, ct)
             .ConfigureAwait(false);
 
         if (installation is null)
@@ -146,7 +160,22 @@ internal sealed class EfAppInstallationService : IAppInstallationService
 
         if (installation is null)
         {
-            return Result<bool>.Failure($"Installation '{installationId}' not found for this tenant.");
+            // S1 (C-6): check whether the record exists but belongs to a different tenant.
+            // If so, emit an audit log entry to surface potential cross-tenant probing.
+            bool existsElsewhere = await _db.Installations
+                .AsNoTracking()
+                .AnyAsync(i => i.Id == installationId, ct)
+                .ConfigureAwait(false);
+
+            if (existsElsewhere)
+            {
+                _logger.LogWarning(
+                    "Cross-tenant uninstall attempt: installId={InstallId} exists but does not belong to tenantId={TenantId}. Request denied.",
+                    installationId,
+                    tenantId);
+            }
+
+            return Result<bool>.Failure("not_found");
         }
 
         try

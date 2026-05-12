@@ -57,6 +57,14 @@ public sealed class TenantBypassTests : IClassFixture<SaasBuilderSecurityFixture
         // must ensure the table exists since we are not running EF migrations here.
         await EnsureLedgerRlsSchemaAsync(conn).ConfigureAwait(false);
 
+        // Switch to the restricted non-superuser role so FORCE ROW LEVEL SECURITY is honoured.
+        // Superusers bypass RLS regardless of FORCE; rls_test_user is a plain login role.
+        await using (NpgsqlCommand setRole = conn.CreateCommand())
+        {
+            setRole.CommandText = "SET ROLE rls_test_user";
+            await setRole.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
+
         await using NpgsqlCommand cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM ledger_security_test.accounts";
         object? result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
@@ -128,10 +136,14 @@ public sealed class TenantBypassTests : IClassFixture<SaasBuilderSecurityFixture
     /// <summary>
     /// Creates a minimal ledger-like schema in an isolated schema for the raw-SQL RLS test.
     /// This is separate from the main ledger schema to avoid coupling to migration state.
+    /// A restricted (non-superuser) role is created and granted to the current connection
+    /// because Postgres superusers bypass RLS even when FORCE ROW LEVEL SECURITY is set.
+    /// The RLS assertion is made via a SET ROLE to the restricted user.
     /// </summary>
     private static async Task EnsureLedgerRlsSchemaAsync(NpgsqlConnection conn)
     {
         await using NpgsqlCommand setup = conn.CreateCommand();
+        // language=sql
         setup.CommandText = """
             CREATE SCHEMA IF NOT EXISTS ledger_security_test;
 
@@ -152,11 +164,25 @@ public sealed class TenantBypassTests : IClassFixture<SaasBuilderSecurityFixture
                       AND tablename  = 'accounts'
                       AND policyname = 'tenant_isolation'
                 ) THEN
+                    -- nullif converts '' to NULL so uuid cast never raises 22P02 when not set.
                     CREATE POLICY tenant_isolation ON ledger_security_test.accounts
-                        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+                        USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid);
                 END IF;
             END;
             $$;
+
+            -- Create a restricted non-superuser role for the RLS assertion.
+            -- Superusers bypass RLS even with FORCE; a regular role respects it.
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_user') THEN
+                    CREATE ROLE rls_test_user LOGIN PASSWORD 'rls_test_pass';
+                END IF;
+            END;
+            $$;
+
+            GRANT USAGE ON SCHEMA ledger_security_test TO rls_test_user;
+            GRANT SELECT, INSERT ON ledger_security_test.accounts TO rls_test_user;
 
             INSERT INTO ledger_security_test.accounts (tenant_id, name)
             VALUES ('aaaaaaaa-0000-0000-0000-000000000001', 'tenant-a-account')

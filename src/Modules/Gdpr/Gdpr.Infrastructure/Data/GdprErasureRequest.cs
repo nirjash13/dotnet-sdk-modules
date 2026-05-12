@@ -1,10 +1,11 @@
 using System;
 using Gdpr.Contracts;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Gdpr.Infrastructure.Data;
 
 /// <summary>Erasure (right-to-be-forgotten) request stored in <c>gdpr_erasure_requests</c>.</summary>
-internal sealed class GdprErasureRequest
+internal sealed class GdprErasureRequest : ITenantScoped
 {
     public Guid Id { get; set; }
 

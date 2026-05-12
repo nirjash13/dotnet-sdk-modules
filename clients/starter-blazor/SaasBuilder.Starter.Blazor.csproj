@@ -5,17 +5,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <!-- This is a starter template — not part of the core SDK build.
-         It is intentionally excluded from SaasBuilder.sln. -->
+    <!-- C-24 FIX: Blazor starter is now included in SaasBuilder.sln so it builds in CI. -->
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
     <RootNamespace>SaasBuilder.Starter.Blazor</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- C-24 FIX: Versions removed from here — governed by Directory.Packages.props (CPM). -->
     <!-- MudBlazor provides Material Design components for clean default styling. -->
-    <PackageReference Include="MudBlazor" Version="7.6.0" />
+    <PackageReference Include="MudBlazor" />
     <!-- SignalR client for real-time notifications hub -->
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
 
   <ItemGroup>

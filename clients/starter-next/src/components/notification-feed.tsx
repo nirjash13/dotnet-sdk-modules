@@ -1,5 +1,11 @@
 "use client";
 
+// C-28 FIX: This component no longer accepts an accessToken prop.
+// The long-lived access token must NOT appear in the client JS heap or RSC payload.
+// Instead, SignalR hub auth is obtained by fetching /api/signalr-token (a BFF route
+// that reads the HttpOnly sb_token cookie server-side and returns a short-lived hub token).
+// API calls to /api/v1/notifications go through the BFF auto-refresh path (no token arg).
+
 import * as React from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { getConnection } from "@/lib/signalr";
@@ -16,25 +22,35 @@ interface Notification {
   isRead: boolean;
 }
 
-interface NotificationFeedProps {
-  accessToken: string;
-}
-
-export function NotificationFeed({
-  accessToken,
-}: NotificationFeedProps): React.JSX.Element {
+export function NotificationFeed(): React.JSX.Element {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
 
-    apiGet<{ items: Notification[] }>("/api/v1/notifications", accessToken)
-      .then((data) => { if (mounted) { setNotifications(data.items); setLoading(false); } })
-      .catch(() => { if (mounted) setLoading(false); });
+    // Fetch notifications server-side via BFF (no token in args — uses cookie auto-refresh)
+    apiGet<{ items: Notification[] }>("/api/v1/notifications")
+      .then((data) => {
+        if (mounted) {
+          setNotifications(data.items);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) setLoading(false);
+      });
 
-    getConnection(accessToken)
+    // Fetch a short-lived hub token from the BFF route (reads HttpOnly cookie server-side)
+    fetch("/api/signalr-token", { method: "POST", signal: controller.signal })
+      .then((res) => (res.ok ? (res.json() as Promise<{ hub_token: string }>) : null))
+      .then((data) => {
+        if (!data || !mounted) return;
+        return getConnection(data.hub_token);
+      })
       .then((conn) => {
+        if (!conn || !mounted) return;
         conn.on("NotificationReceived", (n: Notification) => {
           if (mounted) {
             setNotifications((prev) => [n, ...prev]);
@@ -43,11 +59,14 @@ export function NotificationFeed({
       })
       .catch(() => undefined);
 
-    return () => { mounted = false; };
-  }, [accessToken]);
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, []);
 
   async function markAllRead(): Promise<void> {
-    await apiPost("/api/v1/notifications/read-all", undefined, accessToken);
+    await apiPost("/api/v1/notifications/read-all");
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   }
 

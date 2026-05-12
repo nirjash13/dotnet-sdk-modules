@@ -326,9 +326,14 @@ public sealed class BillingModule : IModuleStartup
         }
 
         // 3. Verify signature (includes 5-minute timestamp check).
-        string signatureHeader = httpRequest.Headers["Stripe-Signature"].ToString()
-            ?? httpRequest.Headers["X-Signature"].ToString()
-            ?? string.Empty;
+        // StringValues.ToString() returns "" (not null) when the header is absent, so ?? never fires.
+        // Use explicit presence checks so non-Stripe providers (Lemon Squeezy, Paddle) can supply X-Signature.
+        string signatureHeader =
+            httpRequest.Headers.TryGetValue("Stripe-Signature", out Microsoft.Extensions.Primitives.StringValues stripeSig) && stripeSig.Count > 0
+                ? stripeSig.ToString()
+                : httpRequest.Headers.TryGetValue("X-Signature", out Microsoft.Extensions.Primitives.StringValues xSig) && xSig.Count > 0
+                    ? xSig.ToString()
+                    : string.Empty;
 
         WebhookVerificationResult verification = await verifier
             .VerifyAsync(rawBody, signatureHeader, ct)
@@ -363,6 +368,7 @@ public sealed class BillingModule : IModuleStartup
         await DispatchStripeEventAsync(
             verification.EventType!,
             rawBody,
+            services,
             publishEndpoint,
             logger,
             ct).ConfigureAwait(false);
@@ -379,45 +385,171 @@ public sealed class BillingModule : IModuleStartup
     private static async Task DispatchStripeEventAsync(
         string eventType,
         byte[] rawBody,
+        IServiceProvider services,
         IPublishEndpoint publishEndpoint,
         ILogger logger,
         CancellationToken ct)
     {
-        // Dispatch domain-specific integration events based on Stripe event type.
-        // Handlers register as MassTransit consumers via the Notifications/Identity modules.
+        // Parse the JSON body once — needed to resolve tenantId and invoice fields.
+        using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(rawBody);
+        System.Text.Json.JsonElement root = doc.RootElement;
+
         switch (eventType)
         {
             case "customer.subscription.created":
             case "customer.subscription.updated":
             case "customer.subscription.deleted":
-                // TODO(Phase 4.x): Parse raw body, resolve tenantId from subscription metadata,
-                // publish SubscriptionUpdatedIntegrationEvent.
-                logger.LogInformation("Stripe subscription lifecycle event: {EventType}.", eventType);
+            {
+                // Resolve tenantId from subscription metadata["tenant_id"] written during checkout.
+                Guid tenantId = TryGetTenantIdFromSubscriptionObject(root);
+                if (tenantId == Guid.Empty)
+                {
+                    logger.LogWarning(
+                        "Stripe {EventType}: could not resolve tenant_id from subscription metadata; skipping state mutation.",
+                        eventType);
+                    break;
+                }
+
+                ISubscriptionRepository subscriptions = services.GetRequiredService<ISubscriptionRepository>();
+                Billing.Domain.Entities.Subscription? subscription =
+                    await subscriptions.FindByTenantAsync(tenantId, ct).ConfigureAwait(false);
+
+                if (subscription is null)
+                {
+                    logger.LogWarning(
+                        "Stripe {EventType}: no local subscription for tenant {TenantId}.",
+                        eventType,
+                        tenantId);
+                    break;
+                }
+
+                if (eventType == "customer.subscription.deleted")
+                {
+                    // Re-fetch with tracking to mutate.
+                    Billing.Domain.Entities.Subscription? tracked =
+                        await subscriptions.FindByIdAsync(subscription.Id, ct).ConfigureAwait(false);
+                    if (tracked is not null && tracked.Status is not Billing.Domain.ValueObjects.SubscriptionStatus.Canceled)
+                    {
+                        tracked.Cancel(DateTimeOffset.UtcNow);
+                        subscriptions.Update(tracked);
+                        await subscriptions.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                }
+
+                logger.LogInformation("Stripe {EventType} processed for tenant {TenantId}.", eventType, tenantId);
                 break;
+            }
 
             case "invoice.paid":
-                logger.LogInformation("Stripe invoice.paid received.");
+            {
+                // Clear dunning state on successful payment so grace-period job becomes a no-op.
+                Guid tenantId = TryGetTenantIdFromInvoiceObject(root);
+                if (tenantId == Guid.Empty)
+                {
+                    logger.LogWarning("Stripe invoice.paid: could not resolve tenant_id; skipping dunning clear.");
+                    break;
+                }
+
+                ISubscriptionRepository subscriptions = services.GetRequiredService<ISubscriptionRepository>();
+                Billing.Domain.Entities.Subscription? subscription =
+                    await subscriptions.FindByTenantAsync(tenantId, ct).ConfigureAwait(false);
+
+                if (subscription is null)
+                {
+                    logger.LogInformation("Stripe invoice.paid: no local subscription for tenant {TenantId}.", tenantId);
+                    break;
+                }
+
+                Billing.Domain.Entities.Subscription? tracked =
+                    await subscriptions.FindByIdAsync(subscription.Id, ct).ConfigureAwait(false);
+
+                if (tracked is not null && !tracked.IsPaid)
+                {
+                    tracked.MarkPaid();
+                    subscriptions.Update(tracked);
+                    await subscriptions.SaveChangesAsync(ct).ConfigureAwait(false);
+                    logger.LogInformation(
+                        "Dunning cleared for tenant {TenantId} after invoice.paid.",
+                        tenantId);
+                }
+
                 break;
+            }
 
             case "invoice.payment_failed":
-                // Publish InvoicePaymentFailedIntegrationEvent for dunning email trigger.
-                // Notifications module subscribes and sends the dunning email.
-                // TODO(Phase 4.x): Parse invoice body to extract tenantId, amountDueCents, etc.
-                // For now we publish a stub event — Notifications consumer will receive it.
+            {
+                Guid tenantId = TryGetTenantIdFromInvoiceObject(root);
+                System.Text.Json.JsonElement invoiceObj = GetStripeDataObject(root);
+
+                string providerInvoiceId = invoiceObj.TryGetProperty("id", out System.Text.Json.JsonElement invoiceIdEl)
+                    ? invoiceIdEl.GetString() ?? "unknown"
+                    : "unknown";
+
+                long amountDue = invoiceObj.TryGetProperty("amount_due", out System.Text.Json.JsonElement amtEl)
+                    ? amtEl.GetInt64()
+                    : 0;
+
+                string currency = invoiceObj.TryGetProperty("currency", out System.Text.Json.JsonElement currEl)
+                    ? currEl.GetString() ?? "usd"
+                    : "usd";
+
+                bool isTerminal = invoiceObj.TryGetProperty("next_payment_attempt", out System.Text.Json.JsonElement npaEl)
+                    && npaEl.ValueKind == System.Text.Json.JsonValueKind.Null;
+
+                int attemptCount = invoiceObj.TryGetProperty("attempt_count", out System.Text.Json.JsonElement acEl)
+                    ? acEl.GetInt32()
+                    : 1;
+
+                if (tenantId != Guid.Empty)
+                {
+                    ISubscriptionRepository subscriptions = services.GetRequiredService<ISubscriptionRepository>();
+                    Billing.Domain.Entities.Subscription? subscription =
+                        await subscriptions.FindByTenantAsync(tenantId, ct).ConfigureAwait(false);
+
+                    if (subscription is not null)
+                    {
+                        Billing.Domain.Entities.Subscription? tracked =
+                            await subscriptions.FindByIdAsync(subscription.Id, ct).ConfigureAwait(false);
+
+                        if (tracked is not null)
+                        {
+                            if (isTerminal)
+                            {
+                                tracked.RecordTerminalPaymentFailure(providerInvoiceId);
+                            }
+                            else
+                            {
+                                tracked.RecordPaymentFailure();
+                            }
+
+                            subscriptions.Update(tracked);
+                            await subscriptions.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                            logger.LogWarning(
+                                "Payment failure recorded for tenant {TenantId}, invoice {InvoiceId}, terminal={IsTerminal}.",
+                                tenantId,
+                                providerInvoiceId,
+                                isTerminal);
+                        }
+                    }
+                }
+
+                // Publish integration event for notification consumers (dunning email).
                 InvoicePaymentFailedIntegrationEvent paymentFailedEvent = new InvoicePaymentFailedIntegrationEvent
                 {
-                    TenantId = Guid.Empty, // Resolved from invoice metadata in full implementation.
-                    ProviderInvoiceId = "pending_parse",
-                    AmountDueCents = 0,
-                    Currency = "usd",
-                    AttemptCount = 1,
+                    TenantId = tenantId,
+                    ProviderInvoiceId = providerInvoiceId,
+                    AmountDueCents = amountDue,
+                    Currency = currency,
+                    AttemptCount = attemptCount,
                     FailedAt = DateTimeOffset.UtcNow,
-                    NextRetryAt = null,
+                    NextRetryAt = isTerminal ? null : DateTimeOffset.UtcNow.AddDays(1).ToString("O"),
                 };
 
                 await publishEndpoint.Publish(paymentFailedEvent, ct).ConfigureAwait(false);
-                logger.LogInformation("InvoicePaymentFailedIntegrationEvent published for dunning.");
+                logger.LogInformation("InvoicePaymentFailedIntegrationEvent published for tenant {TenantId}.", tenantId);
                 break;
+            }
 
             case "customer.subscription.trial_will_end":
                 logger.LogInformation("Stripe trial_will_end event received — TODO: notify tenant.");
@@ -427,6 +559,67 @@ public sealed class BillingModule : IModuleStartup
                 logger.LogDebug("Unhandled Stripe event type: {EventType}.", eventType);
                 break;
         }
+    }
+
+    /// <summary>Returns the data.object element from a Stripe event, or an empty JsonElement on failure.</summary>
+    private static System.Text.Json.JsonElement GetStripeDataObject(System.Text.Json.JsonElement root)
+    {
+        if (root.TryGetProperty("data", out System.Text.Json.JsonElement data)
+            && data.TryGetProperty("object", out System.Text.Json.JsonElement obj))
+        {
+            return obj;
+        }
+
+        return default;
+    }
+
+    /// <summary>
+    /// Extracts tenant_id from a Stripe event root where the data.object is a subscription.
+    /// Stripe puts tenant metadata in data.object.metadata.tenant_id.
+    /// </summary>
+    private static Guid TryGetTenantIdFromSubscriptionObject(System.Text.Json.JsonElement root)
+    {
+        if (root.TryGetProperty("data", out System.Text.Json.JsonElement data)
+            && data.TryGetProperty("object", out System.Text.Json.JsonElement obj)
+            && obj.TryGetProperty("metadata", out System.Text.Json.JsonElement meta)
+            && meta.TryGetProperty("tenant_id", out System.Text.Json.JsonElement tid)
+            && Guid.TryParse(tid.GetString(), out Guid tenantId))
+        {
+            return tenantId;
+        }
+
+        return Guid.Empty;
+    }
+
+    /// <summary>
+    /// Extracts tenant_id from a Stripe event root where the data.object is an invoice.
+    /// Stripe invoice metadata is at data.object.subscription_details.metadata.tenant_id,
+    /// with a fallback to data.object.metadata.tenant_id.
+    /// </summary>
+    private static Guid TryGetTenantIdFromInvoiceObject(System.Text.Json.JsonElement root)
+    {
+        if (root.TryGetProperty("data", out System.Text.Json.JsonElement data)
+            && data.TryGetProperty("object", out System.Text.Json.JsonElement obj))
+        {
+            // Try subscription_details.metadata first (Stripe 2022-11-15+).
+            if (obj.TryGetProperty("subscription_details", out System.Text.Json.JsonElement subDetails)
+                && subDetails.TryGetProperty("metadata", out System.Text.Json.JsonElement subMeta)
+                && subMeta.TryGetProperty("tenant_id", out System.Text.Json.JsonElement tid1)
+                && Guid.TryParse(tid1.GetString(), out Guid tenantId1))
+            {
+                return tenantId1;
+            }
+
+            // Fallback: direct metadata on invoice.
+            if (obj.TryGetProperty("metadata", out System.Text.Json.JsonElement meta)
+                && meta.TryGetProperty("tenant_id", out System.Text.Json.JsonElement tid2)
+                && Guid.TryParse(tid2.GetString(), out Guid tenantId2))
+            {
+                return tenantId2;
+            }
+        }
+
+        return Guid.Empty;
     }
 
     private static object Problem(string detail) => new

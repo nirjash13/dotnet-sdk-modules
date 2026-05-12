@@ -46,19 +46,23 @@ public sealed class SiloedDatabaseTenantResourcesProviderTests
         resources.ConnectionString.Should().Be(perTenantCs);
     }
 
-    // ── Test 2: falls back to DefaultConnection when no per-tenant key ───────────
+    // ── Test 2: throws when per-tenant key is missing (no shared-pool fallback) ───
+    // C-1 fix: SiloedDatabase mode must never fall back to a shared pool — a missing
+    // connection string is a misconfiguration that must fail loudly, not silently share data.
     [Fact]
-    public async Task GetAsync_WhenPerTenantKeyMissing_FallsBackToDefaultConnection()
+    public async Task GetAsync_WhenPerTenantKeyMissing_ThrowsInvalidOperationException()
     {
-        const string defaultCs = "Host=shared-db;Database=shared";
+        // Even when DefaultConnection is present, SiloedDatabase mode must NOT fall back.
         var provider = BuildProvider(new Dictionary<string, string?>
         {
-            ["ConnectionStrings:DefaultConnection"] = defaultCs,
+            ["ConnectionStrings:DefaultConnection"] = "Host=shared-db;Database=shared",
         });
 
-        ITenantResources resources = await provider.GetAsync(TenantA, CancellationToken.None);
+        Func<Task> act = () => provider.GetAsync(TenantA, CancellationToken.None).AsTask();
 
-        resources.ConnectionString.Should().Be(defaultCs);
+        await act.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("*SiloedDatabase*");
     }
 
     // ── Test 3: throws when neither per-tenant key nor DefaultConnection exists ───

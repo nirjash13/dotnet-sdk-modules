@@ -4,7 +4,7 @@ using Jobs.Application.Abstractions;
 using Jobs.Infrastructure.DeadLetter;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Scheduler;
-using Jobs.Infrastructure.Schedulers; // HangfireJobScheduler, HangfireJobDispatcher
+using Jobs.Infrastructure.Schedulers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -100,5 +100,9 @@ public static class JobsInfrastructureExtensions
 
         services.AddScoped<HangfireJobDispatcher>();
         services.AddScoped<IJobScheduler, HangfireJobScheduler>();
+
+        // Singleton allowlist registry for type-safe deserialization (C-4).
+        // Job types are registered at startup via IJobTypeRegistry.Register<T>().
+        services.AddSingleton<IJobTypeRegistry, JobTypeRegistry>();
     }
 }

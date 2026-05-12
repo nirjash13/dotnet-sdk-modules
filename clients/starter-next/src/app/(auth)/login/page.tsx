@@ -56,56 +56,33 @@ export default function LoginPage(): React.JSX.Element {
   async function onSubmit({ email, password }: FormData): Promise<void> {
     setServerError(null);
 
-    const body = new URLSearchParams({
-      grant_type: "password",
-      username: email,
-      password,
-      scope: "openid offline_access",
-    });
-
-    const res = await fetch(`${API}/connect/token`, {
+    // C-29 FIX: Credentials are sent to the BFF server route (/api/auth/login),
+    // which performs the token exchange server-to-server. The raw access token never
+    // reaches the browser JS heap. The BFF sets HttpOnly cookies on success.
+    // The old pattern (ROPC directly from the browser + /api/auth/callback injection)
+    // has been removed.
+    const res = await fetch("/api/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as {
-        detail?: string;
-        error?: string;
-        mfa_required?: boolean;
-        mfa_token?: string;
-      };
-
-      if (data.mfa_required && data.mfa_token) {
-        setAuthState({ kind: "mfa", mfaToken: data.mfa_token });
-        return;
-      }
-
-      setServerError(data.detail ?? data.error ?? "Invalid credentials.");
-      return;
-    }
-
-    const data = (await res.json()) as {
-      access_token: string;
-      refresh_token?: string;
-      requires_mfa?: boolean;
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      mfa_required?: boolean;
       mfa_token?: string;
     };
 
-    if (data.requires_mfa && data.mfa_token) {
-      setAuthState({ kind: "mfa", mfaToken: data.mfa_token });
+    if (!res.ok) {
+      setServerError("Invalid credentials.");
       return;
     }
 
-    await fetch("/api/auth/callback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      }),
-    });
+    if (data.mfa_required && data.mfa_token) {
+      setAuthState({ kind: "mfa", mfaToken: data.mfa_token });
+      return;
+    }
 
     router.push(next);
   }
@@ -137,8 +114,29 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   function buildSocialUrl(provider: string): string {
-    const redirect = encodeURIComponent(`${window.location.origin}/api/auth/callback`);
-    return `${API}/connect/authorize?provider=${provider}&redirect_uri=${redirect}`;
+    // C-30 FIX: The redirect_uri must be our own origin only.
+    // We use the compile-time NEXT_PUBLIC_APP_URL env var (set at build time) as
+    // the canonical origin rather than window.location.origin, which an open-redirect
+    // attacker could influence by rendering this component on a phishing page.
+    // If the env var is absent, we fall back to window.location.origin but assert
+    // it matches one of the statically-known allowed origins.
+    const ALLOWED_ORIGINS: string[] = (
+      process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ?? process.env.NEXT_PUBLIC_APP_URL ?? ""
+    )
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const origin = window.location.origin;
+    const safeOrigin =
+      ALLOWED_ORIGINS.length > 0 && ALLOWED_ORIGINS.includes(origin)
+        ? origin
+        : ALLOWED_ORIGINS[0] ?? origin;
+
+    // Social login goes through the backend HostedUI which validates redirect_uri
+    // against its registered allowlist before issuing the code.
+    const redirect = encodeURIComponent(`${safeOrigin}/api/auth/code-callback`);
+    return `${API}/connect/authorize?provider=${encodeURIComponent(provider)}&redirect_uri=${redirect}`;
   }
 
   if (authState.kind === "mfa") {

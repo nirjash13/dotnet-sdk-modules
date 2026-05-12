@@ -23,6 +23,11 @@ public sealed class NoopDomainOwnershipVerifier : IDomainOwnershipVerifier
     {
         _configuration = configuration;
         _logger = logger;
+
+        // S2 (C-15): emit a startup warning so operators know verification is disabled.
+        _logger.LogWarning(
+            "Domain ownership verification is DISABLED (Noop verifier). " +
+            "Set Identity:DomainVerification:Provider=Dns for production.");
     }
 
     /// <inheritdoc />

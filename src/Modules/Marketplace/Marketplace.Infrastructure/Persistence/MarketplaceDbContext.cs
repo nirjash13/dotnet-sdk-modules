@@ -1,14 +1,23 @@
 using Marketplace.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Marketplace.Infrastructure.Persistence;
 
 /// <summary>EF Core DbContext for the Marketplace module.</summary>
-public sealed class MarketplaceDbContext : DbContext
+/// <remarks>
+/// Extends <see cref="SaasBuilderDbContext"/> so that all <see cref="ITenantScoped"/> entities
+/// (e.g. <see cref="AppInstallation"/>) automatically receive a global query filter scoped to
+/// the current tenant context. This is the EF-layer complement to the Postgres RLS policies (C-8).
+/// </remarks>
+public sealed class MarketplaceDbContext : SaasBuilderDbContext
 {
     /// <summary>Initializes a new instance of <see cref="MarketplaceDbContext"/>.</summary>
-    public MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> options)
-        : base(options)
+    public MarketplaceDbContext(
+        DbContextOptions<MarketplaceDbContext> options,
+        ITenantContextAccessor tenantContextAccessor)
+        : base(options, tenantContextAccessor)
     {
     }
 
@@ -24,6 +33,7 @@ public sealed class MarketplaceDbContext : DbContext
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // base.OnModelCreating applies the tenant global query filters for ITenantScoped entities.
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<MarketplaceApp>(entity =>

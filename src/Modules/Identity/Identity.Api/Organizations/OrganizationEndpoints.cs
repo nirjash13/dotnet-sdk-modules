@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using FluentValidation;
 using Identity.Application.Organizations;
 using Identity.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -73,6 +74,7 @@ public static class OrganizationEndpoints
         [FromBody] CreateOrganizationRequest request,
         ClaimsPrincipal user,
         CreateOrganizationHandler handler,
+        IValidator<CreateOrganizationCommand> validator,
         HttpContext context)
     {
         Guid tenantId = GetTenantId(user);
@@ -87,6 +89,9 @@ public static class OrganizationEndpoints
             Name: request.Name,
             OwnerUserId: userId,
             OwnerRoleId: ownerRoleId);
+
+        // Validate at the API boundary — throws ValidationException mapped to 400 by ProblemDetailsExceptionHandler.
+        await validator.ValidateAndThrowAsync(command, context.RequestAborted).ConfigureAwait(false);
 
         SaasBuilder.SharedKernel.Abstractions.Result<CreateOrganizationResult> result =
             await handler.HandleAsync(command, context.RequestAborted);

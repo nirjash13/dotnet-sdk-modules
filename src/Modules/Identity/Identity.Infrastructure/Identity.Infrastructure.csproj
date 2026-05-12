@@ -33,6 +33,10 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" />
   </ItemGroup>
 
+  <ItemGroup Label="Phase 2.4 — DNS TXT domain ownership verification">
+    <PackageReference Include="DnsClient" />
+  </ItemGroup>
+
   <ItemGroup Label="Phase 2 — auth flows and MFA">
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
     <PackageReference Include="Otp.NET" />

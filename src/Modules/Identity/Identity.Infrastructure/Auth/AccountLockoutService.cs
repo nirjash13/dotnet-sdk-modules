@@ -26,7 +26,8 @@ public sealed class AccountLockoutService(
     /// <inheritdoc />
     public async Task RecordFailedAttemptAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        User? user = await userRepository.FindByIdAsync(userId, cancellationToken).ConfigureAwait(false);
+        // FindByIdForUpdateAsync: tracked entity required so EF Core persists the mutation.
+        User? user = await userRepository.FindByIdForUpdateAsync(userId, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             return;
@@ -52,7 +53,7 @@ public sealed class AccountLockoutService(
     /// <inheritdoc />
     public async Task ResetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        User? user = await userRepository.FindByIdAsync(userId, cancellationToken).ConfigureAwait(false);
+        User? user = await userRepository.FindByIdForUpdateAsync(userId, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             return;
@@ -72,7 +73,7 @@ public sealed class AccountLockoutService(
     /// <inheritdoc />
     public async Task AdminUnlockAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        User? user = await userRepository.FindByIdAsync(userId, cancellationToken).ConfigureAwait(false);
+        User? user = await userRepository.FindByIdForUpdateAsync(userId, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             return;

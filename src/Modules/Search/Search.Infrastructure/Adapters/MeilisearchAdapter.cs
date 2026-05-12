@@ -110,8 +110,35 @@ internal sealed class MeilisearchAdapter(
     /// <inheritdoc />
     public async Task DeleteAsync(string index, string documentId, CancellationToken ct = default)
     {
+        // C-6: fetch the document first and verify it belongs to the caller's tenant before
+        // deleting. This prevents tenant A from deleting tenant B's documents by knowing their id.
+        Guid tenantId = RequireTenantId();
         MeilisearchClient client = new MeilisearchClient(_opts.Url, _opts.ApiKey);
         MeiliIndex idx = client.Index(index);
+
+        // Retrieve the raw document to check tenant ownership.
+        Dictionary<string, object?> existing =
+            await idx.GetDocumentAsync<Dictionary<string, object?>>(documentId, cancellationToken: ct)
+                .ConfigureAwait(false);
+
+        if (existing is null)
+        {
+            // Document does not exist — treat as no-op; caller cannot learn anything.
+            return;
+        }
+
+        bool tenantMatch = existing.TryGetValue("tenantId", out object? storedTenantRaw)
+            && storedTenantRaw?.ToString() == tenantId.ToString();
+
+        if (!tenantMatch)
+        {
+            logger.LogWarning(
+                "Search.Meilisearch: DeleteAsync blocked — document '{Id}' in index '{Index}' " +
+                "does not belong to tenant {TenantId}.",
+                documentId, index, tenantId);
+            return;
+        }
+
         await idx.DeleteOneDocumentAsync(documentId, ct).ConfigureAwait(false);
     }
 

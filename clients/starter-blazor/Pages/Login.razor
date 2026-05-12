@@ -2,7 +2,11 @@
 @layout EmptyLayout
 @using MudBlazor
 @using SaasBuilder.Starter.Blazor.Services
-@inject SaasBuilderClientService Client
+@* C-25 FIX: Inject ApiClient (the only registered auth service) instead of
+   SaasBuilderClientService (which was never registered in DI and has incompatible
+   return types). ApiClient.LoginAsync returns LoginResult; ApiClient.VerifyMfaAsync
+   exists and persists the token in-memory so other pages don't bounce to /login. *@
+@inject ApiClient Client
 @inject NavigationManager Nav
 
 <PageTitle>Sign In — SaasBuilder</PageTitle>
@@ -113,6 +117,9 @@
         _error = null;
         try
         {
+            // C-25 FIX: ApiClient.LoginAsync returns LoginResult and persists the token
+            // internally via SetTokens(). All other pages inject ApiClient, so they will
+            // see the token once login succeeds and won't redirect to /login.
             var result = await Client.LoginAsync(_email, _password);
             if (result == LoginResult.Success)
             {
@@ -149,6 +156,9 @@
         _error = null;
         try
         {
+            // C-25 FIX: VerifyMfaAsync is defined on ApiClient (not on the removed
+            // SaasBuilderClientService). It sets tokens on success so subsequent page
+            // navigations include the Authorization header.
             var ok = await Client.VerifyMfaAsync(_email, _mfaCode);
             if (ok)
             {

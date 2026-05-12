@@ -30,6 +30,22 @@
             getToken: (key) => sessionStorage.getItem(key),
             removeToken: (key) => sessionStorage.removeItem(key),
         };
+
+        // C-26 FIX: Structured CSS variable helper replaces the eval()-based approach
+        // in BrandingService. The color value is validated by a regex allowlist before
+        // being applied — this prevents XSS via tenant-controlled color strings.
+        window.saasBuilderBranding = {
+            setCssVar: function (name, value) {
+                // Accept only: #RGB, #RRGGBB, #RRGGBBAA (hex), or CSS named colors (alpha-only)
+                var hexPattern = /^#[0-9a-fA-F]{3,8}$/;
+                var namedPattern = /^[a-zA-Z]{2,30}$/;
+                if (!hexPattern.test(value) && !namedPattern.test(value)) {
+                    console.warn('saasBuilderBranding.setCssVar: rejected unsafe color value for ' + name);
+                    return;
+                }
+                document.documentElement.style.setProperty(name, value);
+            }
+        };
     </script>
 </body>
 </html>

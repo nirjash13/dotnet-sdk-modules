@@ -1,14 +1,24 @@
 using Gdpr.Contracts;
 using Microsoft.EntityFrameworkCore;
+using SaasBuilder.Persistence;
+using SaasBuilder.SharedKernel.Tenancy;
 
 namespace Gdpr.Infrastructure.Data;
 
 /// <summary>EF Core DbContext for the GDPR bounded context.</summary>
-public sealed class GdprDbContext : DbContext
+/// <remarks>
+/// Extends <see cref="SaasBuilderDbContext"/> so that tenant-scoped entities
+/// (<see cref="GdprConsent"/>, <see cref="GdprErasureRequest"/>) automatically receive
+/// a global query filter restricted to the current tenant context. This prevents a GDPR admin
+/// from one tenant reading or cancelling another tenant's erasure requests (C-7 root cause).
+/// </remarks>
+public sealed class GdprDbContext : SaasBuilderDbContext
 {
     /// <summary>Initializes a new instance of <see cref="GdprDbContext"/>.</summary>
-    public GdprDbContext(DbContextOptions<GdprDbContext> options)
-        : base(options)
+    public GdprDbContext(
+        DbContextOptions<GdprDbContext> options,
+        ITenantContextAccessor tenantContextAccessor)
+        : base(options, tenantContextAccessor)
     {
     }
 
@@ -21,6 +31,8 @@ public sealed class GdprDbContext : DbContext
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // base.OnModelCreating applies tenant global query filters for ITenantScoped entities.
+        base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("gdpr");
 
         modelBuilder.Entity<GdprConsent>(e =>

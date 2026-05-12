@@ -113,9 +113,22 @@ public sealed class GdprModule : IModuleStartup
         IDataExportBuilder exportBuilder,
         CancellationToken ct)
     {
+        // C-7: validate the tenantId route parameter against the caller's tenant claim.
+        // Without this check, an admin of tenant A could export tenant B's PII by
+        // substituting tenant B's Guid in the route. Platform-wide admins (no tenant_id claim)
+        // are permitted to export any tenant.
+        string? callerTenantIdRaw = user.FindFirstValue("tenant_id");
+        if (callerTenantIdRaw is not null)
+        {
+            if (!Guid.TryParse(callerTenantIdRaw, out Guid callerTenantId)
+                || callerTenantId != tenantId)
+            {
+                return Results.Forbid();
+            }
+        }
+
         // Admin-scoped: exports all data for the tenant (userId = empty → all users).
-        // For simplicity, export as tenant-wide by passing empty Guid; IExportable implementations
-        // treat Guid.Empty as "all users in tenant".
+        // IExportable implementations treat Guid.Empty as "all users in tenant".
         Stream zip = await exportBuilder.BuildAsync(tenantId, Guid.Empty, ct).ConfigureAwait(false);
         return Results.File(zip, "application/zip", $"gdpr-export-tenant-{tenantId:N}.zip");
     }
@@ -140,9 +153,29 @@ public sealed class GdprModule : IModuleStartup
 
     private static async Task<IResult> CancelErasureAsync(
         Guid id,
+        ClaimsPrincipal user,
         IGdprErasureRepository erasureRepo,
         CancellationToken ct)
     {
+        // C-7: fetch the erasure request first so we can verify it belongs to the caller's tenant.
+        // An admin of tenant A must not be able to cancel tenant B's pending erasure.
+        ErasureRequestDto? request = await erasureRepo.GetByIdAsync(id, ct).ConfigureAwait(false);
+        if (request is null)
+        {
+            return Results.NotFound();
+        }
+
+        // Platform-wide admins (no tenant_id claim) may cancel any tenant's erasure.
+        string? callerTenantIdRaw = user.FindFirstValue("tenant_id");
+        if (callerTenantIdRaw is not null)
+        {
+            if (!Guid.TryParse(callerTenantIdRaw, out Guid callerTenantId)
+                || callerTenantId != request.TenantId)
+            {
+                return Results.Forbid();
+            }
+        }
+
         bool cancelled = await erasureRepo.CancelAsync(id, ct).ConfigureAwait(false);
         return cancelled ? Results.NoContent() : Results.NotFound();
     }

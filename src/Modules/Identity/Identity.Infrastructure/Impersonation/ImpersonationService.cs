@@ -87,19 +87,31 @@ public sealed class ImpersonationService(
         Guid targetUserId,
         DateTimeOffset expiresAt)
     {
-        // Use a symmetric key from configuration for test environments;
-        // production should use the existing RSA signing cert from OpenIddict.
-        // For Phase 2 we use HMAC-SHA256 with a configurable signing key.
-        string signingKey = configuration["Identity:ImpersonationSigningKey"]
-            ?? "impersonation-dev-signing-key-minimum-32-chars-long";
-
-        // Key must be at least 32 bytes for HS256.
-        if (signingKey.Length < 32)
+        // SECURITY: Require explicit signing key configuration — no fallback constant allowed.
+        // The same known-value secret would be shipped to every SDK consumer.
+        string? signingKeyValue = configuration["Identity:ImpersonationSigningKey"];
+        if (string.IsNullOrWhiteSpace(signingKeyValue))
         {
-            signingKey = signingKey.PadRight(32, '-');
+            throw new InvalidOperationException(
+                "Identity:ImpersonationSigningKey must be configured. " +
+                "Set it to at least 32 cryptographically random bytes (base64-encoded) " +
+                "via an environment variable or secret store. " +
+                "A hardcoded fallback is intentionally absent — every SDK consumer must provide their own key.");
         }
 
-        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(signingKey));
+        // The key must be at least 32 bytes (256 bits) for HS256.
+        byte[] keyBytes = Convert.FromBase64String(signingKeyValue);
+        if (keyBytes.Length < 32)
+        {
+            throw new InvalidOperationException(
+                "Identity:ImpersonationSigningKey must be at least 32 bytes (256 bits) when base64-decoded. " +
+                $"Provided key decodes to {keyBytes.Length} bytes.");
+        }
+
+        string issuer = configuration["Identity:Issuer"] ?? "saasbuilder";
+        const string Audience = "saasbuilder:impersonation";
+
+        var key = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -112,6 +124,8 @@ public sealed class ImpersonationService(
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
+            Issuer = issuer,
+            Audience = Audience,
             NotBefore = DateTime.UtcNow,
             Expires = expiresAt.UtcDateTime,
             SigningCredentials = credentials,

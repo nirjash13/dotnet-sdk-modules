@@ -42,11 +42,24 @@ public sealed class BrandingService
             return;
         }
 
-        await _js.InvokeVoidAsync(
-            "eval",
-            $"document.documentElement.style.setProperty('--brand-primary','{_branding.PrimaryColor}');" +
-            $"document.documentElement.style.setProperty('--brand-secondary','{_branding.SecondaryColor}');")
-            .ConfigureAwait(false);
+        // C-26 FIX: Use structured JS interop instead of eval().
+        // The JS helper (window.saasBuilderBranding.setCssVar) validates the color value
+        // against a regex allowlist (#RGB / #RRGGBB / #RRGGBBAA / CSS named colors)
+        // before calling document.documentElement.style.setProperty().
+        // This prevents XSS via tenant-controlled color strings that contained JS payloads.
+        if (!string.IsNullOrWhiteSpace(_branding.PrimaryColor))
+        {
+            await _js.InvokeVoidAsync(
+                "saasBuilderBranding.setCssVar", "--brand-primary", _branding.PrimaryColor)
+                .ConfigureAwait(false);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_branding.SecondaryColor))
+        {
+            await _js.InvokeVoidAsync(
+                "saasBuilderBranding.setCssVar", "--brand-secondary", _branding.SecondaryColor)
+                .ConfigureAwait(false);
+        }
     }
 
     private static MudTheme BuildTheme(BrandingDto? branding)

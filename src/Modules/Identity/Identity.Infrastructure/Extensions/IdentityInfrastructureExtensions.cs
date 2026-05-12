@@ -128,15 +128,36 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<VerifyDomainClaimHandler>();
         services.AddScoped<DeleteDomainClaimHandler>();
 
-        // Phase 2.4 — Domain ownership verifier: noop for dev (AutoVerify=true), DNS for prod.
+        // Phase 2.4 — Domain ownership verifier.
+        // NoopDomainOwnershipVerifier is only used when BOTH IsDevelopment AND AutoVerify=true.
+        // A lone AutoVerify=true in a production appsettings does NOT bypass verification.
+        //
+        // TODO(C-14): DnsTxtDomainOwnershipVerifier lacks DNSSEC AD-bit validation.
+        // Until a DNSSEC-validating implementation is wired, restrict the DNS verifier to
+        // Development (or explicitly acknowledged insecure deployments). In production, callers
+        // must set INSECURE_DNS_ACK=true to opt in and accept the risk.
         bool autoVerify = configuration.GetValue<bool>("Identity:DomainClaims:AutoVerify");
-        if (autoVerify || environment.IsDevelopment())
+        bool insecureDnsAck = string.Equals(
+            Environment.GetEnvironmentVariable("INSECURE_DNS_ACK"),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+
+        if (environment.IsDevelopment() && autoVerify)
         {
             services.AddScoped<IDomainOwnershipVerifier, NoopDomainOwnershipVerifier>();
         }
+        else if (environment.IsDevelopment() || insecureDnsAck)
+        {
+            // DNS verifier active but AD-bit validation is NOT enforced — log a startup warning.
+            services.AddScoped<IDomainOwnershipVerifier, DnsTxtDomainOwnershipVerifier>();
+            // Warning is emitted from DnsTxtDomainOwnershipVerifier constructor (see C-14 comment).
+        }
         else
         {
-            services.AddScoped<IDomainOwnershipVerifier, DnsTxtDomainOwnershipVerifier>();
+            // Production without explicit opt-in: fail fast rather than silently accept spoofable DNS.
+            throw new InvalidOperationException(
+                "DnsTxtDomainOwnershipVerifier is not production-safe without DNSSEC AD-bit validation. " +
+                "Set INSECURE_DNS_ACK=true to acknowledge and continue, or provide a DNSSEC-validating verifier. (C-14)");
         }
 
         // Phase 2.11 — Account deletion grace period.

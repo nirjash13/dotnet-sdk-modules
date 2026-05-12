@@ -11,11 +11,10 @@ namespace SaasBuilder.Persistence.Tenancy;
 /// <see cref="ITenantResourcesProvider"/> for the <c>SiloedDatabase</c> isolation mode.
 /// Resolves the per-tenant connection string from configuration using the convention:
 /// <c>Tenancy:SiloedDatabase:{tenantId}:ConnectionString</c>.
-/// Falls back to <c>ConnectionStrings:DefaultConnection</c> when no per-tenant entry is found
-/// so that existing tenants are not broken during a pool-to-silo migration.
+/// Throws <see cref="InvalidOperationException"/> when no per-tenant entry is found —
+/// there is no shared-pool fallback in this mode.
 /// </summary>
 /// <remarks>
-/// <para>
 /// Configuration example (appsettings.json or environment variables):
 /// <code>
 /// "Tenancy": {
@@ -28,16 +27,10 @@ namespace SaasBuilder.Persistence.Tenancy;
 /// </code>
 /// Environment variable equivalent:
 /// <c>Tenancy__SiloedDatabase__aaaaaaaa-0000-0000-0000-000000000001__ConnectionString</c>
-/// </para>
-/// <para>
-/// Tenants without an explicit entry fall back to the shared default connection string so that
-/// a deployment can migrate individual tenants to dedicated databases incrementally.
-/// </para>
 /// </remarks>
 public sealed class SiloedDatabaseTenantResourcesProvider : ITenantResourcesProvider
 {
     private const string SiloedKeyPrefix = "Tenancy:SiloedDatabase";
-    private const string DefaultConnectionKey = "ConnectionStrings:DefaultConnection";
 
     private readonly IConfiguration _configuration;
     private readonly ILogger<SiloedDatabaseTenantResourcesProvider> _logger;
@@ -67,21 +60,13 @@ public sealed class SiloedDatabaseTenantResourcesProvider : ITenantResourcesProv
             return new ValueTask<ITenantResources>(new SiloedDatabaseTenantResources(connectionString));
         }
 
-        // Fall back to shared default connection string.
-        string? defaultConnection = _configuration[DefaultConnectionKey];
-        if (!string.IsNullOrWhiteSpace(defaultConnection))
-        {
-            _logger.LogWarning(
-                "No per-tenant connection string found for tenant {TenantId} in SiloedDatabase mode. " +
-                "Falling back to shared DefaultConnection. " +
-                "Configure {Key} to isolate this tenant.",
-                tenantId,
-                perTenantKey);
-            return new ValueTask<ITenantResources>(new SiloedDatabaseTenantResources(defaultConnection));
-        }
-
+        // In SiloedDatabase mode every tenant MUST have an explicit connection string.
+        // Falling back to a shared pool would silently break the isolation guarantee and
+        // expose all tenants to each other — throw instead so the misconfiguration is
+        // discovered at startup / first request rather than at data-breach review time.
         throw new InvalidOperationException(
-            $"No connection string found for tenant {tenantId} in SiloedDatabase mode. " +
-            $"Set {perTenantKey} or ConnectionStrings:DefaultConnection in configuration.");
+            $"SiloedDatabase: no per-tenant connection string found for tenant {tenantId}. " +
+            $"Set configuration key '{perTenantKey}'. " +
+            "Fallback to a shared pool is intentionally disabled in SiloedDatabase isolation mode.");
     }
 }

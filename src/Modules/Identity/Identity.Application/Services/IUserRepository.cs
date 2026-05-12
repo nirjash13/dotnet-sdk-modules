@@ -11,8 +11,18 @@ namespace Identity.Application.Services;
 /// </summary>
 public interface IUserRepository
 {
-    /// <summary>Finds a user by their unique identifier, or returns <see langword="null"/>.</summary>
+    /// <summary>
+    /// Finds a user by their unique identifier for read-only purposes (AsNoTracking).
+    /// Do NOT use this overload when you intend to mutate and save the entity.
+    /// </summary>
     Task<User?> FindByIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds a user by their unique identifier with change-tracking enabled.
+    /// Use this overload whenever the caller will mutate the entity and call
+    /// <see cref="SaveChangesAsync"/> — required for EF Core to detect changes.
+    /// </summary>
+    Task<User?> FindByIdForUpdateAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>Finds a user by their email address, or returns <see langword="null"/>.</summary>
     Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken = default);

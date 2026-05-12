@@ -167,6 +167,8 @@ appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
 **/secrets.json
+secrets.yaml
+**/secrets.yaml
 *.pfx
 *.key
 *.pem
