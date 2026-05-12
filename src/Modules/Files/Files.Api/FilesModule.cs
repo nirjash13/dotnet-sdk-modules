@@ -1,14 +1,17 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Files.Application.Abstractions;
 using Files.Infrastructure.Extensions;
+using Files.Infrastructure.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SaasBuilder.SharedKernel.Abstractions;
 using SaasBuilder.SharedKernel.Tenancy;
 
@@ -52,6 +55,7 @@ public sealed class FilesModule : IModuleStartup
         IBlobStore blobStore,
         ITenantQuotaCounter quotaCounter,
         ITenantContextAccessor tenantAccessor,
+        IOptions<FilesOptions> filesOptions,
         ILogger<FilesModule> logger,
         CancellationToken ct = default)
     {
@@ -60,6 +64,23 @@ public sealed class FilesModule : IModuleStartup
         {
             return Results.Unauthorized();
         }
+
+        FilesOptions opts = filesOptions.Value;
+
+        // M-O11: content-type allowlist — reject types not in the configured allowlist.
+        string resolvedContentType = request.ContentType ?? "application/octet-stream";
+        if (opts.AllowedUploadContentTypes.Length > 0 &&
+            !opts.AllowedUploadContentTypes.Contains(resolvedContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            return Results.Problem(
+                title: "Content type not allowed.",
+                detail: $"Content type '{resolvedContentType}' is not permitted for upload. Allowed: {string.Join(", ", opts.AllowedUploadContentTypes)}.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // M-O11: TTL clamp — cap at configured max (hard ceiling: 15 minutes).
+        int maxTtlMinutes = Math.Min(opts.PresignedUploadMaxTtlMinutes, 15);
+        TimeSpan ttl = TimeSpan.FromMinutes(maxTtlMinutes);
 
         // Quota enforcement: check hard limit before allowing upload.
         long? hardLimit = await quotaCounter.GetHardLimitAsync(ctx.TenantId, ct).ConfigureAwait(false);
@@ -85,11 +106,11 @@ public sealed class FilesModule : IModuleStartup
 
         Uri url = await blobStore.PresignedUploadUrlAsync(
             request.Key,
-            request.ContentType ?? "application/octet-stream",
-            TimeSpan.FromMinutes(15),
+            resolvedContentType,
+            ttl,
             ct).ConfigureAwait(false);
 
-        return Results.Ok(new { Url = url.ToString(), ExpiresInSeconds = 900 });
+        return Results.Ok(new { Url = url.ToString(), ExpiresInSeconds = (int)ttl.TotalSeconds });
     }
 
     private static async Task<IResult> GetDownloadUrlAsync(

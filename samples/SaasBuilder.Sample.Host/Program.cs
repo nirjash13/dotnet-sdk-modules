@@ -1,4 +1,5 @@
 using System;
+using Billing.Infrastructure.Extensions;
 using Identity.Application.Consumers;
 using Ledger.Application.Commands;
 using Ledger.Application.Queries;
@@ -36,6 +37,10 @@ builder.AddSaasBuilderHost(opts =>
         cfg.AddConsumer<ProvisionReportingCommandConsumer>();
         cfg.AddConsumer<UnprovisionReportingCommandConsumer>();
         cfg.AddConsumer<LedgerTransactionPostedConsumer>();
+
+        // Billing seat-sync consumers — keep per-seat billing quantities in sync
+        // when members are added/removed (M-B1).
+        cfg.AddBillingSeatSyncConsumers();
     });
 
     // Register module consumers/sagas on the RabbitMQ bus.
@@ -80,6 +85,9 @@ builder.AddSaasBuilderHost(opts =>
                     TimeSpan.FromMinutes(30),
                     TimeSpan.FromHours(2)));
         });
+
+        // Billing seat-sync consumers for RabbitMQ bus mode (M-B1).
+        cfg.AddBillingSeatSyncConsumers();
     });
 });
 

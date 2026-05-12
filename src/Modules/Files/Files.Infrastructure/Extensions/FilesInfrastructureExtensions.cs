@@ -1,3 +1,5 @@
+using Amazon;
+using Amazon.S3;
 using Files.Application.Abstractions;
 using Files.Infrastructure.BlobStores;
 using Files.Infrastructure.Imaging;
@@ -29,6 +31,17 @@ public static class FilesInfrastructureExtensions
         {
             case "S3":
                 services.Configure<S3Options>(configuration.GetSection(S3Options.SectionName));
+                // M-O10 fix: register a long-lived IAmazonS3 singleton so S3BlobStore does not
+                // allocate a new client per call (fixes per-call allocation and the disposed-client
+                // stream bug in ReadAsync).
+                services.AddSingleton<IAmazonS3>(sp =>
+                {
+                    S3Options s3Opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<S3Options>>().Value;
+                    RegionEndpoint region = RegionEndpoint.GetBySystemName(s3Opts.Region);
+                    return !string.IsNullOrWhiteSpace(s3Opts.AccessKeyId) && !string.IsNullOrWhiteSpace(s3Opts.SecretAccessKey)
+                        ? new AmazonS3Client(s3Opts.AccessKeyId, s3Opts.SecretAccessKey, region)
+                        : new AmazonS3Client(region);
+                });
                 services.AddScoped<IBlobStore, S3BlobStore>();
                 break;
 

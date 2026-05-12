@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -44,7 +45,7 @@ internal static class ApprovalEndpoints
             actorId,
             "approval.approve",
             targetTenantId: result.IsSuccess ? result.Value!.TargetTenantId : null,
-            payloadJson: $"{{\"actionId\":\"{id}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { actionId = id }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -86,7 +87,7 @@ internal static class ApprovalEndpoints
             actorId,
             "approval.deny",
             targetTenantId: null,
-            payloadJson: $"{{\"actionId\":\"{id}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { actionId = id }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

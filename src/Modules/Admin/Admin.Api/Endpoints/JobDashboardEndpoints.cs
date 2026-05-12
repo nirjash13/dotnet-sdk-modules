@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -38,7 +39,7 @@ internal static class JobDashboardEndpoints
             actorId,
             "jobs.dlq.list",
             targetTenantId: null,
-            payloadJson: $"{{\"since\":\"{since}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { since }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -64,7 +65,7 @@ internal static class JobDashboardEndpoints
             actorId,
             "jobs.dlq.replay",
             targetTenantId: null,
-            payloadJson: $"{{\"jobId\":\"{id}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { jobId = id }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

@@ -108,11 +108,14 @@ public sealed class StripeWebhookSignatureVerifier(IConfiguration configuration)
         }
         catch (JsonException)
         {
-            // Body is not valid JSON — still valid from signature standpoint;
-            // use timestamp-based fallback for idempotency key.
+            // Body is not valid JSON — still valid from signature standpoint.
+            // Fall through: SHA-256 fallback below produces a collision-free idempotency key.
         }
 
-        string idempotencyKey = eventId ?? $"stripe_{timestampUnix}";
+        // Fallback: SHA-256 of the raw payload bytes (hex). This is collision-free regardless
+        // of whether JSON parsing succeeded, replacing the prior timestamp-only fallback which
+        // would collide for two distinct payloads delivered within the same second.
+        string idempotencyKey = eventId ?? Convert.ToHexString(SHA256.HashData(rawBody)).ToLowerInvariant();
         string resolvedEventType = eventType ?? "webhook.unknown";
 
         return Task.FromResult(WebhookVerificationResult.Success(resolvedEventType, idempotencyKey));

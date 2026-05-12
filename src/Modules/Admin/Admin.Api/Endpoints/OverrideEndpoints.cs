@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -56,7 +57,7 @@ internal static class OverrideEndpoints
             actorId,
             "tenant.entitlement_override",
             targetTenantId: id,
-            payloadJson: $"{{\"key\":\"{key}\",\"value\":\"{request.Value}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { key, value = request.Value }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -85,16 +86,21 @@ internal static class OverrideEndpoints
             return Results.ValidationProblem(validation.ToDictionary());
         }
 
+        if (request.Value is null)
+        {
+            return Results.Problem(detail: "Value is required.", statusCode: StatusCodes.Status400BadRequest);
+        }
+
         string actorId = httpContext.User.FindFirstValue("sub") ?? "unknown";
 
         Result result = await handler.HandleAsync(
-            id, key, request.Value!.Value, request.Reason!, ct).ConfigureAwait(false);
+            id, key, request.Value.Value, request.Reason!, ct).ConfigureAwait(false);
 
         await auditor.RecordAsync(
             actorId,
             "tenant.feature_flag_override",
             targetTenantId: id,
-            payloadJson: $"{{\"key\":\"{key}\",\"value\":{request.Value!.Value.ToString().ToLowerInvariant()}}}",
+            payloadJson: JsonSerializer.Serialize(new { key, value = request.Value.Value }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

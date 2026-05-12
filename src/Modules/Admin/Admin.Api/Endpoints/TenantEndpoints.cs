@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -47,7 +48,7 @@ internal static class TenantEndpoints
             actorId,
             "tenant.list",
             targetTenantId: null,
-            payloadJson: $"{{\"search\":\"{search}\",\"status\":\"{status}\",\"page\":{page}}}",
+            payloadJson: JsonSerializer.Serialize(new { search, status, page }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

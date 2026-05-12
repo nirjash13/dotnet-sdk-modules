@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -87,7 +88,7 @@ internal static class SupportActionsEndpoints
             actorId,
             "tenant.resend_invite",
             targetTenantId: id,
-            payloadJson: $"{{\"invitationId\":\"{invitationId}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { invitationId }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -95,7 +96,7 @@ internal static class SupportActionsEndpoints
         return Results.Ok(new { Message = "Invitation resent." });
     }
 
-    private static async Task<IResult> ForcePasswordResetAsync(
+    private static Task<IResult> ForcePasswordResetAsync(
         Guid id,
         Guid userId,
         [FromServices] IPasswordResetService passwordResetService,
@@ -103,23 +104,13 @@ internal static class SupportActionsEndpoints
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        string actorId = httpContext.User.FindFirstValue("sub") ?? "unknown";
-
-        // Use the email of the target user to initiate reset — the service looks up by email.
-        // In this scaffold we pass userId as the email key via a dedicated admin-initiated path.
-        // TODO(Phase 6.x): add IPasswordResetService.InitiateByUserIdAsync(userId, ct) overload.
-        await passwordResetService.InitiateAsync(userId.ToString(), ct).ConfigureAwait(false);
-
-        await auditor.RecordAsync(
-            actorId,
-            "tenant.force_password_reset",
-            targetTenantId: id,
-            payloadJson: $"{{\"userId\":\"{userId}\"}}",
-            httpContext.Connection.RemoteIpAddress?.ToString(),
-            httpContext.Request.Headers.UserAgent.ToString(),
-            ct).ConfigureAwait(false);
-
-        return Results.Ok(new { Message = "Password reset initiated." });
+        // TODO(M-O3): not implemented — IPasswordResetService.InitiateAsync accepts an email, not a userId.
+        // Add IPasswordResetService.InitiateByUserIdAsync(userId, ct) before enabling this endpoint.
+        _ = (id, userId, passwordResetService, auditor, httpContext, ct);
+        return Task.FromResult(Results.Problem(
+            detail: "IPasswordResetService.InitiateByUserIdAsync is not yet implemented. Cannot accept a Guid user ID here.",
+            statusCode: StatusCodes.Status501NotImplemented,
+            title: "Not implemented"));
     }
 
     private static async Task<IResult> RefundAsync(
@@ -149,7 +140,7 @@ internal static class SupportActionsEndpoints
             actorId,
             "tenant.refund",
             targetTenantId: id,
-            payloadJson: $"{{\"invoiceId\":\"{request.InvoiceId}\",\"amountCents\":{request.AmountCents}}}",
+            payloadJson: JsonSerializer.Serialize(new { invoiceId = request.InvoiceId, amountCents = request.AmountCents }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -185,7 +176,7 @@ internal static class SupportActionsEndpoints
             actorId,
             "tenant.credit_grant",
             targetTenantId: id,
-            payloadJson: $"{{\"amountCents\":{request.AmountCents}}}",
+            payloadJson: JsonSerializer.Serialize(new { amountCents = request.AmountCents }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -217,7 +208,7 @@ internal static class SupportActionsEndpoints
             actorId,
             "tenant.impersonate",
             targetTenantId: id,
-            payloadJson: $"{{\"userId\":\"{request.UserId}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { userId = request.UserId }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

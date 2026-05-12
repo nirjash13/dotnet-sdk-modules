@@ -31,3 +31,6 @@ jobs:
 
       - name: Build (warnings as errors)
         run: dotnet build -warnaserror --no-restore --configuration Release
+
+      - name: Format check
+        run: dotnet format --verify-no-changes

@@ -232,11 +232,19 @@ public static class SaasBuilderHostExtensions
         app.UseRouting();
         app.UseSaasBuilderSecurityHeaders();  // OWASP headers on all responses
         app.UseRateLimiter();             // Rate limiting before auth
+
         app.UseAuthentication();     // Must be before UseAuthorization
         app.UseAuthorization();
 
         // ── Tenant middleware — runs after auth so JWT claims are available ─────────
         app.UseMiddleware<TenantMiddleware>();
+
+        // ── Per-tenant soft-limit middleware — must run AFTER TenantMiddleware so tenant context is available ──
+        // Only active when AddPerTenantSlidingWindowRateLimiting() registered the middleware.
+        if (app.Services.GetService<PerTenantRateLimitMiddleware>() is not null)
+        {
+            app.UseMiddleware<PerTenantRateLimitMiddleware>();
+        }
 
         // ── OpenAPI / Scalar ───────────────────────────────────────────────────────
         if (app.Environment.IsDevelopment())

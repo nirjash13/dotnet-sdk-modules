@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Admin.Application.Abstractions;
@@ -44,7 +45,7 @@ internal static class WebhookDashboardEndpoints
             actorId,
             "webhooks.deliveries.list",
             targetTenantId: null,
-            payloadJson: $"{{\"endpointId\":\"{endpointId}\",\"status\":\"{status}\",\"page\":{page}}}",
+            payloadJson: JsonSerializer.Serialize(new { endpointId, status, page }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);
@@ -68,7 +69,7 @@ internal static class WebhookDashboardEndpoints
             actorId,
             "webhooks.delivery.replay",
             targetTenantId: null,
-            payloadJson: $"{{\"deliveryId\":\"{id}\"}}",
+            payloadJson: JsonSerializer.Serialize(new { deliveryId = id }),
             httpContext.Connection.RemoteIpAddress?.ToString(),
             httpContext.Request.Headers.UserAgent.ToString(),
             ct).ConfigureAwait(false);

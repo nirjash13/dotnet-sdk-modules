@@ -351,18 +351,20 @@ public sealed class BillingModule : IModuleStartup
                 title: "Webhook signature invalid");
         }
 
-        // 4. Idempotency check.
+        // 4 + 5. Atomic idempotency guard: INSERT … ON CONFLICT DO NOTHING.
+        // TryRecordAsync returns true only when this is the first delivery (row was inserted).
+        // This inverts the previous record-before-publish race: we claim the key atomically
+        // and only proceed to publish when we win the insert. Duplicate deliveries get 200
+        // without reprocessing.
         string idempotencyKey = verification.IdempotencyKey!;
-        if (await webhookEvents.ExistsAsync(idempotencyKey, ct).ConfigureAwait(false))
+        bool firstDelivery = await webhookEvents.TryRecordAsync(idempotencyKey, verification.EventType!, ct).ConfigureAwait(false);
+        if (!firstDelivery)
         {
             logger.LogInformation(
                 "Duplicate webhook received (idempotencyKey={Key}); returning 200 without reprocessing.",
                 idempotencyKey);
             return Results.Ok(new { Message = "Already processed." });
         }
-
-        // 5. Record for idempotency before processing to prevent double-processing on crash.
-        await webhookEvents.RecordAsync(idempotencyKey, verification.EventType!, ct).ConfigureAwait(false);
 
         // 6. Dispatch integration events based on Stripe event type.
         await DispatchStripeEventAsync(

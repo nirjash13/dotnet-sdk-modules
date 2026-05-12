@@ -4,9 +4,11 @@ using Billing.Application.Commands;
 using Billing.Application.Jobs;
 using Billing.Application.Options;
 using Billing.Application.Services;
+using Billing.Infrastructure.Consumers;
 using Billing.Infrastructure.Jobs;
 using Billing.Infrastructure.Persistence;
 using Billing.Infrastructure.Providers;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,5 +75,37 @@ public static class BillingInfrastructureExtensions
         services.AddHostedService<DunningGraceHostedService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers the Billing module's MassTransit consumers on a mediator configurator.
+    /// Call this inside <c>AddSaasBuilderHost</c>'s <c>opts.Transport.MediatorConsumers</c> callback:
+    /// <code>
+    /// opts.Transport.MediatorConsumers = cfg => cfg.AddBillingSeatSyncConsumers();
+    /// </code>
+    /// These consumers forward <c>MemberAdded</c>/<c>MemberRemoved</c> integration events to
+    /// <see cref="SeatSyncService"/> so that per-seat billing quantities are kept in sync.
+    /// </summary>
+    public static IMediatorRegistrationConfigurator AddBillingSeatSyncConsumers(
+        this IMediatorRegistrationConfigurator configurator)
+    {
+        configurator.AddConsumer<MemberAddedConsumer>();
+        configurator.AddConsumer<MemberRemovedConsumer>();
+        return configurator;
+    }
+
+    /// <summary>
+    /// Registers the Billing module's MassTransit consumers on a bus configurator.
+    /// Call this inside <c>AddSaasBuilderHost</c>'s <c>opts.Transport.BusConsumers</c> callback:
+    /// <code>
+    /// opts.Transport.BusConsumers = cfg => cfg.AddBillingSeatSyncConsumers();
+    /// </code>
+    /// </summary>
+    public static IBusRegistrationConfigurator AddBillingSeatSyncConsumers(
+        this IBusRegistrationConfigurator configurator)
+    {
+        configurator.AddConsumer<MemberAddedConsumer>();
+        configurator.AddConsumer<MemberRemovedConsumer>();
+        return configurator;
     }
 }
